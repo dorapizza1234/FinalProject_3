@@ -82,7 +82,8 @@ public class SecurityConfig {
                 .requestMatchers("/bootstrap-4.6.2-dist/**", 
                                  "/css/**", 
                                  "/Highcharts-10.3.1/**",
-                                 "/images/**", 
+                                 "/images/**",
+                                 "/upload/**",
                                  "/jquery-ui-1.13.1.custom/**", 
                                  "/js/**", 
                                  "/smarteditor/**");  

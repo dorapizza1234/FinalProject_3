@@ -31,4 +31,9 @@ public class ProductDTO {
     // ✅ hidden input으로 넘어오는 JSON 문자열(프론트에서 name=shippingOptionsJson / meetLocationsJson)
     private String shippingOptionsJson;
     private String meetLocationsJson;
+    
+ // 목록 표시용 지역 (강남구 등)
+    private String areaGu;
+    private String imgUrl;
+    
 }

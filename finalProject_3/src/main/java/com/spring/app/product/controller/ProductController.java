@@ -9,6 +9,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,20 +37,27 @@ public class ProductController {
 
     private final ProductService pservice;
     private final FileManager fileManager;
-    private final ObjectMapper objectMapper; // ✅ 주입받기(권장)
-
+    private final ObjectMapper objectMapper;
     @Value("${file.images-dir}")
     private String imagesDir;
 
-    // ✅ 브라우저에서 이미지 접근할 URL Prefix (프로젝트 규칙에 맞게 수정 가능)
-    // 예) /upload/파일명 으로 보여줄 계획이면 이대로 사용
     private static final String IMAGE_WEB_PREFIX = "/upload/";
 
+    
+    
+    // 장터(상품목록)
     @GetMapping("/product_list")
-    public String product_list() {
+    public String product_list(Model model) {
+
+        List<ProductDTO> list = pservice.selectProductListSimple();
+        model.addAttribute("list", list);
+
         return "product/product_list";
     }
+    
+    
 
+    //판매하기
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/sell")
     public String sellPage() {

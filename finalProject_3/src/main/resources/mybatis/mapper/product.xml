@@ -2,6 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+<!-- ====판매하기 등록==== -->
 <mapper namespace="com.spring.app.product.model.ProductDAO">
 
   <!-- 1) PRODUCTS insert -->
@@ -111,5 +112,32 @@
       #{sortNo}
     )
   </insert>
+  
+<!--    장터(상품목록) -->
+  <select id="selectProductListSimple"
+        resultType="com.spring.app.product.domain.ProductDTO">
+
+  SELECT
+  PRODUCTS.PRODUCT_NO      AS productNo,
+  PRODUCTS.PRODUCT_NAME    AS productName,
+  PRODUCTS.PRODUCT_PRICE   AS productPrice,
+  PRODUCTS.TRADE_STATUS    AS tradeStatus,
+  PRODUCTS.REG_DATE        AS regDate,
+
+  (SELECT SUBSTR(FULL_ADDRESS, 1, INSTR(FULL_ADDRESS, ' ', 1, 2)-1)
+     FROM PRODUCT_MEET_LOCATION
+    WHERE PRODUCT_NO = PRODUCTS.PRODUCT_NO
+      AND ROWNUM = 1) AS areaGu,
+
+  (SELECT PRODUCT_IMAGE.IMG_URL
+   FROM PRODUCT_IMAGE
+  WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+    AND PRODUCT_IMAGE.IS_MAIN = 'Y'
+    AND ROWNUM = 1) AS imgUrl
+
+FROM PRODUCTS
+ORDER BY PRODUCTS.REG_DATE DESC
+
+</select>
 
 </mapper>

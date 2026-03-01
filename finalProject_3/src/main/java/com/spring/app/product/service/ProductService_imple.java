@@ -19,6 +19,7 @@ public class ProductService_imple implements ProductService {
 
     private final ProductDAO pdao;
 
+  //판매하기 등록
     @Override
     @Transactional
     public int productSellRegister(ProductDTO productDto,
@@ -81,5 +82,11 @@ public class ProductService_imple implements ProductService {
         }
 
         return 1;
+    }
+
+    //장터(상품목록)
+    @Override
+    public List<ProductDTO> selectProductListSimple() {
+        return pdao.selectProductListSimple();
     }
 }
