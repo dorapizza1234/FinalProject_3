@@ -19,7 +19,9 @@ public class ProductService_imple implements ProductService {
 
     private final ProductDAO pdao;
 
-  //판매하기 등록
+    
+    //판매하기 등록 
+    
     @Override
     @Transactional
     public int productSellRegister(ProductDTO productDto,
@@ -27,16 +29,15 @@ public class ProductService_imple implements ProductService {
                                    List<ProductShippingOptionDTO> shippingOptionList,
                                    List<ProductMeetLocationDTO> meetLocationList) {
 
-    	if ("나눔".equals(productDto.getSaleType())) {
+        if ("나눔".equals(productDto.getSaleType())) {
             productDto.setProductPrice(0);
         }
 
-        // (선택) 판매인데 price가 null이면 막기
         if ("판매".equals(productDto.getSaleType()) && productDto.getProductPrice() == null) {
             throw new RuntimeException("판매 상품은 가격이 필수입니다.");
         }
-    	
-        // 1) PRODUCTS 저장 (selectKey로 productNo 세팅)
+
+        // 1) PRODUCTS 저장
         int n = pdao.insertProduct(productDto);
         if (n != 1) {
             throw new RuntimeException("PRODUCTS insert fail");
@@ -93,9 +94,36 @@ public class ProductService_imple implements ProductService {
         return 1;
     }
 
-    //장터(상품목록)
+
+    // 장터(상품목록) 
+
     @Override
     public List<ProductDTO> selectProductListSimple() {
         return pdao.selectProductListSimple();
+    }
+
+    
+   // 상품상세페이지 (전체 조회: 기본 + 이미지 + 옵션 + 위치)
+   
+    @Override
+    @Transactional(readOnly = true)
+    public ProductDTO getProductDetailFull(int productNo) {
+
+        // 1) 기본정보
+        ProductDTO productDTO = pdao.selectProductDetail(productNo);  
+        if (productDTO == null) {
+            return null;
+        }
+
+        // 2) 이미지
+        productDTO.setImageList(pdao.selectProductImages(productNo)); 
+
+        // 3) 배송옵션
+        productDTO.setShippingOptionList(pdao.selectShippingOption(productNo)); 
+
+        // 4) 거래위치
+        productDTO.setMeetLocationList(pdao.selectMeetLocation(productNo)); 
+
+        return productDTO;
     }
 }

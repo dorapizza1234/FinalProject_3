@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,13 +39,12 @@ public class ProductController {
     private final ProductService pservice;
     private final FileManager fileManager;
     private final ObjectMapper objectMapper;
+    
     @Value("${file.images-dir}")
     private String imagesDir;
 
     private static final String IMAGE_WEB_PREFIX = "/upload/";
 
-    
-    
     // 장터(상품목록)
     @GetMapping("/product_list")
     public String product_list(Model model) {
@@ -56,7 +56,9 @@ public class ProductController {
     }
     
     
-
+   
+ 
+    
     //판매하기
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/sell")
@@ -161,7 +163,6 @@ public class ProductController {
                 imgDto.setOrgfilename(originalFilename);
                 imgDto.setFilename(savedFileName);
 
-                // ✅ 핵심: imgUrl NULL 방지 (MyBatis + Oracle ORA-17004 해결)
                 imgDto.setImgUrl(IMAGE_WEB_PREFIX + savedFileName);
 
                 imgDto.setSortNo(sortNo++);
@@ -194,7 +195,6 @@ public class ProductController {
             }
 
         } catch (Exception e) {
-            // ✅ 원인 로그를 반드시 남겨야 함
             log.error("DB 저장 중 예외 발생", e);
 
             for (String fn : savedFileNames) {
@@ -232,13 +232,24 @@ public class ProductController {
             return new ArrayList<>();
         }
     }
-
+    
     // 나눔하기
     @GetMapping("/share")
     public String share() {
         return "product/share";
     }
 
+    //상품상세페이지
+    @GetMapping("/product_detail/{productNo}")
+    public String detail(@PathVariable int productNo, Model model) {
+
+        ProductDTO productDTO = pservice.getProductDetailFull(productNo);
+
+     
+        model.addAttribute("product", productDTO);
+        return "product/product_detail";
+    }
+    
     // 경매하기
     @GetMapping("/auction")
     public String auction() {
@@ -251,11 +262,7 @@ public class ProductController {
         return "product/price_check";
     }
 
-    // 상품상세
-    @GetMapping("/product_detail")
-    public String product_detail() {
-        return "product/product_detail";
-    }
+ 
 
     // 판매자정보
     @GetMapping("/product_user_profile")

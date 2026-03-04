@@ -17,4 +17,11 @@ public interface ProductService {
 
     //장터(상품목록)
 	List<ProductDTO> selectProductListSimple();
+
+	//상품상세페이지
+	ProductDTO getProductDetailFull(int productNo);
+	
+
+	
+	
 }
