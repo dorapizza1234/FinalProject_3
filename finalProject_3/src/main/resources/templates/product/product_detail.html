@@ -12,131 +12,221 @@
 <body>
 <!-- 상품 상세페이지 -->
 <main>
-    <!--상품정보-->
+<!--상품정보-->
 <section class="pd-page">
-    <section class="pd-grid">
-        <!-- LEFT: 이미지 영역 -->
-        <div class="pd-gallery">
-            <div class="pd-main-img">
-                <!-- 실제 이미지로 교체 -->
-                <img id="pdMainImage"
-                    src=""
-                    alt="상품 이미지">
-            </div>
+  <section class="pd-grid">
 
-            <div class="pd-thumbs" aria-label="썸네일">
-                <div class="pd-thumb">
-                    <img src=""
-                        alt="썸네일 1">
-                </div>
+    <!-- LEFT: 이미지 영역 -->
+<div class="pd-gallery">
 
-                <div class="pd-thumb">
-                    <img src=""
-                        alt="썸네일 3">
-                </div>
-            </div>
+  <div class="pd-main-img">
+    <img id="pdMainImage"
+         th:if="${product.imageList != null and !#lists.isEmpty(product.imageList)}"
+         th:src="@{${product.imageList[0].imgUrl}}"
+         alt="상품 대표 이미지">
+
+    <img id="pdMainImage"
+         th:if="${product.imageList == null or #lists.isEmpty(product.imageList)}"
+         th:src="@{/images/no_image.png}"
+         alt="상품 이미지">
+  </div>
+
+  <!-- 썸네일(0번=대표 제외) -->
+  <div class="pd-thumbs" aria-label="썸네일">
+
+  <th:block th:if="${product.imageList != null and !#lists.isEmpty(product.imageList)}">
+
+    <th:block th:each="img, stat : ${product.imageList}">
+      <div class="pd-thumb"
+           th:if="${stat.index < 3}">
+        <img th:src="@{${img.imgUrl}}"
+             th:alt="'썸네일 ' + ${stat.index + 1}"
+             th:attr="data-full=@{${img.imgUrl}}">
+      </div>
+    </th:block>
+
+  </th:block>
+
+  <!-- 이미지 부족할 때 -->
+  <div class="pd-thumb"
+       th:if="${product.imageList == null or #lists.isEmpty(product.imageList)}">
+    <img th:src="@{/images/no_image.png}" alt="썸네일">
+  </div>
+
+</div>
+</div>
+
+
+
+    <!-- RIGHT: 정보 영역 -->
+    <div class="pd-info">
+      <div class="pd-topline">
+        <div>
+          <div class="pd-breadcrumb">
+            <span th:text="${product.categoryName}">가구/인테리어</span>
+            <span class="pd-dot">|</span>
+
+            <!-- n분전(컨트롤러에서 timeAgo 문자열로 만들어서 넘기는 걸 추천) -->
+            <span >4분전</span>
+
+            <span class="pd-dot">|</span>
+            조회 <span >7</span>
+
+            <span class="pd-dot">|</span>
+            찜 <span >2</span>
+          </div>
         </div>
 
-        <!-- RIGHT: 정보 영역 -->
-        <div class="pd-info">
-            <div class="pd-topline">
-                <div>
-                    <div class="pd-breadcrumb">
-                        가구/인테리어 <span class="pd-dot">|</span> <span>4</span>분전 <span class="pd-dot">|</span> 조회 <span>7</span> <span
-                            class="pd-dot">|</span> 찜 <span>2</span>
-                    </div>
-                </div>
-
-                <div class="pd-actions-top">
-                    <div class="pd-user-icon" aria-hidden="true"><img th:src="@{/images/siren.png}"></div>
-                    <a class="pd-report" href="#">신고하기</a>
-                </div>
-            </div>
-
-            <h1 class="pd-title">상품이름</h1>
-            <div class="pd-price">60,000원</div>
-
-            <div class="pd-subline">
-                <a th:href="@{/product/price_check}" aria-label="시세조회">시세조회</a>
-            </div>
-
-            <div class="pd-card" aria-label="상품 정보">
-                <div class="pd-row pd-row-fee">
-                    <div class="pd-label">배송비</div>
-                    <div class="pd-value pd-value-fee">
-                        <ul class="pd-fee-simple">
-                            <!-- 배송비 포함인경우
-                            <li>
-                                <span class="pd-fee-name">배송비 포함</span>
-                                <span class="pd-fee-amount">0원</span>
-                            </li> -->
-                            
-                            <!-- 배송비 별도입력인 경우 -->
-                            <li>
-                                <span class="pd-fee-name">일반택배</span>
-                                <span class="pd-fee-amount">4,000원</span>
-                            </li> 
-                            <li>
-                                <span class="pd-fee-name">CU 반값택배</span>
-                                <span class="pd-fee-amount">2,200원</span>
-                            </li>
-                            <li>
-                                <span class="pd-fee-name">GS 반값택배</span>
-                                <span class="pd-fee-amount">2,200원</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-               <!-- 상품상태 -->
-                <div class="pd-row">
-                <div class="pd-label">상품상태</div>
-                <div class="pd-value">
-                    <span class="pd-chip chip-grade-top">상</span>
-                     <span class="pd-chip chip-grade-mid">중</span>
-                     <span class="pd-chip chip-grade-low">하</span>
-                </div>
-                </div>
-
-                <!-- 거래상태 -->
-                <div class="pd-row">
-                <div class="pd-label">거래상태</div>
-                <div class="pd-value">
-                    <span class="pd-chip chip-sale-ing">판매중</span>
-                     <span class="pd-chip chip-sale-deal">거래중</span>
-                     <span class="pd-chip chip-sale-done">판매완료</span>
-                </div>
-                </div>
-
-                <!-- 거래방법 -->
-                <div class="pd-row">
-                <div class="pd-label">거래방법</div>
-                <div class="pd-value">
-                    <span class="pd-chip chip-method-meet">직거래</span>
-                     <span class="pd-chip chip-method-ship">택배거래</span> 
-                </div>
-                </div>
-
-                <div class="pd-row">
-                    <div class="pd-label">거래 희망장소</div>
-                    <div class="pd-value">
-                        <span class="pd-location">잠실역 3번출구</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pd-cta">
-                <button class="pd-like" type="button" aria-label="찜하기">
-                    <i class="fa-regular fa-heart"></i>
-                </button>
-
-                <div class="pd-btns">
-                    <button class="pd-btn pd-btn-chat" type="button">채팅하기</button>
-                    <button class="pd-btn pd-btn-pay" type="button">안전결제</button>
-                </div>
-            </div>
+        <div class="pd-actions-top">
+          <div class="pd-user-icon" aria-hidden="true">
+            <img th:src="@{/images/siren.png}" alt="신고">
+          </div>
+          <a class="pd-report"
+             th:href="@{/product/report(productNo=${product.productNo})}">
+            신고하기
+          </a>
         </div>
-    </section>
+      </div>
+
+      <h1 class="pd-title" th:text="${product.productName}">상품이름</h1>
+
+      <div class="pd-price"
+           th:text="${#numbers.formatInteger(product.productPrice, 3, 'COMMA')} + '원'">
+        60,000원
+      </div>
+
+      <div class="pd-subline">
+        <a th:href="@{/product/price_check(productNo=${product.productNo})}" aria-label="시세조회">시세조회</a>
+      </div>
+
+      <div class="pd-card" aria-label="상품 정보">
+
+        <!-- 배송비 -->
+        <div class="pd-row pd-row-fee">
+          <div class="pd-label">배송비</div>
+          <div class="pd-value pd-value-fee">
+
+            <!-- 배송옵션이 있을 때 -->
+            <ul class="pd-fee-simple"
+    th:if="${product.shippingOptionList != null and !#lists.isEmpty(product.shippingOptionList)}">
+  <li th:each="opt : ${product.shippingOptionList}">
+    <span class="pd-fee-name" th:text="${opt.parcelType}">일반택배</span>
+    <span class="pd-fee-amount"
+          th:text="${#numbers.formatInteger(opt.shippingFee, 3, 'COMMA')} + '원'">4,000원</span>
+  </li>
+</ul>
+
+            <!-- 배송옵션이 없을 때 -->
+            <ul class="pd-fee-simple"
+                th:if="${product.shippingOptionList == null or #lists.isEmpty(product.shippingOptionList)}">
+              <li>
+                <span class="pd-fee-name">배송비 정보 없음</span>
+                <span class="pd-fee-amount">-</span>
+              </li>
+            </ul>
+
+          </div>
+        </div>
+
+        <!-- 상품상태 -->
+        <div class="pd-row">
+          <div class="pd-label">상품상태</div>
+          <div class="pd-value">
+            <span class="pd-chip"
+                  th:classappend="${product.productCondition == '상' ? ' chip-grade-top' : ''}"
+                  th:text="'상'">상</span>
+
+            <span class="pd-chip"
+                  th:classappend="${product.productCondition == '중' ? ' chip-grade-mid' : ''}"
+                  th:text="'중'">중</span>
+
+            <span class="pd-chip"
+                  th:classappend="${product.productCondition == '하' ? ' chip-grade-low' : ''}"
+                  th:text="'하'">하</span>
+          </div>
+        </div>
+
+        <!-- 거래상태 -->
+        <div class="pd-row">
+          <div class="pd-label">거래상태</div>
+          <div class="pd-value">
+            <span class="pd-chip"
+                  th:classappend="${product.tradeStatus == '판매중' ? ' chip-sale-ing' : ''}"
+                  th:text="'판매중'">판매중</span>
+
+            <span class="pd-chip"
+                  th:classappend="${product.tradeStatus == '거래중' ? ' chip-sale-deal' : ''}"
+                  th:text="'거래중'">거래중</span>
+
+            <span class="pd-chip"
+                  th:classappend="${product.tradeStatus == '판매완료' ? ' chip-sale-done' : ''}"
+                  th:text="'판매완료'">판매완료</span>
+          </div>
+        </div>
+
+        <!-- 거래방법 -->
+        <div class="pd-row">
+          <div class="pd-label">거래방법</div>
+          <div class="pd-value">
+            <span class="pd-chip chip-method-meet"
+                  th:if="${product.tradeMethod == '직거래'}">직거래</span>
+
+            <span class="pd-chip chip-method-ship"
+                  th:if="${product.tradeMethod == '택배거래'}">택배거래</span>
+
+            <span class="pd-chip"
+                  th:if="${product.tradeMethod != '직거래' and product.tradeMethod != '택배거래'}"
+                  th:text="${product.tradeMethod}">거래방법</span>
+          </div>
+        </div>
+
+        <!-- 거래 희망장소 -->
+        <div class="pd-row">
+  <div class="pd-label">거래 희망장소</div>
+
+  <div class="pd-value">
+
+    <th:block th:if="${product.meetLocationList != null and !#lists.isEmpty(product.meetLocationList)}">
+
+      <span class="pd-location"
+            th:each="ml, stat : ${product.meetLocationList}"
+            th:text="${ml.placeName != null ? ml.placeName : ml.fullAddress}"
+            th:classappend="${stat.index > 0 ? ' pd-location--line' : ''}">
+      </span>
+
+    </th:block>
+
+    <span class="pd-location"
+          th:if="${product.meetLocationList == null or #lists.isEmpty(product.meetLocationList)}">
+      장소 정보 없음
+    </span>
+
+  </div>
+</div>
+
+      </div>
+
+      <div class="pd-cta">
+        <button class="pd-like" type="button" aria-label="찜하기"
+                th:attr="data-product-no=${product.productNo}">
+          <i class="fa-regular fa-heart"></i>
+        </button>
+
+        <div class="pd-btns">
+          <button class="pd-btn pd-btn-chat" type="button"
+                  th:attr="data-seller-email=${product.sellerEmail}, data-product-no=${product.productNo}">
+            채팅하기
+          </button>
+
+          <button class="pd-btn pd-btn-pay" type="button"
+                  th:attr="data-product-no=${product.productNo}">
+            안전결제
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
 </section>
 <!--상품글/판매자 정보-->
 <section class="pdinfo-wrap">

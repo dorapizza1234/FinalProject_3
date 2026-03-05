@@ -24,4 +24,13 @@ public interface ProductDAO {
     //장터(상품목록)
     List<ProductDTO> selectProductListSimple();
     
+    //상품상세(기본정보+이미지+배송온셥+거래위치)
+    ProductDTO selectProductDetail(int productNo);
+
+    List<ProductImageDTO> selectProductImages(int productNo);
+
+    List<ProductShippingOptionDTO> selectShippingOption(int productNo);
+
+    List<ProductMeetLocationDTO> selectMeetLocation(int productNo);
+    
 }
