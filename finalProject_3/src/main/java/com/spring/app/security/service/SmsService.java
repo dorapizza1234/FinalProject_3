@@ -7,8 +7,8 @@ import java.util.HashMap;
 
 @Service
 public class SmsService {
-    private final String api_key = "NCSYHJLRBPFOP4R4"; 
-    private final String api_secret = "XC1M69J0IJ9OKHUBTGZOLWKFKCNCJP4K";
+    private final String api_key = ""; // 이시형 key 입력
+    private final String api_secret = ""; // key 입력
 
     public void sendSms(String to, String randomNumber) {
         Message coolsms = new Message(api_key, api_secret);
