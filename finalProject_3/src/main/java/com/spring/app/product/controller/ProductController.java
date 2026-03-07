@@ -26,8 +26,12 @@ import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.SearchKeywordDTO;
+import com.spring.app.product.domain.SearchLogDTO;
 import com.spring.app.product.service.ProductService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,20 +51,47 @@ public class ProductController {
     private static final String IMAGE_WEB_PREFIX = "/upload/";
 
     @GetMapping("/product_list")
-    public String product_list(@RequestParam(name = "searchWord", required = false) String searchWord, Model model) {
+    public String product_list(
+            @RequestParam(name = "searchWord", required = false) String searchWord,
+            @RequestParam(name = "areaDong", required = false) String areaDong,
+            Model model,
+            Principal principal,
+            HttpServletRequest request,
+            HttpSession session) {
 
-        List<ProductDTO> list;
+        if (searchWord != null) {
+            searchWord = searchWord.trim();
+        }
 
-        if(searchWord != null && !searchWord.trim().isEmpty()) {
-        	//검색된 상품목록 보이기
-            list = pservice.searchProductList(searchWord);
+        if (areaDong != null) {
+            areaDong = areaDong.trim();
         }
-        else {
-            list = pservice.selectProductListSimple();
+
+        if (searchWord != null && !"".equals(searchWord)) {
+            SearchLogDTO searchLogDto = new SearchLogDTO();
+
+            searchLogDto.setKeyword(searchWord);
+            searchLogDto.setSearchType("PRODUCT");
+            searchLogDto.setIpAddress(request.getRemoteAddr());
+            searchLogDto.setUserAgent(request.getHeader("User-Agent"));
+
+            if (principal != null && principal.getName() != null && !"".equals(principal.getName().trim())) {
+                searchLogDto.setMemberEmail(principal.getName().trim());
+            }
+            else {
+                searchLogDto.setSessionId(session.getId());
+            }
+            
+            pservice.insertSearchLog(searchLogDto);
         }
+
+        List<ProductDTO> list = pservice.selectProductListByCondition(searchWord, areaDong);
+        List<SearchKeywordDTO> popularKeywordList = pservice.selectPopularKeywordList();
 
         model.addAttribute("list", list);
+        model.addAttribute("popularKeywordList", popularKeywordList);
         model.addAttribute("searchWord", searchWord);
+        model.addAttribute("areaDong", areaDong);
 
         return "product/product_list";
     }

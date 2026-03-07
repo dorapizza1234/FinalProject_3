@@ -4,11 +4,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.SearchKeywordDTO;
+import com.spring.app.product.domain.SearchLogDTO;
 
 @Mapper
 public interface ProductDAO {
@@ -37,7 +40,11 @@ public interface ProductDAO {
     //검색
 	List<String> wordSearchShow(Map<String, String> paraMap);
 
-	//검색된 상품목록 보이기
-	List<ProductDTO> searchProductList(String searchWord);
+	//지역+상품검색
+	List<ProductDTO> selectProductListByCondition(@Param("searchWord") String searchWord, @Param("areaDong") String areaDong);
+	
+	//인기검색어
+	void insertSearchLog(SearchLogDTO searchLogDto);
+	List<SearchKeywordDTO> selectPopularKeywordList();
     
 }
