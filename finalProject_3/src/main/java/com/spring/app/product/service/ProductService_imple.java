@@ -10,6 +10,8 @@ import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.SearchKeywordDTO;
+import com.spring.app.product.domain.SearchLogDTO;
 import com.spring.app.product.model.ProductDAO;
 
 import lombok.RequiredArgsConstructor;
@@ -128,17 +130,26 @@ public class ProductService_imple implements ProductService {
         return productDTO;
     }
     
-    
     //검색
     @Override
     public List<String> wordSearchShow(Map<String, String> paraMap) {
         return pdao.wordSearchShow(paraMap);
     }
     
-  //검색된 상품목록 보이기
+  //지역+상품검색
     @Override
-    public List<ProductDTO> searchProductList(String searchWord) {
-        return pdao.searchProductList(searchWord);
+    public List<ProductDTO> selectProductListByCondition(String searchWord, String areaDong) {
+        return pdao.selectProductListByCondition(searchWord, areaDong);
+    }
+    
+    //인기검색어
+    @Override
+    public void insertSearchLog(SearchLogDTO searchLogDto) {
+        pdao.insertSearchLog(searchLogDto);
+    }
+    @Override
+    public List<SearchKeywordDTO> selectPopularKeywordList() {
+        return pdao.selectPopularKeywordList();
     }
     
 }

@@ -20,12 +20,16 @@
 					<div class="search-pill" style="position: relative;">
 						<div class="select-box">
 							<button type="button" class="btn-area">
-								<i class="fa-solid fa-location-dot"></i><span>지역설정</span>
+								<i class="fa-solid fa-location-dot"></i>
+								<span th:text="${param.areaDong != null and !#strings.isEmpty(param.areaDong[0]) ? param.areaDong[0] : '지역설정'}">지역설정</span>
 							</button>
 						</div>
 
 						<input class="search-input" type="text" id="searchWord"
-							name="searchWord" placeholder="검색어를 입력해주세요" autocomplete="off" />
+							name="searchWord"
+							placeholder="검색어를 입력해주세요"
+							autocomplete="off"
+							th:value="${param.searchWord != null ? param.searchWord[0] : ''}" />
 
 						<button class="search-btn" type="button" id="searchBtn">
 							<i class="fa-solid fa-magnifying-glass"></i>
@@ -33,24 +37,25 @@
 						
 						<!-- 자동완성 리스트 -->
 						<div id="displayList"></div>
-					
+						
+						<input type="hidden" id="areaDong" name="areaDong" th:value="${param.areaDong != null ? param.areaDong[0] : ''}" />
+						
+						
 					</div>
 
 					<div class="popular">
 						<div class="popular-title">인기 검색어</div>
-						<ul class="popular-list">
-							<li class="popular-item">에어컨</li>
-							<li class="popular-item">에어컨청소</li>
-							<li class="popular-item">노트북</li>
-							<li class="popular-item">원룸</li>
-							<li class="popular-item">현대 중고차</li>
-							<li class="popular-item">이사짐 알바</li>
-							<li class="popular-item">근처 맛집</li>
-							<li class="popular-item">투표</li>
-							<li class="popular-item">동네친구</li>
-							<li class="popular-item">배드민턴 모임</li>
-							<li class="popular-item">자전거</li>
+					
+						<ul class="popular-list" th:if="${popularKeywordList != null and !#lists.isEmpty(popularKeywordList)}">
+							<li class="popular-item"
+							    th:each="k : ${popularKeywordList}"
+							    th:text="${k.keyword}">검색어</li>
 						</ul>
+					
+						<div class="popular-empty"
+						     th:if="${popularKeywordList == null or #lists.isEmpty(popularKeywordList)}">
+							아직 인기 검색어가 없어요.
+						</div>
 					</div>
 				</div>
 			</div>
@@ -95,7 +100,7 @@
 					</div>
 
 					<div class="area-list">
-						<div class="area-list__title">최근 검색한 동네</div>
+						<div class="area-list__title">최근 검색한 지역</div>
 						<ul class="area-list__items" id="areaList">
 							<li style="padding: 10px 6px; opacity: .7;">최근 검색 기록이 없어요.</li>
 						</ul>
@@ -126,6 +131,21 @@
 									가능만 보기</label> <label class="check"><input type="checkbox">
 									택배 가능</label>
 							</div>
+						</div>
+						
+						<!-- 카테고리 -->
+						<div class="filter-group">
+							<div class="fg-title">카테고리</div>
+							<select class="select" aria-label="정렬">
+								<option>패션(수입명품 / 패션의류 / 패션잡화)</option>
+								<option>육아(출산 / 유아동)</option>
+								<option>디지털·전자기기(모바일 / 태블릿 / 노트북 / PC / 카메라 / 캠코더)</option>
+								<option>가전(가전제품)</option>
+								<option>홈·인테리어(가구 / 인테리어 / 리빙 / 생활)</option>
+								<option>취미(게임, 반려동물, 독서)</option>
+								<option>여행(등산, 캠핑 등등)</option>
+								<option>공구/산업용품</option>
+							</select>
 						</div>
 
 						<!-- 정렬 -->
@@ -197,6 +217,38 @@
 						</div>
 					</div>
 				</div>
+				<!-- 검색 결과 없음 -->
+				
+<div class="no-result"
+     th:if="${#lists.isEmpty(list)
+             and (
+                (param.searchWord != null and !#strings.isEmpty(param.searchWord[0]))
+                or
+                (param.areaDong != null and !#strings.isEmpty(param.areaDong[0]))
+             )}">
+
+    <div class="no-result-inner">
+        <i class="fa-solid fa-circle-exclamation"></i>
+
+        <div class="no-result-text"
+             th:if="${param.searchWord != null and !#strings.isEmpty(param.searchWord[0])
+                     and param.areaDong != null and !#strings.isEmpty(param.areaDong[0])}"
+             th:text="|${param.areaDong[0]}에서 &quot;${param.searchWord[0]}&quot; 검색 결과가 없습니다.|">
+        </div>
+
+        <div class="no-result-text"
+             th:if="${param.searchWord != null and !#strings.isEmpty(param.searchWord[0])
+                     and (param.areaDong == null or #strings.isEmpty(param.areaDong[0]))}"
+             th:text="|&quot;${param.searchWord[0]}&quot; 검색 결과가 없습니다.|">
+        </div>
+
+        <div class="no-result-text"
+             th:if="${(param.searchWord == null or #strings.isEmpty(param.searchWord[0]))
+                     and param.areaDong != null and !#strings.isEmpty(param.areaDong[0])}"
+             th:text="|${param.areaDong[0]}에서 거래 중인 상품이 없습니다.|">
+        </div>
+    </div>
+</div>
 
 				<!-- 카드 그리드 -->
 				<div class="grid">
@@ -245,49 +297,54 @@
 
 <script th:inline="javascript">
 /*<![CDATA[*/
-	
-	//console.log("jQuery check =", typeof $);
 $(function () {
 
 	const $searchInput = $("#searchWord");
 	const $searchBtn = $("#searchBtn");
 	const $displayList = $("#displayList");
-	const $popularItems = $(".popular-item");
+
 
 	// ===============================
 	// 검색
 	// ===============================
 	window.searchBtnClick = function () {
 		const searchWord = $searchInput.val().trim();
+		const areaDong = $("#areaDong").val().trim();
+		const url = /*[[@{/product/product_list}]]*/ "";
 
-		if (searchWord === "") {
-			alert("검색어를 입력하세요.");
+		if (searchWord === "" && areaDong === "") {
+			alert("검색어 또는 지역을 선택하세요.");
 			$searchInput.focus();
 			return;
 		}
 
-		const url = /*[[@{/product/product_list}]]*/ "";
-		location.href = url + "?searchWord=" + encodeURIComponent(searchWord);
-	};
+		const params = new URLSearchParams();
 
-	//console.log("product_list 통합 인라인 JS 실행됨");
+		if (searchWord !== "") {
+			params.append("searchWord", searchWord);
+		}
+
+		if (areaDong !== "") {
+			params.append("areaDong", areaDong);
+		}
+
+		location.href = url + "?" + params.toString();
+	};
 
 	$displayList.hide();
 
-	// 검색 버튼 클릭
 	$searchBtn.on("click", function (e) {
 		e.preventDefault();
 		e.stopPropagation();
 		window.searchBtnClick();
 	});
 
-	
-//자동완성검색어
+	// ===============================
+	// 자동완성 검색어
+	// ===============================
 	function fetchAutoComplete(searchWord) {
-		//console.log("자동완성 요청 검색어 =", searchWord);
-
 		if (searchWord.length === 0) {
-			$("#displayList").hide().empty();
+			$displayList.hide().empty();
 			return;
 		}
 
@@ -297,8 +354,6 @@ $(function () {
 			data: { searchWord: searchWord },
 			dataType: "json",
 			success: function (json) {
-				//console.log("자동완성 결과:", json);
-
 				if (json && json.length > 0) {
 					let v_html = "";
 
@@ -321,30 +376,23 @@ $(function () {
 						v_html += "<div class='result search-display-item'>" + result + "</div>";
 					});
 
-					$("#displayList").html(v_html).show();
+					$displayList.html(v_html).show();
 				}
 				else {
-					$("#displayList").hide().empty();
+					$displayList.hide().empty();
 				}
 			},
 			error: function (request, status, error) {
 				console.log("AJAX ERROR:", request.status, request.responseText, error);
-				$("#displayList").hide().empty();
+				$displayList.hide().empty();
 			}
 		});
 	}
 
-	
-
 	$(document).on("input", "#searchWord", function () {
-		//console.log("input 이벤트 발생", $(this).val());
-
-	
-
 		fetchAutoComplete($(this).val().trim());
 	});
 
-	// 엔터 검색
 	$(document).on("keydown", "#searchWord", function (e) {
 		if (e.key === "Enter") {
 			e.preventDefault();
@@ -352,14 +400,12 @@ $(function () {
 		}
 	});
 
-	// 포커스 시 다시 보여주기
 	$searchInput.on("focus", function () {
 		if ($(this).val().trim().length > 0 && $displayList.children().length > 0) {
 			$displayList.show();
 		}
 	});
 
-	// 자동완성 클릭
 	$(document).on("click", ".result", function () {
 		const word = $(this).text().trim();
 		$searchInput.val(word);
@@ -367,15 +413,13 @@ $(function () {
 		window.searchBtnClick();
 	});
 
-	// 인기 검색어 클릭
-	$popularItems.on("click", function () {
+	$(document).on("click", ".popular-item", function () {
 		const word = $(this).text().trim();
 		$searchInput.val(word);
 		$displayList.hide().empty();
 		window.searchBtnClick();
 	});
 
-	// 검색창 바깥 클릭 시 자동완성 닫기
 	$(document).on("click", function (e) {
 		if (!$(e.target).closest(".search-pill").length) {
 			$displayList.hide();
@@ -465,7 +509,7 @@ $(function () {
 	const resultUl = document.getElementById("areaKakaoResult");
 
 	if (openBtn && modal && list) {
-		const RECENT_AREA_KEY = "PF_RECENT_DONG_AREAS_V1";
+		const RECENT_AREA_KEY = "PF_RECENT_REGION_AREAS_V1";
 		const RECENT_AREA_TTL_MS = 24 * 60 * 60 * 1000;
 
 		let lastFocusedEl = null;
@@ -489,30 +533,73 @@ $(function () {
 
 			const show = String(regionName || "").trim() || "지역설정";
 			labelSpan.innerHTML = "<span class='area-selected'>" + escapeHtml(show) + "</span>";
+			$("#areaDong").val(show === "지역설정" ? "" : show);
 		}
 
-		function extractDongName(address) {
+		function extractRegionName(address) {
 			const text = String(address || "").trim();
 			if (!text) return "";
 
 			const parts = text.split(/\s+/);
+			if (parts.length === 0) return "";
 
-			for (let i = parts.length - 1; i >= 0; i--) {
+			let sido = "";
+			let sigungu = "";
+			let dong = "";
+
+			for (let i = 0; i < parts.length; i++) {
 				const word = parts[i].trim();
+				if (!word) continue;
 
-				if (word.endsWith("동") || word.endsWith("읍") || word.endsWith("면")) {
-					return word;
+				if (
+					!sido &&
+					(
+						word.endsWith("특별시") ||
+						word.endsWith("광역시") ||
+						word.endsWith("특별자치시") ||
+						word.endsWith("특별자치도") ||
+						word.endsWith("도") ||
+						word.endsWith("시")
+					)
+				) {
+					sido = word;
+					continue;
+				}
+
+				if (
+					!sigungu &&
+					(
+						word.endsWith("구") ||
+						word.endsWith("군") ||
+						(word.endsWith("시") && sido !== "")
+					)
+				) {
+					sigungu = word;
+					continue;
+				}
+
+				if (
+					!dong &&
+					(
+						word.endsWith("동") ||
+						word.endsWith("읍") ||
+						word.endsWith("면")
+					)
+				) {
+					dong = word;
+					break;
 				}
 			}
-			return "";
+
+			return [sido, sigungu, dong].filter(Boolean).join(" ");
 		}
 
-		function pickDongName(roadAddress, jibunAddress) {
-			const roadDong = extractDongName(roadAddress);
-			if (roadDong) return roadDong;
+		function pickRegionName(roadAddress, jibunAddress) {
+			const roadRegion = extractRegionName(roadAddress);
+			if (roadRegion) return roadRegion;
 
-			const jibunDong = extractDongName(jibunAddress);
-			if (jibunDong) return jibunDong;
+			const jibunRegion = extractRegionName(jibunAddress);
+			if (jibunRegion) return jibunRegion;
 
 			return "";
 		}
@@ -540,7 +627,8 @@ $(function () {
 				}
 
 				return alive;
-			} catch {
+			}
+			catch {
 				return [];
 			}
 		}
@@ -548,7 +636,8 @@ $(function () {
 		function writeRecentAreas(arr) {
 			try {
 				localStorage.setItem(RECENT_AREA_KEY, JSON.stringify(arr));
-			} catch {}
+			}
+			catch {}
 		}
 
 		function pushRecentArea(value) {
@@ -557,6 +646,7 @@ $(function () {
 
 			const current = readRecentAreas();
 			const filtered = current.filter((x) => String(x.value).trim() !== v);
+
 			filtered.unshift({
 				value: v,
 				savedAt: Date.now()
@@ -576,7 +666,7 @@ $(function () {
 				const li = document.createElement("li");
 				li.style.padding = "10px 8px";
 				li.style.opacity = ".7";
-				li.textContent = "최근 검색 기록이 없어요.";
+				li.textContent = "최근 설정한 지역이 없어요.";
 				ul.appendChild(li);
 				return;
 			}
@@ -645,7 +735,10 @@ $(function () {
 		}
 
 		function waitForKakaoServices(cb, tries = 60) {
-			if (ensureKakaoServices()) return cb();
+			if (ensureKakaoServices()) {
+				cb();
+				return;
+			}
 
 			if (tries <= 0) {
 				alert("카카오맵 로드에 실패했어요. appkey와 libraries=services를 확인해 주세요.");
@@ -662,11 +755,11 @@ $(function () {
 			}
 
 			const geocoder = new kakao.maps.services.Geocoder();
+
 			geocoder.coord2Address(lng, lat, (result, status) => {
 				if (status === kakao.maps.services.Status.OK) {
 					const roadAddress = result[0].road_address ? result[0].road_address.address_name : "";
 					const jibunAddress = result[0].address ? result[0].address.address_name : "";
-
 					cb({ roadAddress, jibunAddress });
 				}
 				else {
@@ -700,16 +793,16 @@ $(function () {
 				pickMarker.setMap(map);
 
 				coordToAddressInfo(lat, lng, ({ roadAddress, jibunAddress }) => {
-					const dongName = pickDongName(roadAddress, jibunAddress);
+					const regionName = pickRegionName(roadAddress, jibunAddress);
 
-					if (!dongName) {
-						alert("동네 정보를 찾지 못했어요. 다른 지점을 눌러주세요.");
+					if (!regionName) {
+						alert("지역 정보를 찾지 못했어요. 다른 지점을 눌러주세요.");
 						return;
 					}
 
-					pushRecentArea(dongName);
+					pushRecentArea(regionName);
 					renderRecentAreaList();
-					setAreaLabel(dongName);
+					setAreaLabel(regionName);
 					closeModal();
 				});
 			});
@@ -736,21 +829,22 @@ $(function () {
 
 				const roadAddress = (p.road_address_name || "").trim();
 				const jibunAddress = (p.address_name || "").trim();
-				const dongName = pickDongName(roadAddress, jibunAddress);
+				const regionName = pickRegionName(roadAddress, jibunAddress);
 
-				btn.textContent = dongName || jibunAddress || roadAddress || "선택";
+				btn.textContent = regionName || jibunAddress || roadAddress || "선택";
 
 				btn.addEventListener("click", () => {
 					const lat = Number(p.y);
 					const lng = Number(p.x);
 
-					if (!dongName) {
-						alert("동네 정보를 찾지 못했어요. 다른 위치를 선택해 주세요.");
+					if (!regionName) {
+						alert("지역 정보를 찾지 못했어요. 다른 위치를 선택해 주세요.");
 						return;
 					}
 
 					waitForKakaoServices(() => {
 						ensureMap();
+
 						const latlng = new kakao.maps.LatLng(lat, lng);
 						map.setCenter(latlng);
 						map.setLevel(3);
@@ -758,9 +852,9 @@ $(function () {
 						pickMarker.setMap(map);
 					});
 
-					pushRecentArea(dongName);
+					pushRecentArea(regionName);
 					renderRecentAreaList();
-					setAreaLabel(dongName);
+					setAreaLabel(regionName);
 					closeModal();
 				});
 
@@ -798,7 +892,7 @@ $(function () {
 
 						const roadAddress = (p.road_address_name || "").trim();
 						const jibunAddress = (p.address_name || "").trim();
-						const dongName = pickDongName(roadAddress, jibunAddress);
+						const regionName = pickRegionName(roadAddress, jibunAddress);
 
 						const marker = new kakao.maps.Marker({
 							position: latlng
@@ -809,17 +903,17 @@ $(function () {
 						bounds.extend(latlng);
 
 						kakao.maps.event.addListener(marker, "click", () => {
-							if (!dongName) {
-								alert("동네 정보를 찾지 못했어요. 다른 위치를 선택해 주세요.");
+							if (!regionName) {
+								alert("지역 정보를 찾지 못했어요. 다른 위치를 선택해 주세요.");
 								return;
 							}
 
 							pickMarker.setPosition(latlng);
 							pickMarker.setMap(map);
 
-							pushRecentArea(dongName);
+							pushRecentArea(regionName);
 							renderRecentAreaList();
-							setAreaLabel(dongName);
+							setAreaLabel(regionName);
 							closeModal();
 						});
 					});
@@ -842,7 +936,8 @@ $(function () {
 				setTimeout(() => {
 					try {
 						kakao.maps.event.trigger(map, "resize");
-					} catch {}
+					}
+					catch {}
 				}, 0);
 			});
 
@@ -862,16 +957,16 @@ $(function () {
 
 					waitForKakaoServices(() => {
 						coordToAddressInfo(lat, lng, ({ roadAddress, jibunAddress }) => {
-							const dongName = pickDongName(roadAddress, jibunAddress);
+							const regionName = pickRegionName(roadAddress, jibunAddress);
 
-							if (!dongName) {
-								alert("현재 위치의 동네 정보를 찾지 못했어요.");
+							if (!regionName) {
+								alert("현재 위치의 지역 정보를 찾지 못했어요.");
 								return;
 							}
 
-							pushRecentArea(dongName);
+							pushRecentArea(regionName);
 							renderRecentAreaList();
-							setAreaLabel(dongName);
+							setAreaLabel(regionName);
 							closeModal();
 						});
 					});
@@ -891,13 +986,13 @@ $(function () {
 			if (!btn) return;
 
 			const raw = btn.getAttribute("data-area-value") || btn.textContent.trim();
-			const dongName = String(raw || "").trim();
+			const regionName = String(raw || "").trim();
 
-			if (!dongName) return;
+			if (!regionName) return;
 
-			pushRecentArea(dongName);
+			pushRecentArea(regionName);
 			renderRecentAreaList();
-			setAreaLabel(dongName);
+			setAreaLabel(regionName);
 			closeModal();
 		});
 
@@ -955,6 +1050,17 @@ $(function () {
 		$icon.toggleClass("fa-regular");
 		$icon.toggleClass("fa-solid");
 	});
+
+	// ===============================
+	// 초기 지역 라벨 복원
+	// ===============================
+	const initialAreaDong = $("#areaDong").val().trim();
+	if (initialAreaDong !== "") {
+		const labelSpan = document.querySelector(".btn-area span");
+		if (labelSpan) {
+			labelSpan.textContent = initialAreaDong;
+		}
+	}
 });
 /*]]>*/
 </script>

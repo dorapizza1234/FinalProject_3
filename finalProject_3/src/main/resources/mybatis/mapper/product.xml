@@ -244,8 +244,7 @@
     ORDER BY PRODUCT_NAME ASC
 </select>
 
-	<select id="searchProductList"
-        parameterType="string"
+	<select id="selectProductListByCondition"
         resultType="com.spring.app.product.domain.ProductDTO">
 
     SELECT
@@ -272,9 +271,76 @@
         ) AS imgUrl
 
     FROM PRODUCTS
-    WHERE LOWER(PRODUCTS.PRODUCT_NAME) LIKE '%' || LOWER(#{searchWord}) || '%'
-    ORDER BY PRODUCTS.PRODUCT_NO DESC
+    WHERE 1 = 1
+
+    <if test="searchWord != null and searchWord != ''">
+        AND LOWER(PRODUCTS.PRODUCT_NAME) LIKE '%' || LOWER(#{searchWord}) || '%'
+    </if>
+
+    <if test="areaDong != null and areaDong != ''">
+        AND EXISTS (
+            SELECT 1
+            FROM PRODUCT_MEET_LOCATION
+            WHERE PRODUCT_MEET_LOCATION.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+              AND (
+                    PRODUCT_MEET_LOCATION.FULL_ADDRESS LIKE '%' || #{areaDong} || '%'
+                 OR PRODUCT_MEET_LOCATION.PLACE_NAME LIKE '%' || #{areaDong} || '%'
+              )
+        )
+    </if>
+
+    ORDER BY PRODUCTS.REG_DATE DESC
 
 </select>
+
+<!-- 인기검색어 -->
+<insert id="insertSearchLog"
+        parameterType="com.spring.app.product.domain.SearchLogDTO">
+
+    INSERT INTO SEARCH_LOG (
+        SEARCH_ID,
+        KEYWORD,
+        SEARCH_TYPE,
+        MEMBER_EMAIL,
+        GUEST_ID,
+        SESSION_ID,
+        IP_ADDRESS,
+        USER_AGENT,
+        SEARCHED_AT
+    )
+    VALUES (
+        SEQ_SEARCH_LOG_ID.NEXTVAL,
+        #{keyword, jdbcType=VARCHAR},
+        #{searchType, jdbcType=VARCHAR},
+        #{memberEmail, jdbcType=VARCHAR},
+        #{guestId, jdbcType=VARCHAR},
+        #{sessionId, jdbcType=VARCHAR},
+        #{ipAddress, jdbcType=VARCHAR},
+        #{userAgent, jdbcType=VARCHAR},
+        SYSTIMESTAMP
+    )
+
+</insert>
+
+<select id="selectPopularKeywordList"
+        resultType="com.spring.app.product.domain.SearchKeywordDTO">
+
+<![CDATA[
+    SELECT keyword, searchCount
+    FROM (
+        SELECT
+            SEARCH_LOG.KEYWORD AS keyword,
+            COUNT(*) AS searchCount
+        FROM SEARCH_LOG
+        WHERE SEARCH_LOG.SEARCH_TYPE = 'PRODUCT'
+          AND SEARCH_LOG.SEARCHED_AT >= SYSTIMESTAMP - 7
+        GROUP BY SEARCH_LOG.KEYWORD
+        ORDER BY COUNT(*) DESC, SEARCH_LOG.KEYWORD ASC
+    )
+    WHERE ROWNUM <= 10
+]]>
+
+</select>
+
 
 </mapper>

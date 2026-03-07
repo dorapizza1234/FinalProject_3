@@ -7,6 +7,8 @@ import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.SearchKeywordDTO;
+import com.spring.app.product.domain.SearchLogDTO;
 
 public interface ProductService {
 
@@ -25,10 +27,14 @@ public interface ProductService {
 	//검색
 	List<String> wordSearchShow(Map<String, String> paraMap);
 
-	//검색된 상품목록 보이기
-	List<ProductDTO> searchProductList(String searchWord);
-
 	
+
+	//지역+상품검색
+	List<ProductDTO> selectProductListByCondition(String searchWord, String areaDong);
+
+	//인기검색어
+	void insertSearchLog(SearchLogDTO searchLogDto);
+	List<SearchKeywordDTO> selectPopularKeywordList();
 	}
 	
 
