@@ -21,15 +21,14 @@ public class ChatServiceImpl implements ChatService {
         return chatMapper.selectMyChatRooms(loginUserEmail);
     }
     
+ // ChatServiceImpl.java
     @Override
     public String getOrCreateRoom(int productNo, String sellerEmail, String buyerEmail) {
-        // 1. 이미 존재하는 방이 있는지 조회
-        String roomId = chatMapper.findRoomId(productNo, buyerEmail);
+        // 판매자 이메일까지 넣어서 정확히 조회
+        String roomId = chatMapper.findRoomId(productNo, sellerEmail, buyerEmail);
         
-        // 2. 방이 없다면 새로 생성
         if (roomId == null) {
-            roomId = UUID.randomUUID().toString(); // 고유한 방 ID 생성
-            
+            roomId = UUID.randomUUID().toString();
             ChatRoomDTO newRoom = new ChatRoomDTO();
             newRoom.setRoomId(roomId);
             newRoom.setProductNo(productNo);
@@ -38,8 +37,6 @@ public class ChatServiceImpl implements ChatService {
             
             chatMapper.insertChatRoom(newRoom);
         }
-        
-        // 찾은 방 번호나 새로 만든 방 번호를 리턴
         return roomId;
     }
 }

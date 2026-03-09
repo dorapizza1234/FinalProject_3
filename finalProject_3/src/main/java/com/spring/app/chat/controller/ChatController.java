@@ -57,7 +57,7 @@ public class ChatController {
     // 2. 특정 방의 이전 메시지 불러오기 API 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/messages/{roomId}")
-    public Map<String, Object> getRoomMessages(@PathVariable String roomId) {
+    public Map<String, Object> getMessages(@PathVariable("roomId") String roomId) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
             List<ChatMessageDTO> messages = firebaseService.getMessages(roomId);
