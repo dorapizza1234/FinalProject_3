@@ -77,6 +77,50 @@ public class AdminDAO_imple implements AdminDAO {
 	public int selectProductCount() {
 		return sqlsession.selectOne(admin+".selectCount");
 	}
+	
+	@Override
+	public int getOnsaleProductCount() {
+		return sqlsession.selectOne(admin+".getOnsaleProductCount");
+	}
+	//===========================================================
+	//상품리스트 가져오기
+	@Override
+	public List<AdDTO> selectAdList() {
+
+		return sqlsession.selectList(admin+".selectAdList");
+	}
+
+	//===========================================================
+	//광고 상세보기
+	@Override
+	public AdDTO getAd(Long adId) {
+		 return sqlsession.selectOne(admin + ".getAd", adId);
+	}
+	//광고 승인하기
+	@Override
+    public void approveAd(Long adId) {
+        sqlsession.update(admin + ".approveAd", adId);
+		
+	}
+	//광고 반려하기
+	@Override
+	public void rejectAd(Long adId, String reason) {
+		Map<String,Object>map=new HashMap<>();
+		map.put("adId", adId);
+		map.put("reason", reason);
+		 sqlsession.update(admin + ".rejectAd", map);
+		
+	}
+
+	@Override
+	public int checkAdConflict(String startDate, String endDate) {
+
+	    Map<String,Object> map = new HashMap<>();
+	    map.put("startDate", startDate);
+	    map.put("endDate", endDate);
+
+	    return sqlsession.selectOne(admin + ".checkAdConflict", map);
+	}
 }
 
 

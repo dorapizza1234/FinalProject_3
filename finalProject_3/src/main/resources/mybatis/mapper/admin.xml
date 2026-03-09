@@ -4,30 +4,60 @@
 <mapper namespace="admin">
 	 <!-- 광고 insert해주기  -->
     <insert id="insertAd" parameterType="com.spring.app.admin.ad.domain.AdDTO">
-        INSERT INTO AD_INQUIRIES (
-            AD_ID,
-            BRAND_NAME,
-            MANAGER_NAME,
-            COMPANY_EMAIL,
-            PHONE,
-            CONTENT,
-            START_DATE,
-            END_DATE,
-            DURATION_WEEKS,
-            AMOUNT,
-            FILE_PATH,
-            AGREED_YN,
-            STATUS,
-            CREATED_AT
-        ) VALUES (
-            AD_ID_SEQ.NEXTVAL,  #{brandName},       #{managerName},     #{companyEmail},
-            #{phone},
-            #{content},
-            #{startDate},       #{endDate},
-            #{durationWeeks},
-            #{amount},
-            #{filePath},        #{agreedYn},        'WAIT',             SYSDATE             )
-    </insert>
+    INSERT INTO ADS (
+        AD_ID,
+        BRAND_NAME,
+        MANAGER_NAME,
+        COMPANY_EMAIL,
+        PHONE,
+        CONTENT,
+        START_DATE,
+        END_DATE,
+        DURATION_WEEKS,
+        AMOUNT,
+        FILE_PATH,
+        AGREED_YN,
+        STATUS,
+        CREATED_AT
+    ) VALUES (
+        SEQ_AD_ID.NEXTVAL,  #{brandName},       
+        #{managerName},     
+        #{companyEmail},
+        #{phone},
+        #{content},
+        #{startDate},       
+        #{endDate},
+        #{durationWeeks},
+        #{amount},
+        #{filePath},        
+        #{agreedYn},        
+        'WAIT',             
+        SYSDATE             
+    )
+</insert>
+    
+    
+    <!-- AdList가져오기 -->
+ <select id="selectAdList" resultType="com.spring.app.admin.ad.domain.AdDTO">
+    SELECT 
+        AD_ID           as adId, 
+        BRAND_NAME      as brandName,
+        MANAGER_NAME    as managerName, 
+        COMPANY_EMAIL   as companyEmail, 
+        PHONE           as phone, 
+        CONTENT         as content, 
+        START_DATE      as startDate, 
+        END_DATE        as endDate, 
+        DURATION_WEEKS  as durationWeeks, 
+        AMOUNT          as amount, 
+        STATUS          as status, 
+        CREATED_AT      as createdAt,
+        APPROVED_AT     as approvedAt
+    FROM ADS
+    ORDER BY CREATED_AT DESC
+</select>
+    
+    
     
     <!--  회원 전체 목록 -->
     <select id="selectMemberList"
@@ -115,10 +145,63 @@
     OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
 </select>
 
-    <select id="selectCount" resultType="int">
-        SELECT COUNT(*) FROM products
-    </select>
+   <select id="selectCount" resultType="int">
+    SELECT COUNT(*) FROM products
+</select>
 
-
-
+<select id="getOnsaleProductCount" resultType="int">
+    SELECT COUNT(*) FROM products
+    WHERE TRADE_STATUS = '판매중'
+</select>
+            <!-- 컨텐츠 -->
+   <select id="getAd" resultType="com.spring.app.admin.ad.domain.AdDTO">
+    SELECT
+        AD_ID AS adId,
+        BRAND_NAME AS brandName,
+        MANAGER_NAME AS managerName,
+        COMPANY_EMAIL AS companyEmail,
+        PHONE AS phone,
+        CONTENT AS content,
+        START_DATE AS startDate,
+        END_DATE AS endDate,
+        FILE_PATH AS filePath,
+        STATUS AS status,
+        CREATED_AT AS createdAt,
+        APPROVED_AT AS approvedAt
+    FROM ADS
+    WHERE AD_ID = #{adId}
+</select>     
+		            
+            <update id="approveAd">
+		UPDATE ads
+		SET status='CONFIRM',
+		    approved_at = SYSDATE
+		WHERE ad_id = #{adId}
+		
+		</update>
+            
+		<update id="rejectAd">
+		
+		UPDATE ads
+		SET status='REJECT',
+		    rejected_reason = #{reason},
+		    approved_at = SYSDATE
+		WHERE ad_id = #{adId}
+		
+		</update>
+		
+		
+		<select id="checkAdConflict" resultType="int">
+SELECT COUNT(*)
+FROM ADS
+WHERE STATUS = 'CONFIRM'
+AND (
+    START_DATE &lt;= TO_DATE(#{endDate}, 'YYYY-MM-DD')
+    AND END_DATE &gt;= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+)
+</select>
+		
+		
+		
+		
 </mapper>

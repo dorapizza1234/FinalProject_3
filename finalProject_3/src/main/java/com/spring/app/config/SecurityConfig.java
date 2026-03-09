@@ -50,9 +50,17 @@ public class SecurityConfig {
                     "/product/share",
                     "/product/product_detail/**", // 상품 상세
                     "/product/product_user_profile",
-                    "/product/wordSearchShow"//자동검색어
+                    "/product/wordSearchShow",//자동검색어
+                    "/actuator/**",
+                    "/admin/**"
+                    
                 ).permitAll() 
-                
+             // 관리자 권한
+               // .requestMatchers("/admin/supervisor/**").hasRole("SUPERVISOR")
+                //.requestMatchers("/admin/**").hasAnyRole("ADMIN","SUPERVISOR")
+
+          
+
                 // 위에서 허용한 URL 외의 요청(예: /product/sell)은 자동 로그인 요구
                 .anyRequest().authenticated() 
             )
@@ -87,6 +95,7 @@ public class SecurityConfig {
                                  "/upload/**",
                                  "/jquery-ui-1.13.1.custom/**", 
                                  "/js/**", 
-                                 "/smarteditor/**");  
-    }
+                                 "/smarteditor/**");
+                		               
+    }	
 }
