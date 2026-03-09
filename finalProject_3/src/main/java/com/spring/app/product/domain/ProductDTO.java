@@ -28,6 +28,13 @@ public class ProductDTO {
     private Date regDate;
 
     private String categoryName;
+    
+    /* ============================= */
+    /* 판매자 정보 */
+    /* ============================= */
+    private String sellerName;
+    private Double mannerTemp;
+    private String sellerProfileImg;
 
     /* ============================= */
     /* 배송 옵션 리스트 */
@@ -55,7 +62,13 @@ public class ProductDTO {
     /* ============================= */
     private String placeName;   // 목록에서 장소명 표시
     private String imgUrl;      // 대표 이미지
-    private boolean wished;		//찜
     
     private String areaGu;
+    /* ============================= */
+    /* 찜 */
+    /* ============================= */
+    private Integer wishCount;
+    private boolean wished;
+    
+
 }

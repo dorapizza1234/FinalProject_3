@@ -153,32 +153,45 @@
 	<!-- 상품 상세 - 기본정보 (PRODUCTS) -->
 
 	<select id="selectProductDetail"
-		resultType="com.spring.app.product.domain.ProductDTO">
+        resultType="com.spring.app.product.domain.ProductDTO">
 
-		SELECT
-		PRODUCTS.PRODUCT_NO AS productNo,
-		PRODUCTS.SELLER_EMAIL AS sellerEmail,
-		PRODUCTS.CATEGORY_NO AS categoryNo,
+SELECT
+    PRODUCTS.PRODUCT_NO AS productNo,
+    PRODUCTS.SELLER_EMAIL AS sellerEmail,
+    PRODUCTS.CATEGORY_NO AS categoryNo,
 
-		CATEGORY.CATEGORY_NAME AS categoryName,
+    CATEGORY.CATEGORY_NAME AS categoryName,
 
-		PRODUCTS.SALE_TYPE AS saleType,
-		PRODUCTS.PRODUCT_NAME AS productName,
-		PRODUCTS.PRODUCT_PRICE AS productPrice,
-		PRODUCTS.PRODUCT_DESC AS productDesc,
-		PRODUCTS.PRODUCT_CONDITION AS productCondition,
-		PRODUCTS.TRADE_STATUS AS tradeStatus,
-		PRODUCTS.TRADE_METHOD AS tradeMethod,
-		PRODUCTS.VIEW_COUNT AS viewCount,
-		PRODUCTS.REG_DATE AS regDate
+    PRODUCTS.SALE_TYPE AS saleType,
+    PRODUCTS.PRODUCT_NAME AS productName,
+    PRODUCTS.PRODUCT_PRICE AS productPrice,
+    PRODUCTS.PRODUCT_DESC AS productDesc,
+    PRODUCTS.PRODUCT_CONDITION AS productCondition,
+    PRODUCTS.TRADE_STATUS AS tradeStatus,
+    PRODUCTS.TRADE_METHOD AS tradeMethod,
+    PRODUCTS.VIEW_COUNT AS viewCount,
+    PRODUCTS.REG_DATE AS regDate,
 
-		FROM PRODUCTS
-		LEFT JOIN CATEGORY
-		ON PRODUCTS.CATEGORY_NO = CATEGORY.CATEGORY_NO
+    MEMBER.NICKNAME AS sellerName,
+    MEMBER.MANNER_TEMP AS mannerTemp,
+    MEMBER.PROFILE_IMG AS sellerProfileImg,
 
-		WHERE PRODUCTS.PRODUCT_NO = #{productNo}
+    (
+        SELECT COUNT(*)
+        FROM WISHLIST
+        WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+    ) AS wishCount
 
-	</select>
+FROM PRODUCTS
+LEFT JOIN CATEGORY
+ON PRODUCTS.CATEGORY_NO = CATEGORY.CATEGORY_NO
+
+LEFT JOIN MEMBER
+ON PRODUCTS.SELLER_EMAIL = MEMBER.EMAIL
+
+WHERE PRODUCTS.PRODUCT_NO = #{productNo}
+
+</select>
 
 	<!-- 상품 상세 - 이미지 목록 -->
 

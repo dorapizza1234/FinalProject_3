@@ -62,19 +62,17 @@
     <div class="pd-info">
       <div class="pd-topline">
         <div>
-          <div class="pd-breadcrumb">
-            <span th:text="${product.categoryName}">가구/인테리어</span>
-            <span class="pd-dot">|</span>
-
-            <!-- n분전(컨트롤러에서 timeAgo 문자열로 만들어서 넘기는 걸 추천) -->
-            <span >4분전</span>
-
-            <span class="pd-dot">|</span>
-            조회 <span >7</span>
-
-            <span class="pd-dot">|</span>
-            찜 <span >2</span>
-          </div>
+	        <div class="pd-breadcrumb">
+				<span th:text="${product.categoryName}"></span>
+				<span class="pd-dot">|</span>
+				<span class="time-ago"
+				      th:data-regdate="${#dates.format(product.regDate,'yyyy-MM-dd HH:mm:ss')}">
+				</span>
+				<span class="pd-dot">|</span>
+				조회 <span th:text="${product.viewCount}"></span>
+				<span class="pd-dot">|</span>
+				찜 <span th:text="${product.wishCount}"></span>
+			</div>
         </div>
 
         <div class="pd-actions-top">
@@ -240,16 +238,9 @@
                 <h2 class="pdinfo-title">상품정보</h2>
             </div>
 
-            <div class="pdinfo-textbox">
-                이 제품은 사용감이 거의 없는 상태 좋은 중고 상품입니다.
-                생활 스크래치만 약간 있으며 기능 이상 없이 정상 작동합니다.
-
-                직거래 우선이며, 빠른 거래 원합니다.
-                상세 사진은 썸네일 참고 부탁드립니다.
-
-                구매 후 단순 변심으로 인한 환불은 어려우니
-                신중한 구매 부탁드립니다.
-            </div>
+            <div class="pdinfo-textbox" th:text="${product.productDesc}">
+			    상품 설명
+			</div>
 
             <button class="pdinfo-morebtn" type="button">더보기</button>
         </section>
@@ -264,14 +255,22 @@
             <div class="pdinfo-card">
                 <div class="pdinfo-cardbody">
                     <div class="pdinfo-seller-top">
-                        <div class="pdinfo-avatar"></div>
-                        <div class="pdinfo-seller-name">판매자 이름</div>
-                    </div>
-
-                    <div class="pdinfo-temp-row">
-                        <div class="pdinfo-temp-label">매너온도</div>
-                        <div class="pdinfo-temp-value">36.8°C</div>
-                    </div>
+						<div class="pdinfo-avatar">
+	
+						<img th:if="${product.sellerProfileImg != null}"
+						     th:src="@{${product.sellerProfileImg}}">
+						
+						<img th:if="${product.sellerProfileImg == null}"
+						     th:src="@{/images/default_profile.png}">
+						</div>
+						<div class="pdinfo-seller-name"
+						     th:text="${product.sellerName}">
+						</div>
+					</div>
+					<div class="pdinfo-temp-row">
+					    <div class="pdinfo-temp-label">매너온도</div>
+					    <div class="pdinfo-temp-value" th:text="${product.mannerTemp} + '°C'">36.8°C</div>
+					</div>
                     <div class="pdinfo-temp-sub">최근 3개월 기준 · 별점으로 거래후기 반영</div>
 
                     <div class="pdinfo-bar"><span></span></div>
@@ -491,6 +490,45 @@
         })
         .catch(error => console.error("방 생성 에러:", error));
     }
+    
+    //시간
+    document.addEventListener("DOMContentLoaded", function(){
+
+        const elements = document.querySelectorAll(".time-ago");
+
+        elements.forEach(function(el){
+
+            const regDateStr = el.dataset.regdate;
+
+            if(!regDateStr) return;
+
+            const regDate = new Date(regDateStr);
+            const now = new Date();
+
+            const diff = Math.floor((now - regDate) / 1000);
+
+            if(diff < 60){
+                el.innerText = "방금전";
+            }
+            else if(diff < 3600){
+                el.innerText = Math.floor(diff/60) + "분전";
+            }
+            else if(diff < 86400){
+                el.innerText = Math.floor(diff/3600) + "시간전";
+            }
+            else if(diff < 2592000){
+                el.innerText = Math.floor(diff/86400) + "일전";
+            }
+            else if(diff < 31536000){
+                el.innerText = Math.floor(diff/2592000) + "개월전";
+            }
+            else{
+                el.innerText = Math.floor(diff/31536000) + "년전";
+            }
+
+        });
+
+    });
 </script>
 </main>
 <script th:src="@{/js/product/product_detail.js}"></script>
