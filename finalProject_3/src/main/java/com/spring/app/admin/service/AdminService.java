@@ -27,4 +27,18 @@ public interface AdminService {
 
 	 int getTotalProductsCount(); //총상품개수 
 
+	 int getOnsaleProductCount(); //판매중인 상품
+	 
+	 List<AdDTO> getAdList();//광고리스트 가져오기
+
+	 AdDTO getAd(Long adId);//광고 상세보여주기
+
+	 void approvedAd(Long adId); //광고 승인하기
+
+	 void rejectAd(Long adId, String reason);//광고반려하기
+
+	 boolean checkAdConflict(String startDate, String endDate);
+
+	 
+
 }

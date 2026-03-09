@@ -115,9 +115,17 @@ server:
       force: true
   tomcat:
     max-part-count: 30
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
 
 file:
   upload-dir: file_upload
   photoupload-dir: file_photoupload
   emailattachfile-dir: file_emailattachfile
   images-dir: file_images
+
+
