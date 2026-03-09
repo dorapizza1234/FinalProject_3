@@ -126,41 +126,43 @@
           </div>
         </div>
 
-        <!-- 상품상태 -->
-        <div class="pd-row">
-          <div class="pd-label">상품상태</div>
-          <div class="pd-value">
-            <span class="pd-chip"
-                  th:classappend="${product.productCondition == '상' ? ' chip-grade-top' : ''}"
-                  th:text="'상'">상</span>
-
-            <span class="pd-chip"
-                  th:classappend="${product.productCondition == '중' ? ' chip-grade-mid' : ''}"
-                  th:text="'중'">중</span>
-
-            <span class="pd-chip"
-                  th:classappend="${product.productCondition == '하' ? ' chip-grade-low' : ''}"
-                  th:text="'하'">하</span>
-          </div>
-        </div>
-
-        <!-- 거래상태 -->
-        <div class="pd-row">
-          <div class="pd-label">거래상태</div>
-          <div class="pd-value">
-            <span class="pd-chip"
-                  th:classappend="${product.tradeStatus == '판매중' ? ' chip-sale-ing' : ''}"
-                  th:text="'판매중'">판매중</span>
-
-            <span class="pd-chip"
-                  th:classappend="${product.tradeStatus == '거래중' ? ' chip-sale-deal' : ''}"
-                  th:text="'거래중'">거래중</span>
-
-            <span class="pd-chip"
-                  th:classappend="${product.tradeStatus == '판매완료' ? ' chip-sale-done' : ''}"
-                  th:text="'판매완료'">판매완료</span>
-          </div>
-        </div>
+		<!-- 상품상태 -->
+		<div class="pd-row">
+		  <div class="pd-label">상품상태</div>
+		  <div class="pd-value">
+		    <span class="pd-chip chip-grade-top"
+		          th:if="${product.productCondition == '상'}">상</span>
+		
+		    <span class="pd-chip chip-grade-mid"
+		          th:if="${product.productCondition == '중'}">중</span>
+		
+		    <span class="pd-chip chip-grade-low"
+		          th:if="${product.productCondition == '하'}">하</span>
+		
+		    <span class="pd-chip"
+		          th:if="${product.productCondition != '상' and product.productCondition != '중' and product.productCondition != '하'}"
+		          th:text="${product.productCondition}">상품상태</span>
+		  </div>
+		</div>
+		
+		<!-- 거래상태 -->
+		<div class="pd-row">
+		  <div class="pd-label">거래상태</div>
+		  <div class="pd-value">
+		    <span class="pd-chip chip-sale-ing"
+		          th:if="${product.tradeStatus == '판매중'}">판매중</span>
+		
+		    <span class="pd-chip chip-sale-deal"
+		          th:if="${product.tradeStatus == '거래중'}">거래중</span>
+		
+		    <span class="pd-chip chip-sale-done"
+		          th:if="${product.tradeStatus == '판매완료'}">판매완료</span>
+		
+		    <span class="pd-chip"
+		          th:if="${product.tradeStatus != '판매중' and product.tradeStatus != '거래중' and product.tradeStatus != '판매완료'}"
+		          th:text="${product.tradeStatus}">거래상태</span>
+		  </div>
+		</div>
 
         <!-- 거래방법 -->
         <div class="pd-row">

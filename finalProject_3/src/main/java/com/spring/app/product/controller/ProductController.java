@@ -88,17 +88,29 @@ public class ProductController {
             pservice.insertSearchLog(searchLogDto);
         }
 
-        int page = 1;
-        int size = 12;
         int startRow = 1;
         int endRow = 12;
 
-        List<ProductDTO> list = pservice.selectProductListByConditionMore(
-                searchWord, areaDong, tradeAvailable, parcelAvailable,
-                categoryNo, sortType, priceMin, priceMax,
-                startRow, endRow
-        );
+        String memberEmail = null;
+        if (principal != null && principal.getName() != null && !"".equals(principal.getName().trim())) {
+            memberEmail = principal.getName().trim();
+        }
 
+        Map<String, Object> paraMap = new HashMap<>();
+        paraMap.put("searchWord", searchWord);
+        paraMap.put("areaDong", areaDong);
+        paraMap.put("tradeAvailable", tradeAvailable);
+        paraMap.put("parcelAvailable", parcelAvailable);
+        paraMap.put("categoryNo", categoryNo);
+        paraMap.put("sortType", sortType);
+        paraMap.put("priceMin", priceMin);
+        paraMap.put("priceMax", priceMax);
+        paraMap.put("startRow", startRow);
+        paraMap.put("endRow", endRow);
+        paraMap.put("memberEmail", memberEmail);
+
+        List<ProductDTO> list = pservice.selectProductListByConditionMore(paraMap);
+        
         List<SearchKeywordDTO> popularKeywordList = pservice.selectPopularKeywordList();
         
         Map<String, Object> priceParaMap = new HashMap<>();
@@ -311,7 +323,8 @@ public class ProductController {
             @RequestParam(name = "priceMin", required = false) Integer priceMin,
             @RequestParam(name = "priceMax", required = false) Integer priceMax,
             @RequestParam(name = "page", defaultValue = "1") int page,
-            @RequestParam(name = "size", defaultValue = "12") int size
+            @RequestParam(name = "size", defaultValue = "12") int size,
+            Principal principal
     ) {
         if (searchWord != null) searchWord = searchWord.trim();
         if (areaDong != null) areaDong = areaDong.trim();
@@ -320,18 +333,25 @@ public class ProductController {
         int startRow = ((page - 1) * size) + 1;
         int endRow = page * size;
 
-        return pservice.selectProductListByConditionMore(
-                searchWord,
-                areaDong,
-                tradeAvailable,
-                parcelAvailable,
-                categoryNo,
-                sortType,
-                priceMin,
-                priceMax,
-                startRow,
-                endRow
-        );
+        String memberEmail = null;
+        if (principal != null && principal.getName() != null && !"".equals(principal.getName().trim())) {
+            memberEmail = principal.getName().trim();
+        }
+
+        Map<String, Object> paraMap = new HashMap<>();
+        paraMap.put("searchWord", searchWord);
+        paraMap.put("areaDong", areaDong);
+        paraMap.put("tradeAvailable", tradeAvailable);
+        paraMap.put("parcelAvailable", parcelAvailable);
+        paraMap.put("categoryNo", categoryNo);
+        paraMap.put("sortType", sortType);
+        paraMap.put("priceMin", priceMin);
+        paraMap.put("priceMax", priceMax);
+        paraMap.put("startRow", startRow);
+        paraMap.put("endRow", endRow);
+        paraMap.put("memberEmail", memberEmail);
+
+        return pservice.selectProductListByConditionMore(paraMap);
     }
     
     // 나눔하기

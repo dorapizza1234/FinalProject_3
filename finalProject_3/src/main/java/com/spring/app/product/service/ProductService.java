@@ -52,18 +52,7 @@ public interface ProductService {
 	ProductPriceStatsDTO selectRecentProductPriceStats(Map<String, Object> paraMap);
 	
 	//상품 더보기
-	List<ProductDTO> selectProductListByConditionMore(
-	        String searchWord,
-	        String areaDong,
-	        String tradeAvailable,
-	        String parcelAvailable,
-	        Integer categoryNo,
-	        String sortType,
-	        Integer priceMin,
-	        Integer priceMax,
-	        int startRow,
-	        int endRow
-	);
+	List<ProductDTO> selectProductListByConditionMore(Map<String, Object> paraMap);
 	
 	//찜
 	boolean toggleWishlist(WishlistDTO wishlistDto);

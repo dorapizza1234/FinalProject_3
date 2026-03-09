@@ -285,8 +285,9 @@
 							<button class="heart"
 							        type="button"
 							        aria-label="찜"
+							        th:classappend="${p.wished} ? ' on' : ''"
 							        th:attr="data-product-no=${p.productNo}, data-login=${isLogin}">
-							    <i class="fa-regular fa-heart"></i>
+							    <i th:class="${p.wished} ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
 							</button>
 							
 							<img th:src="@{${p.imgUrl}}" alt="">
@@ -1202,13 +1203,19 @@ $("#resetFilterBtn").on("click", function () {
 		const placeName = (p.placeName && String(p.placeName).trim() !== "") ? p.placeName : "택배거래";
 		const imgUrl = p.imgUrl ? p.imgUrl : "";
 		const regDate = p.regDate ? p.regDate : "";
+		const isLogin = /*[[${isLogin}]]*/ false;
+		const wished = !!p.wished;
 
 		return `
 			<a class="card" href="/finalProject_3/product/product_detail/${p.productNo}">
 				<div class="thumb">
 					<span class="thumb-badge selling">판매중</span>
-					<button class="heart" type="button" aria-label="찜">
-						<i class="fa-regular fa-heart"></i>
+					<button class="heart ${wished ? "on" : ""}"
+					        type="button"
+					        aria-label="찜"
+					        data-product-no="${p.productNo}"
+					        data-login="${isLogin}">
+						<i class="${wished ? "fa-solid" : "fa-regular"} fa-heart"></i>
 					</button>
 					<img src="${escapeHtml(imgUrl)}" alt="">
 				</div>

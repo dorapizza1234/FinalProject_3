@@ -447,6 +447,7 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
 
 <!-- 상품더보기 -->
 <select id="selectProductListByConditionMore"
+        parameterType="hashMap"
         resultType="com.spring.app.product.domain.ProductDTO">
 
     SELECT
@@ -459,7 +460,8 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
         viewCount,
         categoryNo,
         placeName,
-        imgUrl
+        imgUrl,
+        wished
     FROM
     (
         SELECT
@@ -502,7 +504,25 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
                 WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
                 AND PRODUCT_IMAGE.IS_MAIN = 'Y'
                 AND ROWNUM = 1
-            ) AS imgUrl
+            ) AS imgUrl,
+
+            <choose>
+                <when test="memberEmail != null and memberEmail != ''">
+                    CASE
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM WISHLIST
+                            WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                              AND WISHLIST.MEMBER_EMAIL = #{memberEmail, jdbcType=VARCHAR}
+                        )
+                        THEN 1
+                        ELSE 0
+                    END AS wished
+                </when>
+                <otherwise>
+                    0 AS wished
+                </otherwise>
+            </choose>
 
         FROM PRODUCTS
         WHERE 1 = 1

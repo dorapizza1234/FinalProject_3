@@ -186,29 +186,10 @@ public class ProductService_imple implements ProductService {
     
     //상품더보기
     @Override
-    public List<ProductDTO> selectProductListByConditionMore(String searchWord,
-                                                             String areaDong,
-                                                             String tradeAvailable,
-                                                             String parcelAvailable,
-                                                             Integer categoryNo,
-                                                             String sortType,
-                                                             Integer priceMin,
-                                                             Integer priceMax,
-                                                             int startRow,
-                                                             int endRow) {
-        return pdao.selectProductListByConditionMore(
-                searchWord,
-                areaDong,
-                tradeAvailable,
-                parcelAvailable,
-                categoryNo,
-                sortType,
-                priceMin,
-                priceMax,
-                startRow,
-                endRow
-        );
+    public List<ProductDTO> selectProductListByConditionMore(Map<String, Object> paraMap) {
+        return pdao.selectProductListByConditionMore(paraMap);
     }
+  
     
     //찜
     @Override

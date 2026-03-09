@@ -63,18 +63,7 @@ public interface ProductDAO {
 	ProductPriceStatsDTO selectRecentProductPriceStats(Map<String, Object> paraMap);
 	
 	//상품 더보기
-	List<ProductDTO> selectProductListByConditionMore(
-	        @Param("searchWord") String searchWord,
-	        @Param("areaDong") String areaDong,
-	        @Param("tradeAvailable") String tradeAvailable,
-	        @Param("parcelAvailable") String parcelAvailable,
-	        @Param("categoryNo") Integer categoryNo,
-	        @Param("sortType") String sortType,
-	        @Param("priceMin") Integer priceMin,
-	        @Param("priceMax") Integer priceMax,
-	        @Param("startRow") int startRow,
-	        @Param("endRow") int endRow
-	);
+	List<ProductDTO> selectProductListByConditionMore(Map<String, Object> paraMap);
 	
 	//찜
 	int insertWishlist(WishlistDTO wishlistDto);
