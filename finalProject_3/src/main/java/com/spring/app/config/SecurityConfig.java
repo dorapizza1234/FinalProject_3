@@ -36,6 +36,8 @@ public class SecurityConfig {
                 .frameOptions(frameOptions -> frameOptions.sameOrigin())
             )
             .authorizeHttpRequests(auth -> auth
+        		.requestMatchers("/api/chat/**").permitAll() 
+                .requestMatchers("/ws-chat/**").permitAll()
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                 
                 // ★ 누구나 볼 수 있는 주소 허용

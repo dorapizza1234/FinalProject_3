@@ -9,6 +9,21 @@
 <main th:fragment="chat_popup">
 
     <style>
+    	.login-required-box {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 80%;
+        }
+        .login-required-box p { font-size: 16px; color: #666; margin-bottom: 20px; }
+        .btn-go-login { 
+            background: #222; color: #fff; border: none; 
+            padding: 12px 30px; border-radius: 4px; 
+            font-weight: bold; cursor: pointer; text-decoration: none;
+            display: inline-block;
+        }
+        
     	.chat-overlay {
             position: fixed;
             top: 0; 
@@ -84,7 +99,15 @@
     <div id="chatOverlay" class="chat-overlay" onclick="window.toggleChatPopup()"></div>
 
     <div id="chatModal" class="chat-modal">
-        <div class="chat-container">
+        
+        <div id="loginRequiredArea" style="display: none; height: 100%; position: relative; background: #fff;">
+            <div class="login-required-box">
+                <p>로그인 후 이용 가능한 서비스입니다.</p>
+                <a href="/finalProject_3/login" class="btn-go-login">로그인하러 가기</a>
+            </div>
+        </div>
+
+        <div id="chatFullContainer" class="chat-container">
             <div class="chat-sidebar">
                 <div class="sidebar-header">채팅/거래방</div>
                 <ul class="room-list" id="roomListArea"></ul>
@@ -156,23 +179,33 @@
 
         // ★ 추가된 부분 2: 팝업을 열고 닫을 때, 배경막(Overlay)도 같이 켜고 끄도록 수정
         window.toggleChatPopup = function() {
-            const modal = document.getElementById('chatModal');
-            const overlay = document.getElementById('chatOverlay'); // 추가됨
-
-            if (modal.style.display === 'none' || modal.style.display === '') {
-                // 열릴 때
-                modal.style.display = 'block';
-                overlay.style.display = 'block'; // 배경막 표시
-                
-                document.getElementById('chatMainArea').style.visibility = 'hidden';
-                window.loadChatRoomList(); 
-                if (!stompClient || !stompClient.connected) window.connectWebSocket();
-            } else {
-                // 닫힐 때
-                modal.style.display = 'none';
-                overlay.style.display = 'none'; // 배경막 숨김
-            }
-        };
+		    const modal = document.getElementById('chatModal');
+		    const overlay = document.getElementById('chatOverlay');
+		    const fullContainer = document.getElementById('chatFullContainer');
+		    const loginArea = document.getElementById('loginRequiredArea');
+		
+		    if (modal.style.display === 'none' || modal.style.display === '') {
+		        modal.style.display = 'block';
+		        overlay.style.display = 'block';
+		
+		        // ⭐ 핵심: 여기서 먼저 guest인지 체크해서 서버 요청을 아예 막아야 합니다!
+		        if (currentUserEmail === 'anonymousUser' || currentUserEmail === 'guest' || !currentUserEmail) {
+		            if (fullContainer) fullContainer.style.display = 'none';
+		            if (loginArea) loginArea.style.display = 'block';
+		            return; // ◀ 여기서 멈춤! 아래에 있는 fetch(loadChatRoomList)를 실행 안 함
+		        } else {
+		            if (fullContainer) fullContainer.style.display = 'flex';
+		            if (loginArea) loginArea.style.display = 'none';
+		        }
+		
+		        document.getElementById('chatMainArea').style.visibility = 'hidden';
+		        window.loadChatRoomList(); // 로그인 된 사용자만 실행됨
+		        if (!stompClient || !stompClient.connected) window.connectWebSocket();
+		    } else {
+			        modal.style.display = 'none';
+			        overlay.style.display = 'none';
+			    }
+		};
 
         window.loadChatRoomList = function() {
             fetch(`${ctxPath}/api/chat/roomList`)
