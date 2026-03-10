@@ -98,6 +98,46 @@ public class AdminService_imple implements AdminService {
 		public int getTotalProductsCount() {
 			return dao.selectProductCount();
 		}
+		//판매중인 상품만 가져오기
+		@Override
+		public int getOnsaleProductCount() {
+		    return dao.getOnsaleProductCount(); // 매퍼 호출
+		}
+		
+		//====================================================================================//
+		// 컨텐츠 관리
+		@Override
+		public List<AdDTO> getAdList() {
+			return dao.selectAdList();
+		}
+		//광고 상세보기
+		@Override
+		public AdDTO getAd(Long adId) {
+			return dao.getAd(adId);
+		}
+		
+		//광고 승인하기
+		@Override
+		public void approvedAd(Long adId) {
+		dao.approveAd(adId);
+			
+		}
+		
+		//광고 반려하기
+		@Override
+		public void rejectAd(Long adId, String reason) {
+		dao.rejectAd(adId, reason);
+			
+		}
+		//예정광고 있는지 확인 
+		@Override
+		public boolean checkAdConflict(String startDate, String endDate) {
+
+		    int count = dao.checkAdConflict(startDate, endDate);
+
+		    return count > 0;
+		}
+		
 
 
 }

@@ -9,7 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
+import com.spring.app.product.domain.ProductPriceStatsDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.SearchKeywordDTO;
+import com.spring.app.product.domain.SearchLogDTO;
+import com.spring.app.product.domain.WishlistDTO;
 import com.spring.app.product.model.ProductDAO;
 
 import lombok.RequiredArgsConstructor;
@@ -128,17 +132,83 @@ public class ProductService_imple implements ProductService {
         return productDTO;
     }
     
-    
     //검색
     @Override
     public List<String> wordSearchShow(Map<String, String> paraMap) {
         return pdao.wordSearchShow(paraMap);
     }
     
-  //검색된 상품목록 보이기
+  //지역+상품검색+상품필터
     @Override
-    public List<ProductDTO> searchProductList(String searchWord) {
-        return pdao.searchProductList(searchWord);
+    public List<ProductDTO> selectProductListByCondition(String searchWord,
+                                                         String areaDong,
+                                                         String tradeAvailable,
+                                                         String parcelAvailable,
+                                                         Integer categoryNo,
+                                                         String sortType,
+                                                         Integer priceMin,
+                                                         Integer priceMax) {
+        return pdao.selectProductListByCondition(
+                searchWord,
+                areaDong,
+                tradeAvailable,
+                parcelAvailable,
+                categoryNo,
+                sortType,
+                priceMin,
+                priceMax
+        );
     }
     
+  
+    
+    //인기검색어
+    @Override
+    public void insertSearchLog(SearchLogDTO searchLogDto) {
+        pdao.insertSearchLog(searchLogDto);
+    }
+    @Override
+    public List<SearchKeywordDTO> selectPopularKeywordList() {
+        return pdao.selectPopularKeywordList();
+    }
+
+    //조회수
+    @Override
+    public void updateViewCount(int productNo) {
+        pdao.updateViewCount(productNo);
+    }
+
+    // 최근 등록 상품 가격 통계
+    @Override
+    public ProductPriceStatsDTO selectRecentProductPriceStats(Map<String, Object> paraMap) {
+        return pdao.selectRecentProductPriceStats(paraMap);
+    }
+    
+    //상품더보기
+    @Override
+    public List<ProductDTO> selectProductListByConditionMore(Map<String, Object> paraMap) {
+        return pdao.selectProductListByConditionMore(paraMap);
+    }
+  
+    
+    //찜
+    @Override
+    public boolean toggleWishlist(WishlistDTO wishlistDto) {
+
+        int n = pdao.selectWishlistExists(wishlistDto);
+
+        if(n > 0) {
+            pdao.deleteWishlist(wishlistDto);
+            return false; // 찜 취소됨
+        }
+        else {
+            pdao.insertWishlist(wishlistDto);
+            return true; // 찜됨
+        }
+    }
+
+    @Override
+    public boolean isWished(WishlistDTO wishlistDto) {
+        return pdao.selectWishlistExists(wishlistDto) > 0;
+    }
 }

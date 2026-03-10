@@ -36,6 +36,9 @@ public class SecurityConfig {
                 .frameOptions(frameOptions -> frameOptions.sameOrigin())
             )
             .authorizeHttpRequests(auth -> auth
+        		.requestMatchers("/api/chat/**").permitAll() 
+                .requestMatchers("/ws-chat/**").permitAll()
+                .requestMatchers("/mypage/**").authenticated()
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                 
                 // ★ 누구나 볼 수 있는 주소 허용
@@ -46,13 +49,20 @@ public class SecurityConfig {
                     "/security/**",       // 회원가입, 로그인 관련 모두 허용
                     "/product/product_list",      // 장터
                     "/product/price_check", // 시세조회
-                    "/product/auction",   // 경매장
                     "/product/share",
                     "/product/product_detail/**", // 상품 상세
                     "/product/product_user_profile",
-                    "/product/wordSearchShow"//자동검색어
+                    "/product/wordSearchShow",//자동검색어
+                    "/actuator/**",
+                    "/admin/**"
+                    
                 ).permitAll() 
-                
+             // 관리자 권한
+               // .requestMatchers("/admin/supervisor/**").hasRole("SUPERVISOR")
+                //.requestMatchers("/admin/**").hasAnyRole("ADMIN","SUPERVISOR")
+
+          
+
                 // 위에서 허용한 URL 외의 요청(예: /product/sell)은 자동 로그인 요구
                 .anyRequest().authenticated() 
             )
@@ -87,6 +97,7 @@ public class SecurityConfig {
                                  "/upload/**",
                                  "/jquery-ui-1.13.1.custom/**", 
                                  "/js/**", 
-                                 "/smarteditor/**");  
-    }
+                                 "/smarteditor/**");
+                		               
+    }	
 }

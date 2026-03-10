@@ -20,12 +20,16 @@
 					<div class="search-pill" style="position: relative;">
 						<div class="select-box">
 							<button type="button" class="btn-area">
-								<i class="fa-solid fa-location-dot"></i><span>지역설정</span>
+								<i class="fa-solid fa-location-dot"></i>
+								<span th:text="${param.areaDong != null and !#strings.isEmpty(param.areaDong[0]) ? param.areaDong[0] : '지역설정'}">지역설정</span>
 							</button>
 						</div>
 
 						<input class="search-input" type="text" id="searchWord"
-							name="searchWord" placeholder="검색어를 입력해주세요" autocomplete="off" />
+							name="searchWord"
+							placeholder="검색어를 입력해주세요"
+							autocomplete="off"
+							th:value="${param.searchWord != null ? param.searchWord[0] : ''}" />
 
 						<button class="search-btn" type="button" id="searchBtn">
 							<i class="fa-solid fa-magnifying-glass"></i>
@@ -33,24 +37,25 @@
 						
 						<!-- 자동완성 리스트 -->
 						<div id="displayList"></div>
-					
+						
+						<input type="hidden" id="areaDong" name="areaDong" th:value="${param.areaDong != null ? param.areaDong[0] : ''}" />
+						
+						
 					</div>
 
 					<div class="popular">
 						<div class="popular-title">인기 검색어</div>
-						<ul class="popular-list">
-							<li class="popular-item">에어컨</li>
-							<li class="popular-item">에어컨청소</li>
-							<li class="popular-item">노트북</li>
-							<li class="popular-item">원룸</li>
-							<li class="popular-item">현대 중고차</li>
-							<li class="popular-item">이사짐 알바</li>
-							<li class="popular-item">근처 맛집</li>
-							<li class="popular-item">투표</li>
-							<li class="popular-item">동네친구</li>
-							<li class="popular-item">배드민턴 모임</li>
-							<li class="popular-item">자전거</li>
+					
+						<ul class="popular-list" th:if="${popularKeywordList != null and !#lists.isEmpty(popularKeywordList)}">
+							<li class="popular-item"
+							    th:each="k : ${popularKeywordList}"
+							    th:text="${k.keyword}">검색어</li>
 						</ul>
+					
+						<div class="popular-empty"
+						     th:if="${popularKeywordList == null or #lists.isEmpty(popularKeywordList)}">
+							아직 인기 검색어가 없어요.
+						</div>
 					</div>
 				</div>
 			</div>
@@ -95,7 +100,7 @@
 					</div>
 
 					<div class="area-list">
-						<div class="area-list__title">최근 검색한 동네</div>
+						<div class="area-list__title">최근 검색한 지역</div>
 						<ul class="area-list__items" id="areaList">
 							<li style="padding: 10px 6px; opacity: .7;">최근 검색 기록이 없어요.</li>
 						</ul>
@@ -122,20 +127,44 @@
 						<div class="filter-group">
 							<div class="fg-title">조건</div>
 							<div class="check-row">
-								<label class="check"><input type="checkbox"> 거래
-									가능만 보기</label> <label class="check"><input type="checkbox">
-									택배 가능</label>
+								<label class="check">
+									<input type="checkbox" id="tradeAvailable" name="tradeAvailable" value="Y"
+									       th:checked="${param.tradeAvailable != null}">
+									거래 가능만 보기
+								</label>
+								
+								<label class="check">
+									<input type="checkbox" id="parcelAvailable" name="parcelAvailable" value="Y"
+									       th:checked="${param.parcelAvailable != null}">
+									택배 가능
+								</label>
 							</div>
+						</div>
+						
+						<!-- 카테고리 -->
+						<div class="filter-group">
+							<div class="fg-title">카테고리</div>
+							<select class="select" id="categoryNo" name="categoryNo" aria-label="카테고리">
+								<option value="">전체 카테고리</option>
+								<option value="1" th:selected="${param.categoryNo != null and param.categoryNo[0] == '1'}">패션(수입명품 / 패션의류 / 패션잡화)</option>
+								<option value="2" th:selected="${param.categoryNo != null and param.categoryNo[0] == '2'}">육아(출산 / 유아동)</option>
+								<option value="3" th:selected="${param.categoryNo != null and param.categoryNo[0] == '3'}">디지털·전자기기(모바일 / 태블릿 / 노트북 / PC / 카메라 / 캠코더)</option>
+								<option value="4" th:selected="${param.categoryNo != null and param.categoryNo[0] == '4'}">가전(가전제품)</option>
+								<option value="5" th:selected="${param.categoryNo != null and param.categoryNo[0] == '5'}">홈·인테리어(가구 / 인테리어 / 리빙 / 생활)</option>
+								<option value="6" th:selected="${param.categoryNo != null and param.categoryNo[0] == '6'}">취미(게임, 반려동물, 독서)</option>
+								<option value="7" th:selected="${param.categoryNo != null and param.categoryNo[0] == '7'}">여행(등산, 캠핑 등등)</option>
+								<option value="8" th:selected="${param.categoryNo != null and param.categoryNo[0] == '8'}">공구/산업용품</option>
+							</select>
 						</div>
 
 						<!-- 정렬 -->
 						<div class="filter-group">
 							<div class="fg-title">정렬</div>
-							<select class="select" aria-label="정렬">
-								<option>최신순</option>
-								<option>인기순</option>
-								<option>가격 낮은순</option>
-								<option>가격 높은순</option>
+							<select class="select" id="sortType" name="sortType" aria-label="정렬">
+								<option value="latest" th:selected="${param.sortType == null or param.sortType[0] == 'latest'}">최신순</option>
+								<option value="view" th:selected="${param.sortType != null and param.sortType[0] == 'view'}">인기순</option>
+								<option value="priceAsc" th:selected="${param.sortType != null and param.sortType[0] == 'priceAsc'}">가격 낮은순</option>
+								<option value="priceDesc" th:selected="${param.sortType != null and param.sortType[0] == 'priceDesc'}">가격 높은순</option>
 							</select>
 						</div>
 
@@ -157,21 +186,23 @@
 
 							<div class="range-row" aria-label="가격 범위">
 								<div class="price-input">
-									<span class="won">₩</span> <input id="priceMin" type="number"
-										placeholder="최소" />
+									<span class="won">₩</span>
+									<input id="priceMin" name="priceMin" type="number" placeholder="최소"
+									       th:value="${param.priceMin != null ? param.priceMin[0] : ''}" />
 								</div>
-
+							
 								<span class="range-dash">-</span>
-
+							
 								<div class="price-input">
-									<span class="won">₩</span> <input id="priceMax" type="number"
-										placeholder="최대" />
+									<span class="won">₩</span>
+									<input id="priceMax" name="priceMax" type="number" placeholder="최대"
+									       th:value="${param.priceMax != null ? param.priceMax[0] : ''}" />
 								</div>
 							</div>
 
 							<div class="filter-actions">
-								<button class="btn btn-primary" type="button">필터적용</button>
-								<button class="btn btn-ghost" type="button">초기화</button>
+								<button class="btn btn-primary" type="button" id="applyFilterBtn">필터적용</button>
+								<button class="btn btn-ghost" type="button" id="resetFilterBtn">초기화</button>
 							</div>
 						</div>
 					</div>
@@ -187,27 +218,78 @@
 					</div>
 					<div class="stats">
 						<div class="stat">
-							<span>평균 가격</span><strong>430,575원</strong>
+							<span>평균 가격</span>
+							<strong th:text="${priceStats != null ? #numbers.formatInteger(priceStats.avgPrice, 3, 'COMMA') + '원' : '0원'}">0원</strong>
 						</div>
 						<div class="stat">
-							<span>가장 높은 가격</span><strong>2,400,000원</strong>
+							<span>가장 높은 가격</span>
+							<strong th:text="${priceStats != null ? #numbers.formatInteger(priceStats.maxPrice, 3, 'COMMA') + '원' : '0원'}">0원</strong>
 						</div>
 						<div class="stat">
-							<span>가장 낮은 가격</span><strong>2,000원</strong>
+							<span>가장 낮은 가격</span>
+							<strong th:text="${priceStats != null ? #numbers.formatInteger(priceStats.minPrice, 3, 'COMMA') + '원' : '0원'}">0원</strong>
 						</div>
 					</div>
 				</div>
+				<!-- 검색 결과 없음 -->
+				
+<div class="no-result"
+       th:if="${#lists.isEmpty(list)
+             and (
+                (param.searchWord != null and !#strings.isEmpty(param.searchWord[0]))
+                or
+                (param.areaDong != null and !#strings.isEmpty(param.areaDong[0]))
+                or
+                (param.tradeAvailable != null)
+                or
+                (param.parcelAvailable != null)
+                or
+                (param.categoryNo != null and !#strings.isEmpty(param.categoryNo[0]))
+                or
+                (param.priceMin != null and !#strings.isEmpty(param.priceMin[0]))
+                or
+                (param.priceMax != null and !#strings.isEmpty(param.priceMax[0]))
+             )}">
+
+    <div class="no-result-inner">
+        <i class="fa-solid fa-circle-exclamation"></i>
+
+        <div class="no-result-text"
+     th:if="${(param.searchWord == null or #strings.isEmpty(param.searchWord[0]))
+             and (param.areaDong == null or #strings.isEmpty(param.areaDong[0]))}"
+     th:text="'조건에 맞는 상품이 없습니다.'">
+        </div>
+
+        <div class="no-result-text"
+             th:if="${param.searchWord != null and !#strings.isEmpty(param.searchWord[0])
+                     and (param.areaDong == null or #strings.isEmpty(param.areaDong[0]))}"
+             th:text="|&quot;${param.searchWord[0]}&quot; 검색 결과가 없습니다.|">
+        </div>
+
+        <div class="no-result-text"
+             th:if="${(param.searchWord == null or #strings.isEmpty(param.searchWord[0]))
+                     and param.areaDong != null and !#strings.isEmpty(param.areaDong[0])}"
+             th:text="|${param.areaDong[0]}에서 거래 중인 상품이 없습니다.|">
+        </div>
+    </div>
+</div>
 
 				<!-- 카드 그리드 -->
-				<div class="grid">
+				<div class="grid" id="productGrid">
 					<!-- card 1 -->
 					<a class="card" th:each="p : ${list}"
 						th:href="@{|/product/product_detail/${p.productNo}|}">
 						<div class="thumb">
 							<span class="thumb-badge selling">판매중</span>
-							<button class="heart" type="button" aria-label="찜">
-								<i class="fa-regular fa-heart"></i>
+							
+							<button class="heart"
+							        type="button"
+							        aria-label="찜"
+							        th:classappend="${p.wished} ? ' on' : ''"
+							        th:attr="data-product-no=${p.productNo}, data-login=${isLogin}">
+							    <i th:class="${p.wished} ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
 							</button>
+							
 							<img th:src="@{${p.imgUrl}}" alt="">
 						</div>
 						<div class="card-body">
@@ -218,13 +300,20 @@
 							</div>
 							<div class="meta">
 
-								<span> <i class="fa-solid fa-location-dot"></i> <span
-									th:text="${p.areaGu != null ? p.areaGu : '택배거래'}">강남구</span>
-								</span> <span> <i class="fa-regular fa-clock"></i> <span
+								<span>
+									<i class="fa-solid fa-location-dot"></i>
+									<span th:text="${p.placeName != null and !#strings.isEmpty(p.placeName) ? p.placeName : '택배거래'}">장소명</span>
+								</span>
+								
+								 <span> <i class="fa-regular fa-clock"></i> <span
 									class="time-ago"
 									th:attr="data-time=${#dates.format(p.regDate,'yyyy-MM-dd''T''HH:mm:ss')}">
 										방금 전 </span>
-								</span> <span><i class="fa-solid fa-eye"></i> 10</span>
+								</span> 
+								<span>
+									<i class="fa-solid fa-eye"></i>
+									<span th:text="${p.viewCount}">0</span>
+								</span>
 
 							</div>
 						</div>
@@ -234,10 +323,10 @@
 				</div>
 
 				<!--  더보기 버튼 -->
-				<div class="load-more-wrap">
-					<button class="btn-load-more">
-						더보기 <i class="fa-solid fa-angle-down"></i>
-					</button>
+				<div class="load-more-wrap" id="loadMoreWrap">
+				    <button class="btn-load-more" id="loadMoreBtn" type="button">
+				        더보기 <i class="fa-solid fa-angle-down"></i>
+				    </button>
 				</div>
 			</section>
 		</section>
@@ -245,49 +334,93 @@
 
 <script th:inline="javascript">
 /*<![CDATA[*/
-	
-	//console.log("jQuery check =", typeof $);
 $(function () {
 
 	const $searchInput = $("#searchWord");
 	const $searchBtn = $("#searchBtn");
 	const $displayList = $("#displayList");
-	const $popularItems = $(".popular-item");
+
 
 	// ===============================
 	// 검색
 	// ===============================
 	window.searchBtnClick = function () {
-		const searchWord = $searchInput.val().trim();
+	const searchWord = $("#searchWord").val().trim();
+	const areaDong = $("#areaDong").val().trim();
+	const tradeAvailable = $("#tradeAvailable").is(":checked");
+	const parcelAvailable = $("#parcelAvailable").is(":checked");
+	const categoryNo = $("#categoryNo").val();
+	const sortType = $("#sortType").val();
+	const priceMin = $("#priceMin").val().trim();
+	const priceMax = $("#priceMax").val().trim();
+	const url = /*[[@{/product/product_list}]]*/ "";
 
-		if (searchWord === "") {
-			alert("검색어를 입력하세요.");
-			$searchInput.focus();
-			return;
-		}
+	const isSortChanged = sortType !== "" && sortType !== "latest";
 
-		const url = /*[[@{/product/product_list}]]*/ "";
-		location.href = url + "?searchWord=" + encodeURIComponent(searchWord);
-	};
+	if (searchWord === "" &&
+		areaDong === "" &&
+		!tradeAvailable &&
+		!parcelAvailable &&
+		categoryNo === "" &&
+		priceMin === "" &&
+		priceMax === "" &&
+		!isSortChanged) {
+		alert("검색어, 지역 또는 필터 조건을 선택하세요.");
+		$("#searchWord").focus();
+		return;
+	}
 
-	//console.log("product_list 통합 인라인 JS 실행됨");
+	const params = new URLSearchParams();
+
+	if (searchWord !== "") params.append("searchWord", searchWord);
+	if (areaDong !== "") params.append("areaDong", areaDong);
+	if (tradeAvailable) params.append("tradeAvailable", "Y");
+	if (parcelAvailable) params.append("parcelAvailable", "Y");
+	if (categoryNo !== "") params.append("categoryNo", categoryNo);
+	if (sortType !== "") params.append("sortType", sortType);
+	if (priceMin !== "") params.append("priceMin", priceMin);
+	if (priceMax !== "") params.append("priceMax", priceMax);
+
+	location.href = url + "?" + params.toString();
+};
+
+$("#applyFilterBtn").on("click", function () {
+	window.searchBtnClick();
+});
+
+$("#resetFilterBtn").on("click", function () {
+	$("#tradeAvailable").prop("checked", false);
+	$("#parcelAvailable").prop("checked", false);
+	$("#categoryNo").val("");
+	$("#sortType").val("latest");
+	$("#priceMin").val("");
+	$("#priceMax").val("");
+
+	const url = /*[[@{/product/product_list}]]*/ "";
+	const searchWord = $("#searchWord").val().trim();
+	const areaDong = $("#areaDong").val().trim();
+
+	const params = new URLSearchParams();
+	if (searchWord !== "") params.append("searchWord", searchWord);
+	if (areaDong !== "") params.append("areaDong", areaDong);
+
+	location.href = params.toString() ? url + "?" + params.toString() : url;
+});
 
 	$displayList.hide();
 
-	// 검색 버튼 클릭
 	$searchBtn.on("click", function (e) {
 		e.preventDefault();
 		e.stopPropagation();
 		window.searchBtnClick();
 	});
 
-	
-//자동완성검색어
+	// ===============================
+	// 자동완성 검색어
+	// ===============================
 	function fetchAutoComplete(searchWord) {
-		//console.log("자동완성 요청 검색어 =", searchWord);
-
 		if (searchWord.length === 0) {
-			$("#displayList").hide().empty();
+			$displayList.hide().empty();
 			return;
 		}
 
@@ -297,8 +430,6 @@ $(function () {
 			data: { searchWord: searchWord },
 			dataType: "json",
 			success: function (json) {
-				//console.log("자동완성 결과:", json);
-
 				if (json && json.length > 0) {
 					let v_html = "";
 
@@ -321,30 +452,23 @@ $(function () {
 						v_html += "<div class='result search-display-item'>" + result + "</div>";
 					});
 
-					$("#displayList").html(v_html).show();
+					$displayList.html(v_html).show();
 				}
 				else {
-					$("#displayList").hide().empty();
+					$displayList.hide().empty();
 				}
 			},
 			error: function (request, status, error) {
 				console.log("AJAX ERROR:", request.status, request.responseText, error);
-				$("#displayList").hide().empty();
+				$displayList.hide().empty();
 			}
 		});
 	}
 
-	
-
 	$(document).on("input", "#searchWord", function () {
-		//console.log("input 이벤트 발생", $(this).val());
-
-	
-
 		fetchAutoComplete($(this).val().trim());
 	});
 
-	// 엔터 검색
 	$(document).on("keydown", "#searchWord", function (e) {
 		if (e.key === "Enter") {
 			e.preventDefault();
@@ -352,14 +476,12 @@ $(function () {
 		}
 	});
 
-	// 포커스 시 다시 보여주기
 	$searchInput.on("focus", function () {
 		if ($(this).val().trim().length > 0 && $displayList.children().length > 0) {
 			$displayList.show();
 		}
 	});
 
-	// 자동완성 클릭
 	$(document).on("click", ".result", function () {
 		const word = $(this).text().trim();
 		$searchInput.val(word);
@@ -367,15 +489,13 @@ $(function () {
 		window.searchBtnClick();
 	});
 
-	// 인기 검색어 클릭
-	$popularItems.on("click", function () {
+	$(document).on("click", ".popular-item", function () {
 		const word = $(this).text().trim();
 		$searchInput.val(word);
 		$displayList.hide().empty();
 		window.searchBtnClick();
 	});
 
-	// 검색창 바깥 클릭 시 자동완성 닫기
 	$(document).on("click", function (e) {
 		if (!$(e.target).closest(".search-pill").length) {
 			$displayList.hide();
@@ -439,13 +559,7 @@ $(function () {
 		minEl.addEventListener("blur", syncRangeActive);
 		maxEl.addEventListener("blur", syncRangeActive);
 
-		const resetBtn = document.querySelector(".filter-actions .btn-ghost");
-		if (resetBtn) {
-			resetBtn.addEventListener("click", () => {
-				clearPillActive();
-				clearRangeValues();
-			});
-		}
+		
 	}
 
 	// ===============================
@@ -465,7 +579,7 @@ $(function () {
 	const resultUl = document.getElementById("areaKakaoResult");
 
 	if (openBtn && modal && list) {
-		const RECENT_AREA_KEY = "PF_RECENT_DONG_AREAS_V1";
+		const RECENT_AREA_KEY = "PF_RECENT_REGION_AREAS_V1";
 		const RECENT_AREA_TTL_MS = 24 * 60 * 60 * 1000;
 
 		let lastFocusedEl = null;
@@ -489,30 +603,73 @@ $(function () {
 
 			const show = String(regionName || "").trim() || "지역설정";
 			labelSpan.innerHTML = "<span class='area-selected'>" + escapeHtml(show) + "</span>";
+			$("#areaDong").val(show === "지역설정" ? "" : show);
 		}
 
-		function extractDongName(address) {
+		function extractRegionName(address) {
 			const text = String(address || "").trim();
 			if (!text) return "";
 
 			const parts = text.split(/\s+/);
+			if (parts.length === 0) return "";
 
-			for (let i = parts.length - 1; i >= 0; i--) {
+			let sido = "";
+			let sigungu = "";
+			let dong = "";
+
+			for (let i = 0; i < parts.length; i++) {
 				const word = parts[i].trim();
+				if (!word) continue;
 
-				if (word.endsWith("동") || word.endsWith("읍") || word.endsWith("면")) {
-					return word;
+				if (
+					!sido &&
+					(
+						word.endsWith("특별시") ||
+						word.endsWith("광역시") ||
+						word.endsWith("특별자치시") ||
+						word.endsWith("특별자치도") ||
+						word.endsWith("도") ||
+						word.endsWith("시")
+					)
+				) {
+					sido = word;
+					continue;
+				}
+
+				if (
+					!sigungu &&
+					(
+						word.endsWith("구") ||
+						word.endsWith("군") ||
+						(word.endsWith("시") && sido !== "")
+					)
+				) {
+					sigungu = word;
+					continue;
+				}
+
+				if (
+					!dong &&
+					(
+						word.endsWith("동") ||
+						word.endsWith("읍") ||
+						word.endsWith("면")
+					)
+				) {
+					dong = word;
+					break;
 				}
 			}
-			return "";
+
+			return [sido, sigungu, dong].filter(Boolean).join(" ");
 		}
 
-		function pickDongName(roadAddress, jibunAddress) {
-			const roadDong = extractDongName(roadAddress);
-			if (roadDong) return roadDong;
+		function pickRegionName(roadAddress, jibunAddress) {
+			const roadRegion = extractRegionName(roadAddress);
+			if (roadRegion) return roadRegion;
 
-			const jibunDong = extractDongName(jibunAddress);
-			if (jibunDong) return jibunDong;
+			const jibunRegion = extractRegionName(jibunAddress);
+			if (jibunRegion) return jibunRegion;
 
 			return "";
 		}
@@ -540,7 +697,8 @@ $(function () {
 				}
 
 				return alive;
-			} catch {
+			}
+			catch {
 				return [];
 			}
 		}
@@ -548,7 +706,8 @@ $(function () {
 		function writeRecentAreas(arr) {
 			try {
 				localStorage.setItem(RECENT_AREA_KEY, JSON.stringify(arr));
-			} catch {}
+			}
+			catch {}
 		}
 
 		function pushRecentArea(value) {
@@ -557,6 +716,7 @@ $(function () {
 
 			const current = readRecentAreas();
 			const filtered = current.filter((x) => String(x.value).trim() !== v);
+
 			filtered.unshift({
 				value: v,
 				savedAt: Date.now()
@@ -576,7 +736,7 @@ $(function () {
 				const li = document.createElement("li");
 				li.style.padding = "10px 8px";
 				li.style.opacity = ".7";
-				li.textContent = "최근 검색 기록이 없어요.";
+				li.textContent = "최근 설정한 지역이 없어요.";
 				ul.appendChild(li);
 				return;
 			}
@@ -645,7 +805,10 @@ $(function () {
 		}
 
 		function waitForKakaoServices(cb, tries = 60) {
-			if (ensureKakaoServices()) return cb();
+			if (ensureKakaoServices()) {
+				cb();
+				return;
+			}
 
 			if (tries <= 0) {
 				alert("카카오맵 로드에 실패했어요. appkey와 libraries=services를 확인해 주세요.");
@@ -662,11 +825,11 @@ $(function () {
 			}
 
 			const geocoder = new kakao.maps.services.Geocoder();
+
 			geocoder.coord2Address(lng, lat, (result, status) => {
 				if (status === kakao.maps.services.Status.OK) {
 					const roadAddress = result[0].road_address ? result[0].road_address.address_name : "";
 					const jibunAddress = result[0].address ? result[0].address.address_name : "";
-
 					cb({ roadAddress, jibunAddress });
 				}
 				else {
@@ -700,16 +863,16 @@ $(function () {
 				pickMarker.setMap(map);
 
 				coordToAddressInfo(lat, lng, ({ roadAddress, jibunAddress }) => {
-					const dongName = pickDongName(roadAddress, jibunAddress);
+					const regionName = pickRegionName(roadAddress, jibunAddress);
 
-					if (!dongName) {
-						alert("동네 정보를 찾지 못했어요. 다른 지점을 눌러주세요.");
+					if (!regionName) {
+						alert("지역 정보를 찾지 못했어요. 다른 지점을 눌러주세요.");
 						return;
 					}
 
-					pushRecentArea(dongName);
+					pushRecentArea(regionName);
 					renderRecentAreaList();
-					setAreaLabel(dongName);
+					setAreaLabel(regionName);
 					closeModal();
 				});
 			});
@@ -736,21 +899,22 @@ $(function () {
 
 				const roadAddress = (p.road_address_name || "").trim();
 				const jibunAddress = (p.address_name || "").trim();
-				const dongName = pickDongName(roadAddress, jibunAddress);
+				const regionName = pickRegionName(roadAddress, jibunAddress);
 
-				btn.textContent = dongName || jibunAddress || roadAddress || "선택";
+				btn.textContent = regionName || jibunAddress || roadAddress || "선택";
 
 				btn.addEventListener("click", () => {
 					const lat = Number(p.y);
 					const lng = Number(p.x);
 
-					if (!dongName) {
-						alert("동네 정보를 찾지 못했어요. 다른 위치를 선택해 주세요.");
+					if (!regionName) {
+						alert("지역 정보를 찾지 못했어요. 다른 위치를 선택해 주세요.");
 						return;
 					}
 
 					waitForKakaoServices(() => {
 						ensureMap();
+
 						const latlng = new kakao.maps.LatLng(lat, lng);
 						map.setCenter(latlng);
 						map.setLevel(3);
@@ -758,9 +922,9 @@ $(function () {
 						pickMarker.setMap(map);
 					});
 
-					pushRecentArea(dongName);
+					pushRecentArea(regionName);
 					renderRecentAreaList();
-					setAreaLabel(dongName);
+					setAreaLabel(regionName);
 					closeModal();
 				});
 
@@ -798,7 +962,7 @@ $(function () {
 
 						const roadAddress = (p.road_address_name || "").trim();
 						const jibunAddress = (p.address_name || "").trim();
-						const dongName = pickDongName(roadAddress, jibunAddress);
+						const regionName = pickRegionName(roadAddress, jibunAddress);
 
 						const marker = new kakao.maps.Marker({
 							position: latlng
@@ -809,17 +973,17 @@ $(function () {
 						bounds.extend(latlng);
 
 						kakao.maps.event.addListener(marker, "click", () => {
-							if (!dongName) {
-								alert("동네 정보를 찾지 못했어요. 다른 위치를 선택해 주세요.");
+							if (!regionName) {
+								alert("지역 정보를 찾지 못했어요. 다른 위치를 선택해 주세요.");
 								return;
 							}
 
 							pickMarker.setPosition(latlng);
 							pickMarker.setMap(map);
 
-							pushRecentArea(dongName);
+							pushRecentArea(regionName);
 							renderRecentAreaList();
-							setAreaLabel(dongName);
+							setAreaLabel(regionName);
 							closeModal();
 						});
 					});
@@ -842,7 +1006,8 @@ $(function () {
 				setTimeout(() => {
 					try {
 						kakao.maps.event.trigger(map, "resize");
-					} catch {}
+					}
+					catch {}
 				}, 0);
 			});
 
@@ -862,16 +1027,16 @@ $(function () {
 
 					waitForKakaoServices(() => {
 						coordToAddressInfo(lat, lng, ({ roadAddress, jibunAddress }) => {
-							const dongName = pickDongName(roadAddress, jibunAddress);
+							const regionName = pickRegionName(roadAddress, jibunAddress);
 
-							if (!dongName) {
-								alert("현재 위치의 동네 정보를 찾지 못했어요.");
+							if (!regionName) {
+								alert("현재 위치의 지역 정보를 찾지 못했어요.");
 								return;
 							}
 
-							pushRecentArea(dongName);
+							pushRecentArea(regionName);
 							renderRecentAreaList();
-							setAreaLabel(dongName);
+							setAreaLabel(regionName);
 							closeModal();
 						});
 					});
@@ -891,13 +1056,13 @@ $(function () {
 			if (!btn) return;
 
 			const raw = btn.getAttribute("data-area-value") || btn.textContent.trim();
-			const dongName = String(raw || "").trim();
+			const regionName = String(raw || "").trim();
 
-			if (!dongName) return;
+			if (!regionName) return;
 
-			pushRecentArea(dongName);
+			pushRecentArea(regionName);
 			renderRecentAreaList();
-			setAreaLabel(dongName);
+			setAreaLabel(regionName);
 			closeModal();
 		});
 
@@ -946,15 +1111,211 @@ $(function () {
 	// 하트 버튼
 	// ===============================
 	$(document).on("click", ".heart", function (e) {
-		e.preventDefault();
-		e.stopPropagation();
+	e.preventDefault();
+	e.stopPropagation();
 
-		$(this).toggleClass("on");
+	const $btn = $(this);
+	const isLogin = String($btn.data("login")) === "true";
 
-		const $icon = $(this).find("i");
-		$icon.toggleClass("fa-regular");
-		$icon.toggleClass("fa-solid");
+	if (!isLogin) {
+		alert("로그인이 필요합니다.");
+		location.href = "/finalProject_3/login/login";
+		return;
+	}
+
+	const productNo = $btn.data("product-no");
+
+	$.ajax({
+		url: /*[[@{/product/wishlist/toggle}]]*/ "",
+		type: "post",
+		data: { productNo: productNo },
+		dataType: "json",
+		success: function (json) {
+			if (!json.success) {
+				alert(json.message || "찜 처리에 실패했습니다.");
+				return;
+			}
+
+			const $icon = $btn.find("i");
+
+			if (json.wished) {
+				$btn.addClass("on");
+				$icon.removeClass("fa-regular").addClass("fa-solid");
+				alert("찜 성공");
+			} else {
+				$btn.removeClass("on");
+				$icon.removeClass("fa-solid").addClass("fa-regular");
+				alert("찜 취소");
+			}
+		},
+		error: function (request, status, error) {
+			console.log("찜 AJAX ERROR");
+			console.log("status =", request.status);
+			console.log("responseText =", request.responseText);
+			console.log("error =", error);
+			alert("찜 처리 중 오류가 발생했습니다.");
+		}
 	});
+});
+
+	// ===============================
+	// 초기 지역 라벨 복원
+	// ===============================
+	const initialAreaDong = $("#areaDong").val().trim();
+	if (initialAreaDong !== "") {
+		const labelSpan = document.querySelector(".btn-area span");
+		if (labelSpan) {
+			labelSpan.textContent = initialAreaDong;
+		}
+	}
+	
+	// ===============================
+	// 더보기
+	// ===============================
+	const $loadMoreBtn = $("#loadMoreBtn");
+	const $loadMoreWrap = $("#loadMoreWrap");
+	const $productGrid = $("#productGrid");
+
+	let currentPage = 1;
+	const pageSize = 12;
+	let isLoadingMore = false;
+
+	function escapeHtml(str) {
+		return String(str || "")
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll('"', "&quot;")
+			.replaceAll("'", "&#39;");
+	}
+
+	function formatPrice(saleType, productPrice) {
+		if (saleType === "나눔") {
+			return "무료나눔";
+		}
+		if (productPrice == null || productPrice === "") {
+			return "가격없음";
+		}
+		return Number(productPrice).toLocaleString("ko-KR") + "원";
+	}
+
+	function makeProductCard(p) {
+		const placeName = (p.placeName && String(p.placeName).trim() !== "") ? p.placeName : "택배거래";
+		const imgUrl = p.imgUrl ? p.imgUrl : "";
+		const regDate = p.regDate ? p.regDate : "";
+		const isLogin = /*[[${isLogin}]]*/ false;
+		const wished = !!p.wished;
+
+		return `
+			<a class="card" href="/finalProject_3/product/product_detail/${p.productNo}">
+				<div class="thumb">
+					<span class="thumb-badge selling">판매중</span>
+					<button class="heart ${wished ? "on" : ""}"
+					        type="button"
+					        aria-label="찜"
+					        data-product-no="${p.productNo}"
+					        data-login="${isLogin}">
+						<i class="${wished ? "fa-solid" : "fa-regular"} fa-heart"></i>
+					</button>
+					<img src="${escapeHtml(imgUrl)}" alt="">
+				</div>
+				<div class="card-body">
+					<div class="item-title">${escapeHtml(p.productName)}</div>
+					<div class="price">${formatPrice(p.saleType, p.productPrice)}</div>
+					<div class="meta">
+						<span>
+							<i class="fa-solid fa-location-dot"></i>
+							<span>${escapeHtml(placeName)}</span>
+						</span>
+						<span>
+							<i class="fa-regular fa-clock"></i>
+							<span class="time-ago" data-time="${escapeHtml(regDate)}">${formatTimeAgo(regDate)}</span>
+						</span>
+						<span>
+							<i class="fa-solid fa-eye"></i>
+							<span>${p.viewCount != null ? p.viewCount : 0}</span>
+						</span>
+					</div>
+				</div>
+			</a>
+		`;
+	}
+
+	function loadMoreProducts() {
+		if (isLoadingMore) return;
+
+		isLoadingMore = true;
+		currentPage++;
+
+		const searchWord = $("#searchWord").val().trim();
+		const areaDong = $("#areaDong").val().trim();
+		const tradeAvailable = $("#tradeAvailable").is(":checked") ? "Y" : "";
+		const parcelAvailable = $("#parcelAvailable").is(":checked") ? "Y" : "";
+		const categoryNo = $("#categoryNo").val();
+		const sortType = $("#sortType").val();
+		const priceMin = $("#priceMin").val().trim();
+		const priceMax = $("#priceMax").val().trim();
+
+		$loadMoreBtn.prop("disabled", true).text("불러오는 중...");
+
+		$.ajax({
+			url: /*[[@{/product/product_list_more}]]*/ "",
+			type: "get",
+			dataType: "json",
+			data: {
+				searchWord: searchWord,
+				areaDong: areaDong,
+				tradeAvailable: tradeAvailable,
+				parcelAvailable: parcelAvailable,
+				categoryNo: categoryNo,
+				sortType: sortType,
+				priceMin: priceMin,
+				priceMax: priceMax,
+				page: currentPage,
+				size: pageSize
+			},
+			success: function (json) {
+				if (json && json.length > 0) {
+					let html = "";
+					$.each(json, function (index, p) {
+						html += makeProductCard(p);
+					});
+					$productGrid.append(html);
+
+					if (json.length < pageSize) {
+						$loadMoreWrap.hide();
+					}
+				}
+				else {
+					$loadMoreWrap.hide();
+				}
+			},
+			error: function (request, status, error) {
+				console.log("더보기 AJAX ERROR:", request.status, request.responseText, error);
+				currentPage--;
+				alert("상품을 더 불러오지 못했습니다.");
+			},
+			complete: function () {
+				isLoadingMore = false;
+				$loadMoreBtn.prop("disabled", false).html('더보기 <i class="fa-solid fa-angle-down"></i>');
+			}
+		});
+	}
+
+	$loadMoreBtn.on("click", function () {
+		loadMoreProducts();
+	});
+
+	// 첫 화면 상품 수가 12개 미만이면 더보기 숨김
+	if ($("#productGrid .card").length < pageSize) {
+		$loadMoreWrap.hide();
+	}
+});
+
+window.addEventListener("pageshow", function (event) {
+	if (event.persisted) {
+		window.location.reload();
+	}
 });
 /*]]>*/
 </script>

@@ -6,7 +6,11 @@ import java.util.Map;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
+import com.spring.app.product.domain.ProductPriceStatsDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.SearchKeywordDTO;
+import com.spring.app.product.domain.SearchLogDTO;
+import com.spring.app.product.domain.WishlistDTO;
 
 public interface ProductService {
 
@@ -25,12 +29,37 @@ public interface ProductService {
 	//검색
 	List<String> wordSearchShow(Map<String, String> paraMap);
 
-	//검색된 상품목록 보이기
-	List<ProductDTO> searchProductList(String searchWord);
+	
 
+	//지역+상품검색+상품필터
+	List<ProductDTO> selectProductListByCondition(String searchWord,
+            String areaDong,
+            String tradeAvailable,
+            String parcelAvailable,
+            Integer categoryNo,
+            String sortType,
+            Integer priceMin,
+            Integer priceMax);
+
+	//인기검색어
+	void insertSearchLog(SearchLogDTO searchLogDto);
+	List<SearchKeywordDTO> selectPopularKeywordList();
+	
+	//조회수
+	void updateViewCount(int productNo);
+	
+	// 최근 등록 상품 가격 통계
+	ProductPriceStatsDTO selectRecentProductPriceStats(Map<String, Object> paraMap);
+	
+	//상품 더보기
+	List<ProductDTO> selectProductListByConditionMore(Map<String, Object> paraMap);
+	
+	//찜
+	boolean toggleWishlist(WishlistDTO wishlistDto);
+	boolean isWished(WishlistDTO wishlistDto);
 	
 	}
 	
-
+	
 	
 	
