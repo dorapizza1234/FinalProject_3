@@ -12,6 +12,7 @@ import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductPriceStatsDTO;
+import com.spring.app.product.domain.ProductPriceTrendDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
 import com.spring.app.product.domain.SearchKeywordDTO;
 import com.spring.app.product.domain.SearchLogDTO;
@@ -263,9 +264,10 @@ public class ProductService_imple implements ProductService {
     
     //인기검색어
     @Override
-    public void insertSearchLog(SearchLogDTO searchLogDto) {
-        pdao.insertSearchLog(searchLogDto);
+    public int insertSearchLog(SearchLogDTO searchLogDto) {
+        return pdao.insertSearchLog(searchLogDto);
     }
+    
     @Override
     public List<SearchKeywordDTO> selectPopularKeywordList() {
         return pdao.selectPopularKeywordList();
@@ -310,4 +312,22 @@ public class ProductService_imple implements ProductService {
     public boolean isWished(WishlistDTO wishlistDto) {
         return pdao.selectWishlistExists(wishlistDto) > 0;
     }
+    
+    //시세조회
+    @Override
+    public ProductPriceStatsDTO selectPriceCheckStats(Map<String, Object> paraMap) {
+        return pdao.selectPriceCheckStats(paraMap);
+    }
+
+    @Override
+    public List<ProductPriceTrendDTO> selectPriceCheckChartData(Map<String, Object> paraMap) {
+        return pdao.selectPriceCheckChartData(paraMap);
+    }
+
+    @Override
+    public List<ProductDTO> selectPriceCheckProductList(Map<String, Object> paraMap) {
+        return pdao.selectPriceCheckProductList(paraMap);
+    }
+    
+    
 }

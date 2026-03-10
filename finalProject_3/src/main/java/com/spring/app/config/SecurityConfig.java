@@ -68,32 +68,39 @@ public class SecurityConfig {
                 .accessDeniedHandler(jwtAccessDeniedHandler)            // 403 권한없음
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/chat/**").permitAll()
-                .requestMatchers("/ws-chat/**").permitAll()
-                .requestMatchers("/mypage/**").authenticated()
-                .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+            	    .requestMatchers("/api/chat/**").permitAll()
+            	    .requestMatchers("/ws-chat/**").permitAll()
+            	    .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
 
-                // 관리자 권한
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+            	    .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                // 누구나 볼 수 있는 주소 허용
-                .requestMatchers(
-                    "/",
-                    "/member/**",
-                    "/index.up",
-                    "/security/**",
-                    "/product/product_list",
-                    "/product/price_check",
-                    "/product/share",
-                    "/product/product_detail/**",
-                    "/product/product_user_profile",
-                    "/product/wordSearchShow",
-                    "/actuator/**",
-                    "/adminupload/**"
-                ).permitAll()
+            	    // 로그인 필요
+            	    .requestMatchers(
+            	        "/mypage/**",
+            	        "/product/sell",
+            	        "/product/sellRegister",
+            	        "/product/wishlist/**"
+            	    ).authenticated()
 
-                .anyRequest().authenticated()
-            )
+            	    // 공개
+            	    .requestMatchers(
+            	        "/",
+            	        "/member/**",
+            	        "/index.up",
+            	        "/security/**",
+            	        "/product/product_list",
+            	        "/product/product_list_more",
+            	        "/product/price_check",
+            	        "/product/share",
+            	        "/product/product_detail/**",
+            	        "/product/product_user_profile",
+            	        "/product/wordSearchShow",
+            	        "/actuator/**",
+            	        "/adminupload/**"
+            	    ).permitAll()
+
+            	    .anyRequest().authenticated()
+            	)
             .formLogin(form -> form
                 .loginPage("/security/login")
                 .loginProcessingUrl("/security/login/process")

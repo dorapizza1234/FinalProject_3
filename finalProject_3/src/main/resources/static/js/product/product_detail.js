@@ -1,5 +1,23 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+    function getJwt() {
+        try {
+            return JSON.parse(localStorage.getItem("JWT")) || {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function getAccessToken() {
+        const jwt = getJwt();
+        return jwt.accessToken ? jwt.accessToken : "";
+    }
+
+    function moveLogin() {
+        alert("로그인이 필요합니다.");
+        location.href = "/finalProject_3/security/login";
+    }
+
     /* =========================
        1. 대표 이미지 변경
     ========================= */
@@ -58,184 +76,196 @@ document.addEventListener("DOMContentLoaded", function () {
     })();
 
     /* =========================
-       3. 카카오 지도
+       3. 카카오 지도 + 거래희망장소 연동
     ========================= */
+    (function () {
+        const container = document.getElementById("locMapKakao");
+        const pdLocationButtons = document.querySelectorAll(".pd-location[data-lat][data-lng]");
+        const mapPlaceButtons = document.querySelectorAll(".loc-map-place[data-lat][data-lng]");
+        const locWrap = document.getElementById("locWrap");
 
-	/* =========================
-	   3. 카카오 지도 + 거래희망장소 연동
-	========================= */
-	(function () {
-	    const container = document.getElementById("locMapKakao");
-	    const pdLocationButtons = document.querySelectorAll(".pd-location[data-lat][data-lng]");
-	    const mapPlaceButtons = document.querySelectorAll(".loc-map-place[data-lat][data-lng]");
-	    const locWrap = document.getElementById("locWrap");
+        if (!container) {
+            return;
+        }
 
-	    if (!container) {
-	        return;
-	    }
+        try {
+            if (!(window.kakao && kakao.maps && kakao.maps.load)) {
+                return;
+            }
 
-	    try {
-	        if (!(window.kakao && kakao.maps && kakao.maps.load)) {
-	            return;
-	        }
+            kakao.maps.load(function () {
 
-	        kakao.maps.load(function () {
+                let defaultLat = 37.5665;
+                let defaultLng = 126.9780;
+                let defaultPlace = "위치 정보 없음";
 
-	            let defaultLat = 37.5665;
-	            let defaultLng = 126.9780;
-	            let defaultPlace = "위치 정보 없음";
+                if (mapPlaceButtons.length > 0) {
+                    defaultLat = parseFloat(mapPlaceButtons[0].dataset.lat);
+                    defaultLng = parseFloat(mapPlaceButtons[0].dataset.lng);
+                    defaultPlace = mapPlaceButtons[0].dataset.place || "거래 희망 위치";
+                }
 
-	            if (mapPlaceButtons.length > 0) {
-	                defaultLat = parseFloat(mapPlaceButtons[0].dataset.lat);
-	                defaultLng = parseFloat(mapPlaceButtons[0].dataset.lng);
-	                defaultPlace = mapPlaceButtons[0].dataset.place || "거래 희망 위치";
-	            }
+                if (isNaN(defaultLat) || isNaN(defaultLng)) {
+                    defaultLat = 37.5665;
+                    defaultLng = 126.9780;
+                }
 
-	            if (isNaN(defaultLat) || isNaN(defaultLng)) {
-	                defaultLat = 37.5665;
-	                defaultLng = 126.9780;
-	            }
+                const map = new kakao.maps.Map(container, {
+                    center: new kakao.maps.LatLng(defaultLat, defaultLng),
+                    level: 3
+                });
 
-	            const map = new kakao.maps.Map(container, {
-	                center: new kakao.maps.LatLng(defaultLat, defaultLng),
-	                level: 3
-	            });
+                const marker = new kakao.maps.Marker({
+                    position: new kakao.maps.LatLng(defaultLat, defaultLng)
+                });
+                marker.setMap(map);
 
-	            const marker = new kakao.maps.Marker({
-	                position: new kakao.maps.LatLng(defaultLat, defaultLng)
-	            });
-	            marker.setMap(map);
+                const infoWindow = new kakao.maps.InfoWindow({
+                    content: '<div style="padding:6px 10px; font-size:12px;">' + defaultPlace + '</div>'
+                });
+                infoWindow.open(map, marker);
 
-	            const infoWindow = new kakao.maps.InfoWindow({
-	                content: '<div style="padding:6px 10px; font-size:12px;">' + defaultPlace + '</div>'
-	            });
-	            infoWindow.open(map, marker);
+                function setActiveMapPlaceButton(place) {
+                    mapPlaceButtons.forEach(function (btn) {
+                        btn.classList.remove("is-active");
 
-	            function setActiveMapPlaceButton(place) {
-	                mapPlaceButtons.forEach(function (btn) {
-	                    btn.classList.remove("is-active");
+                        if ((btn.dataset.place || "") === place) {
+                            btn.classList.add("is-active");
+                        }
+                    });
+                }
 
-	                    if ((btn.dataset.place || "") === place) {
-	                        btn.classList.add("is-active");
-	                    }
-	                });
-	            }
+                function moveMapTo(lat, lng, place, shouldScroll) {
+                    if (isNaN(lat) || isNaN(lng)) {
+                        return;
+                    }
 
-	            function moveMapTo(lat, lng, place, shouldScroll) {
-	                if (isNaN(lat) || isNaN(lng)) {
-	                    return;
-	                }
+                    const position = new kakao.maps.LatLng(lat, lng);
 
-	                const position = new kakao.maps.LatLng(lat, lng);
+                    map.panTo(position);
+                    marker.setPosition(position);
 
-	                map.panTo(position);
-	                marker.setPosition(position);
+                    infoWindow.close();
+                    infoWindow.setContent('<div style="padding:6px 10px; font-size:12px;">' + place + '</div>');
+                    infoWindow.open(map, marker);
 
-	                infoWindow.close();
-	                infoWindow.setContent('<div style="padding:6px 10px; font-size:12px;">' + place + '</div>');
-	                infoWindow.open(map, marker);
+                    setActiveMapPlaceButton(place);
 
-	                setActiveMapPlaceButton(place);
+                    if (shouldScroll && locWrap) {
+                        locWrap.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+                    }
+                }
 
-	                if (shouldScroll && locWrap) {
-	                    locWrap.scrollIntoView({
-	                        behavior: "smooth",
-	                        block: "start"
-	                    });
-	                }
-	            }
+                mapPlaceButtons.forEach(function (btn) {
+                    btn.addEventListener("click", function () {
+                        const lat = parseFloat(btn.dataset.lat);
+                        const lng = parseFloat(btn.dataset.lng);
+                        const place = btn.dataset.place || "거래 희망 위치";
 
-	            mapPlaceButtons.forEach(function (btn) {
-	                btn.addEventListener("click", function () {
-	                    const lat = parseFloat(btn.dataset.lat);
-	                    const lng = parseFloat(btn.dataset.lng);
-	                    const place = btn.dataset.place || "거래 희망 위치";
+                        moveMapTo(lat, lng, place, false);
+                    });
+                });
 
-	                    moveMapTo(lat, lng, place, false);
-	                });
-	            });
+                pdLocationButtons.forEach(function (btn) {
+                    btn.addEventListener("click", function () {
+                        const lat = parseFloat(btn.dataset.lat);
+                        const lng = parseFloat(btn.dataset.lng);
+                        const place = btn.dataset.place || "거래 희망 위치";
 
-	            pdLocationButtons.forEach(function (btn) {
-	                btn.addEventListener("click", function () {
-	                    const lat = parseFloat(btn.dataset.lat);
-	                    const lng = parseFloat(btn.dataset.lng);
-	                    const place = btn.dataset.place || "거래 희망 위치";
+                        moveMapTo(lat, lng, place, true);
+                    });
+                });
 
-	                    moveMapTo(lat, lng, place, true);
-	                });
-	            });
+                setActiveMapPlaceButton(defaultPlace);
+            });
+        } catch (e) {
+            console.warn("Kakao map load failed:", e);
+        }
+    })();
 
-	            setActiveMapPlaceButton(defaultPlace);
-	        });
-	    } catch (e) {
-	        console.warn("Kakao map load failed:", e);
-	    }
-	})();
+    /* =========================
+       4. 찜 하트 기능
+    ========================= */
+    $(document).on("click", ".pd-like", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
 
+        const $btn = $(this);
+        const isLogin = String($btn.attr("data-login")) === "true";
+        const accessToken = getAccessToken();
 
-	/* =========================
-	   4. 찜 하트 기능
-	========================= */
-	$(document).on("click", ".pd-like", function (e) {
-	    e.preventDefault();
-	    e.stopPropagation();
+        if (!isLogin || !accessToken) {
+            moveLogin();
+            return;
+        }
 
-	    const $btn = $(this);
-	    const isLogin = String($btn.attr("data-login")) === "true";
+        const productNo = $btn.attr("data-product-no");
 
-	    if (!isLogin) {
-	        alert("로그인이 필요합니다.");
-	        location.href = "/finalProject_3/login/login";
-	        return;
-	    }
+        $.ajax({
+            url: "/finalProject_3/product/wishlist/toggle",
+            type: "post",
+            headers: {
+                "Authorization": "Bearer " + accessToken
+            },
+            data: { productNo: productNo },
+            dataType: "json",
+            success: function (json) {
+                if (!json.success) {
+                    alert(json.message || "찜 처리에 실패했습니다.");
+                    return;
+                }
 
-	    const productNo = $btn.attr("data-product-no");
+                const $icon = $btn.find("i");
+                const $wishCountText = $("#wishCountText");
+                let currentCount = parseInt($wishCountText.text(), 10);
 
-	    $.ajax({
-	        url: "/finalProject_3/product/wishlist/toggle",
-	        type: "post",
-	        data: { productNo: productNo },
-	        dataType: "json",
-	        success: function (json) {
-	            if (!json.success) {
-	                alert(json.message || "찜 처리에 실패했습니다.");
-	                return;
-	            }
+                if (isNaN(currentCount)) {
+                    currentCount = 0;
+                }
 
-	            const $icon = $btn.find("i");
-	            const $wishCountText = $("#wishCountText");
-	            let currentCount = parseInt($wishCountText.text(), 10);
+                if (json.wished) {
+                    $btn.addClass("is-active");
+                    $icon.removeClass("fa-regular").addClass("fa-solid");
+                    $wishCountText.text(currentCount + 1);
+                    alert("찜 성공");
+                }
+                else {
+                    $btn.removeClass("is-active");
+                    $icon.removeClass("fa-solid").addClass("fa-regular");
 
-	            if (isNaN(currentCount)) {
-	                currentCount = 0;
-	            }
+                    if (currentCount > 0) {
+                        $wishCountText.text(currentCount - 1);
+                    }
 
-	            if (json.wished) {
-	                $btn.addClass("is-active");
-	                $icon.removeClass("fa-regular").addClass("fa-solid");
-	                $wishCountText.text(currentCount + 1);
-	                alert("찜 성공");
-	            } 
-	            else {
-	                $btn.removeClass("is-active");
-	                $icon.removeClass("fa-solid").addClass("fa-regular");
+                    alert("찜 취소");
+                }
+            },
+            error: function (request, status, error) {
+                console.log("찜 AJAX ERROR");
+                console.log("status =", request.status);
+                console.log("responseText =", request.responseText);
+                console.log("error =", error);
 
-	                if (currentCount > 0) {
-	                    $wishCountText.text(currentCount - 1);
-	                }
+                if (request.status === 401) {
+                    localStorage.removeItem("JWT");
+                    alert("로그인이 필요하거나 인증이 만료되었습니다.");
+                    moveLogin();
+                    return;
+                }
 
-	                alert("찜 취소");
-	            }
-	        },
-	        error: function (request, status, error) {
-	            console.log("찜 AJAX ERROR");
-	            console.log("status =", request.status);
-	            console.log("responseText =", request.responseText);
-	            console.log("error =", error);
-	            alert("찜 처리 중 오류가 발생했습니다.");
-	        }
-	    });
-	});
+                if (request.status === 403) {
+                    alert("접근 권한이 없습니다.");
+                    return;
+                }
+
+                alert("찜 처리 중 오류가 발생했습니다.");
+            }
+        });
+    });
+
     /* =========================
        5. 등록시간 표시
     ========================= */
@@ -344,7 +374,7 @@ document.addEventListener("DOMContentLoaded", function () {
             temp = 100;
         }
 
-        let color = "#9ca3af"; // 회색
+        let color = "#9ca3af";
 
         if (temp <= 12.5) {
             color = "#9ca3af";

@@ -743,7 +743,134 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
       AND PRODUCT_NO = #{productNo}
 </select>
 
+<!-- 시세조회 -->
+<!-- 시세 요약 통계 -->
+<select id="selectPriceCheckStats"
+        parameterType="hashMap"
+        resultType="com.spring.app.product.domain.ProductPriceStatsDTO">
 
+    SELECT
+        NVL(ROUND(AVG(PRODUCTS.PRODUCT_PRICE)), 0) AS avgPrice,
+        NVL(MAX(PRODUCTS.PRODUCT_PRICE), 0) AS maxPrice,
+        NVL(MIN(PRODUCTS.PRODUCT_PRICE), 0) AS minPrice,
+        COUNT(*) AS sampleCount
+    FROM PRODUCTS
+    WHERE PRODUCTS.SALE_TYPE = '판매'
+      AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
+      AND PRODUCTS.TRADE_STATUS = '판매중'
+      AND PRODUCTS.REG_DATE >= TRUNC(SYSDATE) - 29
+      <if test="searchWord != null and searchWord != ''">
+          AND LOWER(PRODUCTS.PRODUCT_NAME) LIKE '%' || LOWER(#{searchWord}) || '%'
+      </if>
 
+</select>
+
+<!-- 최근 30일 차트 데이터 -->
+<select id="selectPriceCheckChartData"
+        parameterType="hashMap"
+        resultType="com.spring.app.product.domain.ProductPriceTrendDTO">
+
+    SELECT
+        TO_CHAR(DATE_LIST.PRICE_DATE, 'YYYY-MM-DD') AS priceDate,
+        NVL(PRICE_DATA.AVG_PRICE, 0) AS avgPrice
+    FROM
+    (
+        SELECT TRUNC(SYSDATE) - 29 + LEVEL - 1 AS PRICE_DATE
+        FROM DUAL
+        CONNECT BY LEVEL &lt;= 30
+    ) DATE_LIST
+    LEFT JOIN
+    (
+        SELECT
+            TRUNC(PRODUCTS.REG_DATE) AS PRICE_DATE,
+            ROUND(AVG(PRODUCTS.PRODUCT_PRICE)) AS AVG_PRICE
+        FROM PRODUCTS
+        WHERE PRODUCTS.SALE_TYPE = '판매'
+          AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
+          AND PRODUCTS.TRADE_STATUS = '판매중'
+          AND PRODUCTS.REG_DATE >= TRUNC(SYSDATE) - 29
+          <if test="searchWord != null and searchWord != ''">
+              AND LOWER(PRODUCTS.PRODUCT_NAME) LIKE '%' || LOWER(#{searchWord}) || '%'
+          </if>
+        GROUP BY TRUNC(PRODUCTS.REG_DATE)
+    ) PRICE_DATA
+    ON DATE_LIST.PRICE_DATE = PRICE_DATA.PRICE_DATE
+    ORDER BY DATE_LIST.PRICE_DATE ASC
+
+</select>
+
+<!-- 시세조회용 상품 목록 -->
+<select id="selectPriceCheckProductList"
+        parameterType="hashMap"
+        resultType="com.spring.app.product.domain.ProductDTO">
+
+    SELECT
+        PRODUCTS.PRODUCT_NO AS productNo,
+        PRODUCTS.PRODUCT_NAME AS productName,
+        PRODUCTS.SALE_TYPE AS saleType,
+        PRODUCTS.PRODUCT_PRICE AS productPrice,
+        PRODUCTS.TRADE_STATUS AS tradeStatus,
+        PRODUCTS.REG_DATE AS regDate,
+        PRODUCTS.VIEW_COUNT AS viewCount,
+        PRODUCTS.CATEGORY_NO AS categoryNo,
+
+        (
+            SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
+            FROM PRODUCT_MEET_LOCATION
+            WHERE PRODUCT_MEET_LOCATION.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+              AND ROWNUM = 1
+        ) AS placeName,
+
+        (
+            SELECT PRODUCT_IMAGE.IMG_URL
+            FROM PRODUCT_IMAGE
+            WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+              AND PRODUCT_IMAGE.IS_MAIN = 'Y'
+              AND ROWNUM = 1
+        ) AS imgUrl,
+
+        <choose>
+            <when test="memberEmail != null and memberEmail != ''">
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM WISHLIST
+                        WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                          AND WISHLIST.MEMBER_EMAIL = #{memberEmail}
+                    )
+                    THEN 1
+                    ELSE 0
+                END AS wished
+            </when>
+            <otherwise>
+                0 AS wished
+            </otherwise>
+        </choose>
+
+    FROM PRODUCTS
+    WHERE PRODUCTS.SALE_TYPE = '판매'
+      AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
+      AND PRODUCTS.TRADE_STATUS = '판매중'
+      AND PRODUCTS.REG_DATE >= TRUNC(SYSDATE) - 29
+      <if test="searchWord != null and searchWord != ''">
+          AND LOWER(PRODUCTS.PRODUCT_NAME) LIKE '%' || LOWER(#{searchWord}) || '%'
+      </if>
+
+    <choose>
+        <when test="sortType == 'pop'">
+            ORDER BY PRODUCTS.VIEW_COUNT DESC, PRODUCTS.REG_DATE DESC
+        </when>
+        <when test="sortType == 'low'">
+            ORDER BY PRODUCTS.PRODUCT_PRICE ASC, PRODUCTS.REG_DATE DESC
+        </when>
+        <when test="sortType == 'high'">
+            ORDER BY PRODUCTS.PRODUCT_PRICE DESC, PRODUCTS.REG_DATE DESC
+        </when>
+        <otherwise>
+            ORDER BY PRODUCTS.REG_DATE DESC
+        </otherwise>
+    </choose>
+
+</select>
 
 </mapper>
