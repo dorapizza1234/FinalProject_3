@@ -27,11 +27,18 @@ public interface AdminService {
 	 List<MemberDTO> getMemberList(int page, int size); //회원  보여주기
 
 	 List<ProductDTO> getProductList(int page, int size); //상품 리스트 보여주기
-
+	//--------------------------------------------------------------------------------
 	 int getTotalProductsCount(); //총상품개수 
 
 	 int getOnsaleProductCount(); //판매중인 상품
 	 
+	 int getReportedProductCount();
+
+	 Map<String, Object> getDailyProductStats();
+
+	 Map<String, Object> getCategoryProductStats();
+	 
+	//--------------------------------------------------------------------------------
 	 List<AdDTO> getAdList();//광고리스트 가져오기
 
 	 AdDTO getAd(Long adId);//광고 상세보여주기
@@ -51,6 +58,9 @@ public interface AdminService {
 	 List<InquiryDTO> getTop3FAQ();   // 상단고정 
 
 	 List<InquiryDTO> getAllInquiries(); //문의 모든 리스트 
+
+	 
+	
 
 
 

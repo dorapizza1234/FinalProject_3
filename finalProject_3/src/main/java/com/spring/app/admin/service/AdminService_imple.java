@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -188,10 +189,64 @@ public class AdminService_imple implements AdminService {
 	    public List<InquiryDTO> getAllInquiries() {
 	        return dao.getAllInquiries();
 	    }
-		
-		
-		
+	    
+	    //==============================================================================
+	    @Override
+	    public int getReportedProductCount() {
+	        // 신고 테이블(예: REPORTS)의 전체 건수를 조회해옵니다.
+	        return dao.getReportedProductCount();
+	    }
+
+	    @Override
+	    public Map<String, Object> getDailyProductStats() {
+	        // DB에서 최근 7일간의 [{REG_DATE: "03-05", CNT: 10}, ...] 형태의 리스트를 가져옵니다.
+	        List<Map<String, Object>> rawData = dao.getDailyProductStats();
+	        
+	        List<String> labels = new ArrayList<>();
+	        List<Long> data = new ArrayList<>();
+	        
+	        // 차트용 데이터 가공
+	        for (Map<String, Object> row : rawData) {
+	            labels.add(String.valueOf(row.get("REG_DATE"))); // 날짜 (X축)
+	            data.add(((Number) row.get("CNT")).longValue());  // 등록수 (Y축)
+	        }
+	        
+	        Map<String, Object> resultMap = new HashMap<>();
+	        resultMap.put("labels", labels);
+	        resultMap.put("data", data);
+	        
+	        return resultMap;
+	    }
+
+	    @Override
+	    public Map<String, Object> getCategoryProductStats() {
+	        // DB에서 [{CATEGORY_NAME: "패션", CNT: 35}, ...] 형태의 리스트를 가져옵니다.
+	        List<Map<String, Object>> rawData = dao.getCategoryProductStats();
+	        
+	        List<String> labels = new ArrayList<>();
+	        List<Long> data = new ArrayList<>();
+	        
+	        // 도넛 차트용 데이터 가공
+	        for (Map<String, Object> row : rawData) {
+	            labels.add(String.valueOf(row.get("CATEGORY_NAME"))); // 카테고리명
+	            data.add(((Number) row.get("CNT")).longValue());      // 비중 수치
+	        }
+	        
+	        Map<String, Object> resultMap = new HashMap<>();
+	        resultMap.put("labels", labels);
+	        resultMap.put("data", data);
+	        
+	        return resultMap;
+	    }
+	
+
+
+
 }
+		
+		
+		
+
 
 
 

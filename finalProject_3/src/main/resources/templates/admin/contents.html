@@ -10,21 +10,47 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-    body { background:#f8f9fc; font-family:Pretendard; }
+    body { background:#f8f9fc; font-family: 'Pretendard', sans-serif; color: #4a4a4a; }
     .main-content { flex:1; padding:25px; }
-    .dashboard-card { background:white; border-radius:12px; box-shadow:0 0.15rem 1.75rem rgba(58,59,69,0.1); padding:20px; margin-bottom:24px; }
+    .dashboard-card { background:white; border-radius:12px; box-shadow:0 0.15rem 1.75rem rgba(58,59,69,0.08); padding:20px; margin-bottom:24px; border: 1px solid #edf2f7; }
+    
+    /* 캘린더 스타일 */
     .calendar-table { width:100%; border-collapse:collapse; table-layout:fixed; }
-    .calendar-table th { text-align:center; padding:10px; font-size:12px; font-weight:600; background:#f8f9fc; }
-    .calendar-table td { border:1px solid #eee; height:90px; vertical-align:top; padding:6px; background:#fff; }
-    .calendar-table th:nth-child(6), .calendar-table th:nth-child(7) { color:#e74a3b; }
-    .day-num { font-size:12px; font-weight:700; margin-bottom:4px; color:#333; }
-    .ad-tag { font-size:11px; padding:3px 6px; border-radius:6px; color:white; margin-top:3px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; transition:all 0.15s ease; font-weight:500; }
-    .ad-tag:hover { transform:scale(1.03); opacity:0.9; }
-    .status-confirm { color:#1cc88a; font-weight:700; }
-    .status-wait { color:#f6c23e; font-weight:700; }
-    .status-reject { color:#e74a3b; font-weight:700; }
-    .brand-name { font-weight:600; font-size:14px; }
-    .amount { font-weight:600; color:#4e73df; }
+    .calendar-table th { text-align:center; padding:10px; font-size:12px; font-weight:700; background:#f8f9fc; color: #858796; text-transform: uppercase; }
+    .calendar-table td { border:1px solid #f1f4f8; height:100px; vertical-align:top; padding:8px; background:#fff; transition: background 0.2s; }
+    .calendar-table td:hover { background: #fdfdfd; }
+    .calendar-table th:nth-child(6), .calendar-table th:nth-child(7) { color:#e74a3b; opacity: 0.7; }
+    .day-num { font-size:12px; font-weight:800; margin-bottom:6px; color:#b7b9cc; }
+    
+    /* [수정] 광고 태그 스타일 - 쨍함 제거, 파스텔톤 대응 */
+    .ad-tag { 
+        font-size: 11px; 
+        padding: 4px 8px; 
+        border-radius: 6px; 
+        margin-top: 4px; 
+        display: block; 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+        cursor: pointer; 
+        transition: all 0.2s ease; 
+        font-weight: 700;
+        border: 1px solid transparent;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .ad-tag:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    
+    /* 상태 색상 */
+    .status-confirm { color:#1cc88a; font-weight:700; background: #e8faf4; padding: 2px 8px; border-radius: 4px; }
+    .status-wait { color:#f6c23e; font-weight:700; background: #fff9e6; padding: 2px 8px; border-radius: 4px; }
+    .status-reject { color:#e74a3b; font-weight:700; background: #fff2f1; padding: 2px 8px; border-radius: 4px; }
+    
+    .brand-name { font-weight:700; font-size:14px; color: #2e3750; }
+    .amount { font-weight:700; color:#4e73df; }
+    
+    /* 진행중 리스트 커스텀 */
+    .running-item { border: none !important; margin-bottom: 8px; border-radius: 8px !important; transition: transform 0.2s; }
+    .running-item:hover { transform: translateX(5px); }
 </style>
 </head>
 
@@ -34,16 +60,16 @@
 
 <main class="main-content">
     <div class="container-fluid">
-        <h4 class="fw-bold mb-4">광고 콘텐츠 관리</h4>
+        <h4 class="fw-bold mb-4 text-dark"><i class="bi bi-grid-1x2-fill me-2"></i>광고 콘텐츠 관리</h4>
 
         <div class="row">
             <div class="col-lg-7">
                 <div class="dashboard-card">
-                    <div class="d-flex justify-content-between mb-3">
-                        <b id="waitingText">대기중 광고 0건 있습니다</b>
-                        <select id="chartType" class="form-select form-select-sm w-auto">
-                            <option>매출</option>
-                            <option>문의</option>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <b id="waitingText" class="text-secondary">대기중 광고 로딩중...</b>
+                        <select id="chartType" class="form-select form-select-sm w-auto border-0 bg-light">
+                            <option>매출 통계</option>
+                            <option>문의 통계</option>
                         </select>
                     </div>
                     <div style="height:250px">
@@ -51,20 +77,20 @@
                     </div>
                 </div>
 
-                <div class="dashboard-card">
-                    <h6 class="fw-bold mb-3">진행중 광고</h6>
+                <div class="dashboard-card border-0 shadow-sm">
+                    <h6 class="fw-bold mb-3 text-dark">진행중 광고 현황</h6>
                     <ul class="list-group list-group-flush" id="runningList"></ul>
                 </div>
             </div>
 
             <div class="col-lg-5">
                 <div class="dashboard-card">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="moveMonth(-1)">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <button class="btn btn-sm btn-light rounded-circle" onclick="moveMonth(-1)">
                             <i class="bi bi-chevron-left"></i>
                         </button>
-                        <b th:text="${year} + '년 ' + ${month} + '월'"></b>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="moveMonth(1)">
+                        <h5 class="m-0 fw-bold text-dark" th:text="${year} + '년 ' + ${month} + '월'"></h5>
+                        <button class="btn btn-sm btn-light rounded-circle" onclick="moveMonth(1)">
                             <i class="bi bi-chevron-right"></i>
                         </button>
                     </div>
@@ -72,7 +98,7 @@
                     <table class="calendar-table">
                         <thead>
                             <tr>
-                                <th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
+                                <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -81,7 +107,11 @@
                                     <div class="day-num" th:if="${day != null}" th:text="${#temporals.day(day)}"></div>
                                     <div th:each="ad : ${adList}"
                                          th:if="${day != null and ad.status == 'CONFIRM' and day >= ad.startDate and day <= ad.endDate}">
-                                        <span class="ad-tag bg-success" th:text="${ad.brandName}"></span>
+                                        <span class="ad-tag" 
+                                              th:text="${ad.brandName}" 
+                                              th:attr="data-brand=${ad.brandName}, data-adid=${ad.adId}"
+                                              data-bs-toggle="modal" 
+                                              data-bs-target="#adDetailModal"></span>
                                     </div>
                                 </td>
                             </tr>
@@ -92,32 +122,33 @@
         </div>
 
         <div class="dashboard-card">
-            <h5 class="fw-bold mb-3">광고 리스트</h5>
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>브랜드</th><th>담당자</th><th>이메일</th><th>금액</th><th>상태</th><th>관리</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="ad : ${adList}">
-                        <td class="brand-name" th:text="${ad.brandName}"></td>
-                        <td th:text="${ad.managerName}"></td>
-                        <td th:text="${ad.companyEmail}"></td>
-                        <td class="amount" th:text="${#numbers.formatInteger(ad.amount, 3, 'COMMA')} + '원'"></td>
-                        <td>
-                            <span th:if="${ad.status == 'CONFIRM'}" class="status-confirm">CONFIRM</span>
-                            <span th:if="${ad.status == 'WAIT'}" class="status-wait">WAIT</span>
-                            <span th:if="${ad.status == 'REJECT'}" class="status-reject">REJECT</span>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#adDetailModal" th:attr="data-adid=${ad.adId}">
-                                상세보기
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <h5 class="fw-bold mb-4 text-dark">광고 신청 내역</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" style="border-top: 1px solid #eee;">
+                    <thead class="bg-light">
+                        <tr class="small text-uppercase text-muted">
+                            <th class="py-3">브랜드</th><th>담당자</th><th>이메일</th><th>금액</th><th>상태</th><th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="ad : ${adList}">
+                            <td class="brand-name py-3" th:text="${ad.brandName}"></td>
+                            <td th:text="${ad.managerName}"></td>
+                            <td class="text-muted" th:text="${ad.companyEmail}"></td>
+                            <td class="amount" th:text="${#numbers.formatInteger(ad.amount, 3, 'COMMA')} + '원'"></td>
+                            <td>
+                                <span th:class="${ad.status == 'CONFIRM' ? 'status-confirm' : (ad.status == 'WAIT' ? 'status-wait' : 'status-reject')}" 
+                                      th:text="${ad.status}"></span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-dark px-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#adDetailModal" th:attr="data-adid=${ad.adId}">
+                                    상세보기
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </main>
@@ -132,7 +163,21 @@
     let month = /*[[${month}]]*/ 0;
     let selectedAdId = null;
 
-    // 월 이동 함수
+    // [중요] 세련된 파스텔톤 색상 계산기
+    function getBrandColor(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const h = Math.abs(hash) % 360;
+        // HSL: 색상은 유지하되, 채도(S)를 낮추고 밝기(L)를 높여 부드럽게 처리
+        return {
+            bg: `hsl(${h}, 45%, 94%)`,      // 아주 연한 배경
+            border: `hsl(${h}, 40%, 85%)`,  // 살짝 진한 테두리
+            text: `hsl(${h}, 50%, 35%)`     // 가독성을 위해 진한 글자색
+        };
+    }
+
     function moveMonth(diff){
         month += diff;
         if(month < 1){ month = 12; year--; }
@@ -140,100 +185,131 @@
         location.href = ctx + "admin/contents?year=" + year + "&month=" + month;
     }
 
-    // 초기 세팅
+    function loadAdDetail(adId) {
+        selectedAdId = adId;
+        fetch(ctx + "admin/ad/detail?adId=" + selectedAdId)
+        .then(res => res.json())
+        .then(data => {
+            if(!data.ad) return;
+            const ad = data.ad;
+            
+            // 모달 데이터 채우기 (디자인 파일의 ID와 매칭 확인 필요)
+            document.getElementById("brandName").innerText = ad.brandName;
+            document.getElementById("managerName").innerText = ad.managerName;
+            document.getElementById("phone").innerText = ad.phone;
+            document.getElementById("companyEmail").innerText = ad.companyEmail;
+            document.getElementById("targetEmail").value = ad.companyEmail;
+            document.getElementById("content").innerText = ad.content;
+            document.getElementById("period").innerText = ad.startDate + " ~ " + ad.endDate;
+            document.getElementById("amount").innerText = Number(ad.amount).toLocaleString();
+            document.getElementById("durationWeeks").innerText = ad.durationWeeks;
+
+            const adImage = document.getElementById("adImage");
+            const downloadBtn = document.getElementById("downloadBtn");
+
+            if(ad.filePath) {
+                adImage.src = ctx + "upload/" + ad.filePath;
+                adImage.style.display = "block";
+                downloadBtn.href = ctx + "admin/ad/download?adId=" + selectedAdId;
+            } else {
+                adImage.src = "";
+                adImage.style.display = "none";
+            }
+
+            let conflictBox = document.getElementById("conflictMessage");
+            if(data.conflictAds && data.conflictAds.length > 0){
+                let names = data.conflictAds.map(a => a.brandName).join(", ");
+                conflictBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i> 현재 <b>${names}</b> 광고와 일정이 겹칩니다.`;
+                conflictBox.classList.remove("d-none");
+            } else {
+                conflictBox.classList.add("d-none");
+            }
+        });
+    }
+
     document.addEventListener("DOMContentLoaded", function(){
-        // 대기 광고 건수 표시
+        // 1. 대기 건수
         let waiting = ads.filter(a => a.status === 'WAIT').length;
-        document.getElementById("waitingText").innerText = "대기중 광고 " + waiting + "건 있습니다";
+        document.getElementById("waitingText").innerHTML = `<span class="badge bg-warning text-dark me-2">${waiting}</span> 대기 중인 신청이 있습니다.`;
 
-        // 진행중 리스트 렌더링
+        // 2. 진행중 리스트 (파스텔 스타일 적용)
         const runningList = document.getElementById("runningList");
-        runningList.innerHTML = ads.filter(a => a.status === 'CONFIRM').map(ad => `
-            <li class="list-group-item">
-                <b>${ad.brandName}</b><br>
-                <small>${ad.startDate} ~ ${ad.endDate}</small>
-            </li>
-        `).join("");
+        runningList.innerHTML = ads.filter(a => a.status === 'CONFIRM').map(ad => {
+            const colors = getBrandColor(ad.brandName);
+            return `
+                <li class="list-group-item running-item p-3 mb-2 shadow-sm border-start" style="border-left: 6px solid ${colors.border} !important; background-color: ${colors.bg};">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <b style="color: ${colors.text}">${ad.brandName}</b>
+                        <span class="badge rounded-pill bg-white text-dark small border shadow-sm">진행중</span>
+                    </div>
+                    <small class="text-muted d-block mt-1"><i class="bi bi-calendar3 me-1"></i>${ad.startDate} ~ ${ad.endDate}</small>
+                </li>
+            `;
+        }).join("");
 
-        // 상세보기 이벤트 리스너
-        document.querySelectorAll("[data-adid]").forEach(btn => {
-            btn.addEventListener("click", function(){
-                selectedAdId = this.dataset.adid;
-                
-                fetch(ctx + "admin/ad/detail?adId=" + selectedAdId)
-                .then(res => res.json())
-                .then(data => {
-                    if(!data.ad) return;
-                    const ad = data.ad;
-
-                    // 기본 정보 매핑
-                    document.getElementById("brandName").innerText = ad.brandName;
-                    document.getElementById("managerName").innerText = ad.managerName;
-                    document.getElementById("phone").innerText = ad.phone;
-                    document.getElementById("content").innerText = ad.content;
-                    document.getElementById("period").innerText = ad.startDate + " ~ " + ad.endDate;
-
-                    // 중요: 광고 이미지 및 다운로드 경로 처리
-                    const adImage = document.getElementById("adImage");
-                    const downloadBtn = document.getElementById("downloadBtn");
-
-                    if(ad.filePath) {
-                        let imgPath = ctx + "upload/" + ad.filePath;
-                        if(adImage) { adImage.src = imgPath; adImage.style.display = "block"; }
-                        if(downloadBtn) downloadBtn.href = ctx + "admin/ad/download?adId=" + selectedAdId;
-                    } else {
-                        if(adImage) { adImage.src = ""; adImage.style.display = "none"; }
-                        if(downloadBtn) downloadBtn.href = "#";
-                    }
-
-                    // 충돌 메시지 처리
-                    let conflictBox = document.getElementById("conflictMessage");
-                    if(data.conflictAds && data.conflictAds.length > 0){
-                        let names = data.conflictAds.map(a => a.brandName).join(", ");
-                        conflictBox.innerText = "⚠ " + names + " 광고와 기간이 충돌합니다.";
-                    } else {
-                        conflictBox.innerText = "";
-                    }
-                });
-            });
+        // 3. 달력 태그 색상 적용
+        document.querySelectorAll('.ad-tag').forEach(tag => {
+            const brandName = tag.getAttribute('data-brand');
+            if(brandName) {
+                const colors = getBrandColor(brandName);
+                tag.style.backgroundColor = colors.bg;
+                tag.style.color = colors.text;
+                tag.style.borderColor = colors.border;
+            }
         });
 
-        // 차트 초기화
+        // 4. 모달 트리거
+        document.addEventListener("click", function(e) {
+            const target = e.target.closest("[data-adid]");
+            if (target) loadAdDetail(target.dataset.adid);
+        });
+
+        // 5. 차트 (색상 연하게 조정)
         const chartCtx = document.getElementById("mainChart");
         new Chart(chartCtx, {
             type:'line',
             data:{
                 labels:['10월','11월','12월','1월','2월','3월'],
                 datasets:[{
-                    data:[30,55,40,70,85,60],
+                    label: '월별 매출액',
+                    data:[320, 550, 410, 720, 890, 650],
                     borderColor:'#4e73df',
                     backgroundColor:'rgba(78,115,223,0.05)',
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#4e73df',
                     fill:true,
-                    tension:0.4
+                    tension:0.35
                 }]
             },
-            options:{ maintainAspectRatio:false }
+            options:{ 
+                maintainAspectRatio:false,
+                plugins: { legend: { display: false } },
+                scales: { y: { grid: { color: '#f1f1f1' } }, x: { grid: { display: false } } }
+            }
         });
     });
 
-    // 승인/반려 함수 (기존과 동일)
+    // 승인/반려 로직 (기존 유지)
     function approveAd(){
-        if(!selectedAdId) return alert("광고 선택 안됨");
+        if(!selectedAdId) return alert("광고를 선택해주세요.");
+        if(!confirm("광고를 승인하고 게시 확정하시겠습니까?")) return;
         fetch(ctx + "admin/ad/approve", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: "adId=" + selectedAdId
-        }).then(() => { alert("광고 승인 완료"); location.reload(); });
+        }).then(() => { location.reload(); });
     }
 
     function rejectAd(){
-        if(!selectedAdId) return alert("광고 선택 안됨");
+        if(!selectedAdId) return alert("광고를 선택해주세요.");
         let reason = document.getElementById("mailContent").value;
+        if(!reason) return alert("반려 사유를 메일 내용에 입력해주세요.");
+        if(!confirm("반려 처리하시겠습니까?")) return;
         fetch(ctx + "admin/ad/reject", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: "adId=" + selectedAdId + "&reason=" + encodeURIComponent(reason)
-        }).then(() => { alert("광고 반려 완료"); location.reload(); });
+        }).then(() => { location.reload(); });
     }
 </script>
 </body>

@@ -8,17 +8,25 @@
     <link rel="stylesheet" th:href="@{/css/admin/sideBar.css}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .main-content { padding: 30px; background-color: #f8f9fa; min-height: 100vh; width: 100%; }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; padding: 20px; }
+        body { font-family: 'Pretendard', sans-serif; color: #333; }
+        .main-content { padding: 30px; background-color: #f8f9fc; min-height: 100vh; width: 100%; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 0.15rem 1.75rem rgba(58, 59, 69, 0.1); margin-bottom: 20px; padding: 20px; background: white; }
         .chart-wrapper { position: relative; width: 100%; }
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        
+        /* 거래 상태 뱃지 */
+        .status-badge { padding: 5px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; }
         .onsale { background-color: #e6fcf5; color: #0ca678; }
         .reserve { background-color: #fff4e6; color: #f76707; }
         .soldout { background-color: #f1f3f5; color: #868e96; }
-        .table { background: white; border-radius: 10px; overflow: hidden; }
-        .table thead { background-color: #f1f3f5; }
-        .bg-light-warning { background-color: #fffcf0; }
-        .bg-light-danger { background-color: #fff5f5; }
+        
+        /* 테이블 스타일 */
+        .table { background: white; border-radius: 10px; }
+        .table thead th { background-color: #f8f9fc; color: #858796; font-size: 0.8rem; text-transform: uppercase; border-bottom: 1px solid #e3e6f0; }
+        .bg-light-warning { background-color: #fffcf0 !important; }
+        .bg-light-danger { background-color: #fff5f5 !important; }
+        
+        /* 의심 상품 행 강조 */
+        .table-warning-subtle { background-color: #fff9db !important; }
     </style>
 </head>
 <body class="d-flex">
@@ -26,12 +34,12 @@
     <aside th:replace="~{admin/admin_sidebar :: adminSidebar}"></aside>
 
     <main class="main-content">
-        <h4 class="mb-4 fw-bold">📦 상품 관리 대시보드</h4>
+        <h4 class="mb-4 fw-bold text-gray-800">📦 상품 관리 대시보드</h4>
 
         <div class="row g-3 mb-4">
             <div class="col-md-5">
                 <div class="card h-100">
-                    <div class="fw-bold mb-3 small">📈 일별 상품 등록 현황</div>
+                    <div class="fw-bold mb-3 small text-primary text-uppercase">📈 일별 상품 등록 현황 (최근 7일)</div>
                     <div class="chart-wrapper" style="height: 220px;">
                         <canvas id="productChart"></canvas>
                     </div>
@@ -40,7 +48,7 @@
             
             <div class="col-md-3">
                 <div class="card h-100 text-center">
-                    <div class="fw-bold mb-3 small text-start">🏷️ 카테고리별 비중</div>
+                    <div class="fw-bold mb-3 small text-start text-success text-uppercase">🏷️ 카테고리별 비중</div>
                     <div class="chart-wrapper" style="height: 220px;">
                         <canvas id="categoryChart"></canvas>
                     </div>
@@ -49,55 +57,55 @@
             
             <div class="col-md-4">
                 <div class="d-flex flex-column gap-2 h-100">
-                    <div class="card flex-fill py-2 text-center bg-white border-0">
+                    <div class="card flex-fill py-2 text-center border-0 shadow-sm">
                         <div class="text-muted small">총 등록 상품</div>
-                        <div class="h5 fw-bold mb-0" th:text="${totalProducts + '건'}">0건</div>
+                        <div class="h5 fw-bold mb-0 text-dark" th:text="${totalProducts + '건'}">0건</div>
                     </div>
-                    <div class="card flex-fill py-2 text-center border-warning-subtle bg-light-warning">
+                    <div class="card flex-fill py-2 text-center border-left-warning bg-light-warning shadow-sm">
                         <div class="text-muted small">금지어 의심</div>
                         <div class="h5 fw-bold mb-0 text-warning" 
                              th:text="${#lists.toList(productList).?[suspect == true].size() + '건'}">0건</div>
                     </div>
-                    <div class="card flex-fill py-2 text-center border-danger-subtle bg-light-danger">
+                    <div class="card flex-fill py-2 text-center border-left-danger bg-light-danger shadow-sm">
                         <div class="text-muted small">신고된 상품</div>
                         <div class="h5 fw-bold mb-0 text-danger" th:text="${reportCount + '건'}">0건</div>
                     </div>
-                    <div class="card flex-fill py-2 text-center border-0 bg-white text-success">
-                        <div class="text-muted small">현재 판매중</div>
-                        <div class="h5 fw-bold mb-0" th:text="${onsaleCount + '건'}">0건</div>
+                    <div class="card flex-fill py-2 text-center border-left-success bg-white shadow-sm">
+                        <div class="text-muted small text-success">현재 판매중</div>
+                        <div class="h5 fw-bold mb-0 text-success" th:text="${onsaleCount + '건'}">0건</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card py-3 mb-3">
-            <div class="d-flex justify-content-between align-items-center">
+        <div class="card py-3 mb-3 border-0 shadow-sm">
+            <form action="/admin/product" method="get" class="d-flex justify-content-between align-items-center">
                 <div class="d-flex gap-2">
-                    <select class="form-select form-select-sm" style="width: 120px;">
-                        <option value="">전체상태</option>
+                    <select name="status" class="form-select form-select-sm" style="width: 130px;">
+                        <option value="">전체 상태</option>
                         <option value="판매중">판매중</option>
                         <option value="예약중">예약중</option>
                         <option value="판매완료">판매완료</option>
                     </select>
-                    <input type="text" class="form-control form-control-sm" placeholder="상품명 또는 판매자 검색" style="width: 250px;">
-                    <button class="btn btn-dark btn-sm">검색</button>
+                    <input type="text" name="keyword" class="form-control form-control-sm" placeholder="상품명 또는 판매자 검색" style="width: 250px;">
+                    <button type="submit" class="btn btn-dark btn-sm px-3">검색</button>
                 </div>
                 <div class="text-muted small">
-                    조회 결과 : <span class="fw-bold" th:text="${#lists.size(productList)}">0</span>개
+                    조회 결과 : <span class="fw-bold text-primary" th:text="${totalProducts}">0</span>개
                 </div>
-            </div>
+            </form>
         </div>
 
-        <div class="card p-0 overflow-hidden">
+        <div class="card p-0 overflow-hidden border-0 shadow-sm">
             <table class="table table-hover mb-0 text-center align-middle">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">번호</th>
+                        <th style="width: 70px;">번호</th>
                         <th>판매자</th>
                         <th class="text-start">상품명</th>
                         <th>카테고리</th>
                         <th>판매가격</th>
-                        <th>상태</th>
+                        <th>거래상태</th>
                         <th>관리</th>
                     </tr>
                 </thead>
@@ -106,15 +114,15 @@
                         <td colspan="7" class="py-5 text-muted">등록된 상품이 없습니다.</td>
                     </tr>
                     <tr th:each="product, stat : ${productList}" th:classappend="${product.suspect ? 'table-warning-subtle' : ''}">
-                        <td th:text="${(currentPage - 1) * size + stat.count}">1</td>
-                        <td><small th:text="${product.sellerEmail}">email@domain.com</small></td>
-                        <td class="text-start fw-bold">
-                            <span th:text="${product.productName}">상품명</span>
+                        <td class="text-muted small" th:text="${(currentPage - 1) * size + stat.count}">1</td>
+                        <td><small class="fw-bold" th:text="${product.sellerEmail}">email@domain.com</small></td>
+                        <td class="text-start">
+                            <span class="fw-bold" th:text="${product.productName}">상품명</span>
                             <span th:if="${product.suspect}" class="badge bg-danger ms-1" 
-                                  style="font-size: 0.7rem; vertical-align: middle;">⚠️ 의심</span>
+                                  style="font-size: 0.65rem; padding: 2px 5px;">⚠️ 의심</span>
                         </td>
-                        <td><small class="text-muted" th:text="${product.categoryName}">카테고리</small></td>
-                        <td th:text="${product.productPrice > 0 ? #numbers.formatInteger(product.productPrice, 0, 'COMMA') + '원' : '나눔'}">0원</td>
+                        <td><span class="badge bg-light text-dark fw-normal" th:text="${product.categoryName}">카테고리</span></td>
+                        <td class="fw-bold text-primary" th:text="${product.productPrice > 0 ? #numbers.formatInteger(product.productPrice, 0, 'COMMA') + '원' : '무료나눔'}">0원</td>
                         <td>
                             <span class="status-badge" 
                                   th:classappend="${product.tradeStatus == '예약중' ? 'reserve' : (product.tradeStatus == '판매완료' ? 'soldout' : 'onsale')}"
@@ -122,7 +130,7 @@
                         </td>
                         <td>
                             <a th:href="@{/admin/productDetail(productNo=${product.productNo})}" 
-                               class="btn btn-outline-secondary btn-sm">상세보기</a>
+                               class="btn btn-sm btn-outline-dark rounded-pill px-3">상세보기</a>
                         </td>
                     </tr>
                 </tbody>
@@ -132,64 +140,74 @@
         <nav th:if="${totalPages > 0}" class="mt-4">
             <ul class="pagination justify-content-center pagination-sm">
                 <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
-                    <a class="page-link" th:href="@{/admin/product(page=${currentPage - 1}, size=${size})}">이전</a>
+                    <a class="page-link shadow-none" th:href="@{/admin/product(page=${currentPage - 1}, size=${size})}">이전</a>
                 </li>
                 <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
                     th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link" th:href="@{/admin/product(page=${i}, size=${size})}" th:text="${i}">1</a>
+                    <a class="page-link shadow-none" th:href="@{/admin/product(page=${i}, size=${size})}" th:text="${i}">1</a>
                 </li>
                 <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
-                    <a class="page-link" th:href="@{/admin/product(page=${currentPage + 1}, size=${size})}">다음</a>
+                    <a class="page-link shadow-none" th:href="@{/admin/product(page=${currentPage + 1}, size=${size})}">다음</a>
                 </li>
             </ul>
         </nav>
     </main>
 
     <script th:inline="javascript">
-        // 1. 일별 등록 현황 (라인 차트)
-        const ctx = document.getElementById('productChart').getContext('2d');
-        const chartData = /*[[${chartData}]]*/ [5, 10, 8, 15, 20, 12, 7]; // 샘플 데이터
+        // --- 1. 라인 차트: 일별 상품 등록 현황 ---
+        const dailyLabels = /*[[${dailyLabels}]]*/ ['월', '화', '수', '목', '금', '토', '일'];
+        const dailyData = /*[[${dailyData}]]*/ [0, 0, 0, 0, 0, 0, 0];
         
+        const ctx = document.getElementById('productChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['월', '화', '수', '목', '금', '토', '일'],
+                labels: dailyLabels,
                 datasets: [{
                     label: '등록 건수',
-                    data: chartData,
-                    borderColor: '#495057',
-                    backgroundColor: 'rgba(73, 80, 87, 0.1)',
+                    data: dailyData,
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
                     fill: true,
-                    tension: 0.3
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#4e73df'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                scales: { 
+                    y: { beginAtZero: true, grid: { display: true, drawBorder: false } },
+                    x: { grid: { display: false } }
+                }
             }
         });
 
-        // 2. 카테고리별 비중 (도넛 차트)
+        // --- 2. 도넛 차트: 카테고리별 비중 ---
+        const categoryLabels = /*[[${categoryLabels}]]*/ ['데이터 없음'];
+        const categoryData = /*[[${categoryData}]]*/ [1];
+
         const catCtx = document.getElementById('categoryChart').getContext('2d');
         new Chart(catCtx, {
             type: 'doughnut',
             data: {
-                labels: ['패션', '가전', '육아', '취미', '기타'],
+                labels: categoryLabels,
                 datasets: [{
-                    data: [30, 20, 15, 10, 25], // 샘플 데이터
-                    backgroundColor: ['#ff6b6b', '#4dabf7', '#ffd43b', '#63e6be', '#be4bdb'],
-                    borderWidth: 0
+                    data: categoryData,
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69'],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, padding: 15 } }
                 },
-                cutout: '70%'
+                cutout: '75%'
             }
         });
     </script>

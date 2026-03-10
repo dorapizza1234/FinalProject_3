@@ -269,7 +269,25 @@
         ORDER BY created_at DESC
     </select>
 		
-		
+		<select id="getReportedProductCount" resultType="int">
+    SELECT COUNT(*) FROM REPORTS
+</select>
+
+<select id="getDailyProductStats" resultType="map">
+    SELECT TO_CHAR(REG_DATE, 'MM-DD') AS REG_DATE, COUNT(*) AS CNT
+    FROM PRODUCTS
+    WHERE REG_DATE >= SYSDATE - 7
+    GROUP BY TO_CHAR(REG_DATE, 'MM-DD')
+    ORDER BY REG_DATE ASC
+</select>
+
+<select id="getCategoryProductStats" resultType="map">
+    SELECT C.CATEGORY_NAME, COUNT(P.PRODUCT_NO) AS CNT
+    FROM CATEGORY C
+    LEFT JOIN PRODUCTS P ON C.CATEGORY_NO = P.CATEGORY_NO
+    GROUP BY C.CATEGORY_NAME
+    ORDER BY CNT DESC
+</select>
 		
 		
 		

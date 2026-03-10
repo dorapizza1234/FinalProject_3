@@ -52,6 +52,10 @@ public interface AdminDAO {
 	//------------------------------------------------------------------
 	List<InquiryDTO> getTop3FAQ(); //상단고정 자주묻는질문 가져오기
 	List<InquiryDTO> getAllInquiries(); //모든 질문 
+	int getReportedProductCount();
+	List<Map<String, Object>> getDailyProductStats();
+	List<Map<String, Object>> getCategoryProductStats();
+
 	
 
 }

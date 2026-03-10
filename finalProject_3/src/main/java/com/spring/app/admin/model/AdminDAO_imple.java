@@ -144,6 +144,27 @@ public class AdminDAO_imple implements AdminDAO {
 	   
 	    return sqlsession.selectList("admin.getAllInquiries");
 	}
+
+
+    @Override
+    public int getReportedProductCount() {
+        // 신고된 상품의 총 개수(숫자 하나)를 가져옵니다.
+        return sqlsession.selectOne("admin.getReportedProductCount");
+    }
+
+    @Override
+    public List<Map<String, Object>> getDailyProductStats() {
+        // 최근 7일간의 날짜별 등록수를 List<Map> 형태로 가져옵니다.
+        // 결과 예시: [{REG_DATE: '03-08', CNT: 5}, {REG_DATE: '03-09', CNT: 12}]
+        return sqlsession.selectList("admin.getDailyProductStats");
+    }
+
+    @Override
+    public List<Map<String, Object>> getCategoryProductStats() {
+        // 카테고리별 상품 비중을 List<Map> 형태로 가져옵니다.
+        // 결과 예시: [{CATEGORY_NAME: '패션', CNT: 20}, {CATEGORY_NAME: '가전', CNT: 15}]
+        return sqlsession.selectList("admin.getCategoryProductStats");
+    }
 }
 
 
