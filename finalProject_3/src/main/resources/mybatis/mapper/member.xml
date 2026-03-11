@@ -38,7 +38,7 @@
 	        #{gender, jdbcType=VARCHAR}, 
 	        #{birthDate, jdbcType=VARCHAR}, 
 	        #{postcode},           #{address},            #{detailaddress},      #{extraaddress, jdbcType=VARCHAR},
-	        SYSDATE,               0,                     0,                     0,                     0,                     36.5,                  #{profileImg, jdbcType=VARCHAR}
+	        SYSDATE,               DEFAULT,                     DEFAULT,                     DEFAULT,                     DEFAULT,                     DEFAULT,                  #{profileImg, jdbcType=VARCHAR}
 	    )
 	</insert>
 
