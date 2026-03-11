@@ -856,20 +856,20 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
           AND LOWER(PRODUCTS.PRODUCT_NAME) LIKE '%' || LOWER(#{searchWord}) || '%'
       </if>
 
-    <choose>
-        <when test="sortType == 'pop'">
-            ORDER BY PRODUCTS.VIEW_COUNT DESC, PRODUCTS.REG_DATE DESC
-        </when>
-        <when test="sortType == 'low'">
-            ORDER BY PRODUCTS.PRODUCT_PRICE ASC, PRODUCTS.REG_DATE DESC
-        </when>
-        <when test="sortType == 'high'">
-            ORDER BY PRODUCTS.PRODUCT_PRICE DESC, PRODUCTS.REG_DATE DESC
-        </when>
-        <otherwise>
-            ORDER BY PRODUCTS.REG_DATE DESC
-        </otherwise>
-    </choose>
+   <choose>
+    <when test="sortType == 'view'">
+        ORDER BY PRODUCTS.VIEW_COUNT DESC, PRODUCTS.REG_DATE DESC
+    </when>
+    <when test="sortType == 'priceAsc'">
+        ORDER BY PRODUCTS.PRODUCT_PRICE ASC, PRODUCTS.REG_DATE DESC
+    </when>
+    <when test="sortType == 'priceDesc'">
+        ORDER BY PRODUCTS.PRODUCT_PRICE DESC, PRODUCTS.REG_DATE DESC
+    </when>
+    <otherwise>
+        ORDER BY PRODUCTS.REG_DATE DESC
+    </otherwise>
+</choose>
 
 </select>
 
