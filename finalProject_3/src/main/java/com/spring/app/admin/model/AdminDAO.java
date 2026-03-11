@@ -1,9 +1,13 @@
 package com.spring.app.admin.model;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import com.spring.app.admin.ad.domain.AdDTO;
+import com.spring.app.admin.domain.AdDTO;
+import com.spring.app.admin.domain.InquiryDTO;
+import com.spring.app.admin.domain.SearchDTO;
+import com.spring.app.admin.domain.StatDTO;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.security.domain.MemberDTO;
 public interface AdminDAO {
@@ -32,6 +36,8 @@ public interface AdminDAO {
 	List<AdDTO> selectAdList();//상품리스트 가져오기
 	
 	int getOnsaleProductCount(); //판매중인 상품만 가져오기
+	
+	List<Map<String, Object>> getCategoryProductStats();
 	  //-------------------------------------------------------------------------
 	
 	AdDTO getAd(Long adId);
@@ -40,7 +46,20 @@ public interface AdminDAO {
 
 	void rejectAd(Long adId, String reason);
 	 
-	int checkAdConflict(String startDate, String endDate); //예정 광고 있는지확인
+	List<AdDTO> getConflictAds(Map<String, Object> map); //예정 광고 있는지확인
 	 //-------------------------------------------------------------------------
+	List<StatDTO> getUserStats(String type);
+	List<SearchDTO> getPopularKeywords();//인기검색어 가져오기
+	
+	//------------------------------------------------------------------
+	List<InquiryDTO> getTop3FAQ(); //상단고정 자주묻는질문 가져오기
+	List<InquiryDTO> getAllInquiries(); //모든 질문 
+	int getReportedProductCount();
+	List<Map<String, Object>> getDailyProductStats();
+	List<Map<String, Object>> getCategoryProdusctStats();
+	MemberDTO getMemberById(String loginId);
+	
+
+	
 
 }

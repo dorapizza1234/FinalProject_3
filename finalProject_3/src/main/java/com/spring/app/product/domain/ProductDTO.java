@@ -69,6 +69,7 @@ public class ProductDTO {
     /* ============================= */
     private Integer wishCount;
     private boolean wished;
-    
+    // 관리자 페이지 전용 의심 플래그
+    private boolean suspect;
 
 }

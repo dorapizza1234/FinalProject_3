@@ -1,5 +1,7 @@
 package com.spring.app.product.service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +12,7 @@ import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductPriceStatsDTO;
+import com.spring.app.product.domain.ProductPriceTrendDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
 import com.spring.app.product.domain.SearchKeywordDTO;
 import com.spring.app.product.domain.SearchLogDTO;
@@ -109,7 +112,6 @@ public class ProductService_imple implements ProductService {
 
     
    // 상품상세페이지 (전체 조회: 기본 + 이미지 + 옵션 + 위치)
-   
     @Override
     @Transactional(readOnly = true)
     public ProductDTO getProductDetailFull(int productNo) {
@@ -130,6 +132,104 @@ public class ProductService_imple implements ProductService {
         productDTO.setMeetLocationList(pdao.selectMeetLocation(productNo)); 
 
         return productDTO;
+    }
+    
+    // 비슷한 거래물품
+    @Override
+    public List<ProductDTO> selectSimilarProducts(ProductDTO productDto) {
+
+        List<ProductDTO> similarProductList = new ArrayList<>();
+
+        if (productDto == null) {
+            return similarProductList;
+        }
+
+        String productName = productDto.getProductName();
+        String keyword1 = "";
+        String keyword2 = "";
+        String keyword3 = "";
+
+        if (productName != null && !"".equals(productName.trim())) {
+
+            String cleanedName = productName.replaceAll("\\[|\\]|\\(|\\)|,", " ").trim();
+            String[] wordArr = cleanedName.split("\\s+");
+
+            List<String> keywordList = new ArrayList<>();
+
+            for (String word : wordArr) {
+
+                if (word == null || "".equals(word.trim())) {
+                    continue;
+                }
+
+                String trimWord = word.trim();
+
+                if ("급처".equals(trimWord) ||
+                    "판매".equals(trimWord) ||
+                    "정리".equals(trimWord) ||
+                    "새상품".equals(trimWord) ||
+                    "상태좋음".equals(trimWord) ||
+                    "상태최상".equals(trimWord)) {
+                    continue;
+                }
+
+                keywordList.add(trimWord);
+
+                if (keywordList.size() == 3) {
+                    break;
+                }
+            }
+
+            if (keywordList.size() > 0) {
+                keyword1 = keywordList.get(0);
+            }
+            if (keywordList.size() > 1) {
+                keyword2 = keywordList.get(1);
+            }
+            if (keywordList.size() > 2) {
+                keyword3 = keywordList.get(2);
+            }
+        }
+
+        Map<String, Object> paraMap = new LinkedHashMap<String, Object>();
+        paraMap.put("productNo", productDto.getProductNo());
+        paraMap.put("categoryNo", productDto.getCategoryNo());
+        paraMap.put("productPrice", productDto.getProductPrice());
+        paraMap.put("keyword1", keyword1);
+        paraMap.put("keyword2", keyword2);
+        paraMap.put("keyword3", keyword3);
+
+        similarProductList = pdao.selectSimilarProducts(paraMap);
+
+        if (similarProductList == null) {
+            similarProductList = new ArrayList<>();
+        }
+
+        if (similarProductList.size() < 12) {
+
+            List<Integer> excludeProductNoList = new ArrayList<>();
+            excludeProductNoList.add(productDto.getProductNo());
+
+            for (ProductDTO dto : similarProductList) {
+                excludeProductNoList.add(dto.getProductNo());
+            }
+
+            paraMap.put("excludeProductNoList", excludeProductNoList);
+
+            List<ProductDTO> fallbackList = pdao.selectSimilarProductsFallback(paraMap);
+
+            if (fallbackList != null && !fallbackList.isEmpty()) {
+                for (ProductDTO dto : fallbackList) {
+                    similarProductList.add(dto);
+
+                    if (similarProductList.size() == 12) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return similarProductList;
     }
     
     //검색
@@ -164,9 +264,10 @@ public class ProductService_imple implements ProductService {
     
     //인기검색어
     @Override
-    public void insertSearchLog(SearchLogDTO searchLogDto) {
-        pdao.insertSearchLog(searchLogDto);
+    public int insertSearchLog(SearchLogDTO searchLogDto) {
+        return pdao.insertSearchLog(searchLogDto);
     }
+    
     @Override
     public List<SearchKeywordDTO> selectPopularKeywordList() {
         return pdao.selectPopularKeywordList();
@@ -211,4 +312,22 @@ public class ProductService_imple implements ProductService {
     public boolean isWished(WishlistDTO wishlistDto) {
         return pdao.selectWishlistExists(wishlistDto) > 0;
     }
+    
+    //시세조회
+    @Override
+    public ProductPriceStatsDTO selectPriceCheckStats(Map<String, Object> paraMap) {
+        return pdao.selectPriceCheckStats(paraMap);
+    }
+
+    @Override
+    public List<ProductPriceTrendDTO> selectPriceCheckChartData(Map<String, Object> paraMap) {
+        return pdao.selectPriceCheckChartData(paraMap);
+    }
+
+    @Override
+    public List<ProductDTO> selectPriceCheckProductList(Map<String, Object> paraMap) {
+        return pdao.selectPriceCheckProductList(paraMap);
+    }
+    
+    
 }

@@ -5,16 +5,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.spring.app.admin.ad.domain.AdDTO;
+import com.spring.app.admin.domain.AdDTO;
+import com.spring.app.admin.domain.InquiryDTO;
+import com.spring.app.admin.domain.SearchDTO;
+import com.spring.app.admin.domain.StatDTO;
 import com.spring.app.admin.model.AdminDAO;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.security.domain.MemberDTO;
@@ -24,31 +30,55 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AdminService_imple implements AdminService {
-
+	
 	private final AdminDAO dao;
+	
+	//광고 페이지 회원정보 가져오기
+		@Override
+		public MemberDTO getMemberById(String loginId) {
+		
+		return dao.getMemberById(loginId);
+		}
+		
+    //광고 insert하기 
+	@Value("${file.adminupload-dir}")
+	private String adminuploadDir;
 
-	@Value("${file.upload-dir}")
-	private String uploadDir;
-
-	//광고 신청 insert하기
 	@Override
 	public int registerAd(AdDTO adDto) {
-		MultipartFile attachment = adDto.getAttachment();
-		if (attachment != null && !attachment.isEmpty()) {
-			try {
-				Path uploadPath = Paths.get(uploadDir);
-				if (!Files.exists(uploadPath)) {
-					Files.createDirectories(uploadPath);
-				}
-				String savedName = UUID.randomUUID().toString() + "_" + attachment.getOriginalFilename();
-				Files.copy(attachment.getInputStream(), uploadPath.resolve(savedName), StandardCopyOption.REPLACE_EXISTING);
-				adDto.setFilePath(savedName);
-			} catch (IOException e) {
-				throw new RuntimeException("파일 저장 실패: " + e.getMessage(), e);
-			}
-		}
-		return dao.insertAd(adDto);
+
+	    MultipartFile attachment = adDto.getAttachment();
+
+	    if (attachment != null && !attachment.isEmpty()) {
+
+	        try {
+
+			        	Path uploadPath = Paths.get(adminuploadDir);
+		
+			        	if (!Files.exists(uploadPath)) {
+			        	    Files.createDirectories(uploadPath);
+			        	}
+			        	String savedName =
+			        	        UUID.randomUUID() + "_" + attachment.getOriginalFilename();
+
+			        	Files.copy(
+			        	        attachment.getInputStream(),
+			        	        uploadPath.resolve(savedName),
+			        	        StandardCopyOption.REPLACE_EXISTING
+			        	);
+
+			        	adDto.setFilePath("/adminupload/" + savedName);
+
+	        } catch (IOException e) {
+	            throw new RuntimeException("파일 저장 실패: " + e.getMessage(), e);
+	        }
+	    }
+
+	    return dao.insertAd(adDto);
+	
 	}
+	
+	
   //====================================================================================//
         //회원 전체 리스트 
 	    @Override
@@ -131,16 +161,103 @@ public class AdminService_imple implements AdminService {
 		}
 		//예정광고 있는지 확인 
 		@Override
-		public boolean checkAdConflict(String startDate, String endDate) {
+		public List<AdDTO> getConflictAds(LocalDate startDate, LocalDate endDate, Long adId) {
 
-		    int count = dao.checkAdConflict(startDate, endDate);
+		    Map<String,Object> map = new HashMap<>();
 
-		    return count > 0;
+		    map.put("startDate", startDate);
+		    map.put("endDate", endDate);
+		    map.put("adId", adId);
+
+		    return dao.getConflictAds(map);
 		}
 		
 
+		@Override
+		public Map<String, Object> getUserRegistrationStats(String type) {
+		    List<StatDTO> stats = dao.getUserStats(type);
+		    
+		    Map<String, Object> response = new HashMap<>();
+		    response.put("labels", stats.stream().map(StatDTO::getLabel).collect(Collectors.toList()));
+		    response.put("data", stats.stream().map(StatDTO::getCount).collect(Collectors.toList()));
+		    return response;
+		}
+		
+		//인기검색어 가져오기
+		@Override
+		public List<SearchDTO> getPopularKeywords() {
+		    return dao.getPopularKeywords();
+		}
+		//===================================================================
+		//문의내역
+		@Override
+	    public List<InquiryDTO> getTop3FAQ() {
+	        return dao.getTop3FAQ();
+	    }
+
+	    @Override
+	    public List<InquiryDTO> getAllInquiries() {
+	        return dao.getAllInquiries();
+	    }
+	    
+	    //==============================================================================
+	    @Override
+	    public int getReportedProductCount() {
+	        // 신고 테이블(예: REPORTS)의 전체 건수를 조회해옵니다.
+	        return dao.getReportedProductCount();
+	    }
+
+	    @Override
+	    public Map<String, Object> getDailyProductStats() {
+	        // DB에서 최근 7일간의 [{REG_DATE: "03-05", CNT: 10}, ...] 형태의 리스트를 가져옵니다.
+	        List<Map<String, Object>> rawData = dao.getDailyProductStats();
+	        
+	        List<String> labels = new ArrayList<>();
+	        List<Long> data = new ArrayList<>();
+	        
+	        // 차트용 데이터 가공
+	        for (Map<String, Object> row : rawData) {
+	            labels.add(String.valueOf(row.get("REG_DATE"))); // 날짜 (X축)
+	            data.add(((Number) row.get("CNT")).longValue());  // 등록수 (Y축)
+	        }
+	        
+	        Map<String, Object> resultMap = new HashMap<>();
+	        resultMap.put("labels", labels);
+	        resultMap.put("data", data);
+	        
+	        return resultMap;
+	    }
+
+	    @Override
+	    public Map<String, Object> getCategoryProductStats() {
+	        // DB에서 [{CATEGORY_NAME: "패션", CNT: 35}, ...] 형태의 리스트를 가져옵니다.
+	        List<Map<String, Object>> rawData = dao.getCategoryProductStats();
+	        
+	        List<String> labels = new ArrayList<>();
+	        List<Long> data = new ArrayList<>();
+	        
+	        // 도넛 차트용 데이터 가공
+	        for (Map<String, Object> row : rawData) {
+	            labels.add(String.valueOf(row.get("CATEGORY_NAME"))); // 카테고리명
+	            data.add(((Number) row.get("CNT")).longValue());      // 비중 수치
+	        }
+	        
+	        Map<String, Object> resultMap = new HashMap<>();
+	        resultMap.put("labels", labels);
+	        resultMap.put("data", data);
+	        
+	        return resultMap;
+	    }
+	   
+	
+
+
 
 }
+		
+		
+		
+
 
 
 

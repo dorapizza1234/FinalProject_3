@@ -10,6 +10,7 @@ import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductPriceStatsDTO;
+import com.spring.app.product.domain.ProductPriceTrendDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
 import com.spring.app.product.domain.SearchKeywordDTO;
 import com.spring.app.product.domain.SearchLogDTO;
@@ -38,6 +39,11 @@ public interface ProductDAO {
     List<ProductShippingOptionDTO> selectShippingOption(int productNo);
 
     List<ProductMeetLocationDTO> selectMeetLocation(int productNo);
+    
+    
+ // 비슷한 거래물품
+    List<ProductDTO> selectSimilarProducts(Map<String, Object> paraMap);
+    List<ProductDTO> selectSimilarProductsFallback(Map<String, Object> paraMap);
 
     //검색
 	List<String> wordSearchShow(Map<String, String> paraMap);
@@ -53,7 +59,7 @@ public interface ProductDAO {
             @Param("priceMax") Integer priceMax);
 	
 	//인기검색어
-	void insertSearchLog(SearchLogDTO searchLogDto);
+	public int insertSearchLog(SearchLogDTO searchLogDto);
 	List<SearchKeywordDTO> selectPopularKeywordList();
 	
 	//조회수
@@ -69,5 +75,12 @@ public interface ProductDAO {
 	int insertWishlist(WishlistDTO wishlistDto);
 	int deleteWishlist(WishlistDTO wishlistDto);
 	int selectWishlistExists(WishlistDTO wishlistDto);
+	
+	//시세조회
+	ProductPriceStatsDTO selectPriceCheckStats(Map<String, Object> paraMap);
+
+	List<ProductPriceTrendDTO> selectPriceCheckChartData(Map<String, Object> paraMap);
+
+	List<ProductDTO> selectPriceCheckProductList(Map<String, Object> paraMap);
     
 }

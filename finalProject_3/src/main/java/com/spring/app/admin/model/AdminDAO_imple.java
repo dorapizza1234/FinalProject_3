@@ -1,5 +1,6 @@
 package com.spring.app.admin.model;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +9,10 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
-import com.spring.app.admin.ad.domain.AdDTO;
+import com.spring.app.admin.domain.AdDTO;
+import com.spring.app.admin.domain.InquiryDTO;
+import com.spring.app.admin.domain.SearchDTO;
+import com.spring.app.admin.domain.StatDTO;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.security.domain.MemberDTO;
 
@@ -113,14 +117,66 @@ public class AdminDAO_imple implements AdminDAO {
 	}
 
 	@Override
-	public int checkAdConflict(String startDate, String endDate) {
-
-	    Map<String,Object> map = new HashMap<>();
-	    map.put("startDate", startDate);
-	    map.put("endDate", endDate);
-
-	    return sqlsession.selectOne(admin + ".checkAdConflict", map);
+	public List<AdDTO> getConflictAds(Map<String,Object> map) {
+	    return sqlsession.selectList("admin.getConflictAds", map);
 	}
+
+	@Override
+	public List<StatDTO> getUserStats(String type) {
+		return sqlsession.selectList("admin.getUserStats", type);
+	}
+
+	
+	@Override
+	public List<SearchDTO> getPopularKeywords() {
+		return sqlsession.selectList("admin.getPopularKeywords");
+	}
+	
+	//-----------------------------------------------------------------
+	//문의내역 상단고정
+	// AdminDAO_imple.java 139라인 근처 수정
+	public List<InquiryDTO> getTop3FAQ() {
+	   
+	    return sqlsession.selectList("admin.getTop3FAQ"); 
+	}
+
+	public List<InquiryDTO> getAllInquiries() {
+	   
+	    return sqlsession.selectList("admin.getAllInquiries");
+	}
+
+
+    @Override
+    public int getReportedProductCount() {
+        // 신고된 상품의 총 개수(숫자 하나)를 가져옵니다.
+        return sqlsession.selectOne("admin.getReportedProductCount");
+    }
+
+    @Override
+    public List<Map<String, Object>> getDailyProductStats() {
+        // 최근 7일간의 날짜별 등록수를 List<Map> 형태로 가져옵니다.
+        // 결과 예시: [{REG_DATE: '03-08', CNT: 5}, {REG_DATE: '03-09', CNT: 12}]
+        return sqlsession.selectList("admin.getDailyProductStats");
+    }
+
+    @Override
+    public List<Map<String, Object>> getCategoryProductStats() {
+        // 카테고리별 상품 비중을 List<Map> 형태로 가져옵니다.
+        // 결과 예시: [{CATEGORY_NAME: '패션', CNT: 20}, {CATEGORY_NAME: '가전', CNT: 15}]
+        return sqlsession.selectList("admin.getCategoryProductStats");
+    }
+
+    @Override
+    public MemberDTO getMemberById(String loginid) {
+        return sqlsession.selectOne(admin + ".getMemberById", loginid);
+    }
+
+	@Override
+	public List<Map<String, Object>> getCategoryProdusctStats() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
 
 

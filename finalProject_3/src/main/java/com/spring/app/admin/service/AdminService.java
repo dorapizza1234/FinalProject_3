@@ -1,16 +1,22 @@
 package com.spring.app.admin.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import com.spring.app.admin.ad.domain.AdDTO;
+import com.spring.app.admin.domain.AdDTO;
+import com.spring.app.admin.domain.InquiryDTO;
+import com.spring.app.admin.domain.SearchDTO;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.security.domain.MemberDTO;
 
 public interface AdminService {
 
 	int registerAd(AdDTO adDto); //광고 신청 insert하기 
-
+	
+    MemberDTO getMemberById(String loginId);// 회원 정보 조회 (아이디로 조회)
+    
+    //----------------------------------------------------------------------------------
 	 List<MemberDTO> getMemberList();//
 
 	 int getNewMembersCount();  //신규가입자 가져오기
@@ -24,11 +30,18 @@ public interface AdminService {
 	 List<MemberDTO> getMemberList(int page, int size); //회원  보여주기
 
 	 List<ProductDTO> getProductList(int page, int size); //상품 리스트 보여주기
-
+	//--------------------------------------------------------------------------------
 	 int getTotalProductsCount(); //총상품개수 
 
 	 int getOnsaleProductCount(); //판매중인 상품
 	 
+	 int getReportedProductCount();
+
+	 Map<String, Object> getDailyProductStats();
+
+	 Map<String, Object> getCategoryProductStats();
+	 
+	//--------------------------------------------------------------------------------
 	 List<AdDTO> getAdList();//광고리스트 가져오기
 
 	 AdDTO getAd(Long adId);//광고 상세보여주기
@@ -37,7 +50,24 @@ public interface AdminService {
 
 	 void rejectAd(Long adId, String reason);//광고반려하기
 
-	 boolean checkAdConflict(String startDate, String endDate);
+
+
+	 List<AdDTO> getConflictAds(LocalDate startDate, LocalDate endDate, Long adId);
+
+	 Map<String, Object> getUserRegistrationStats(String type); //신규가입자 
+
+	 List<SearchDTO> getPopularKeywords();//인기검색어 가져오기 
+
+	 List<InquiryDTO> getTop3FAQ();   // 상단고정 
+
+	 List<InquiryDTO> getAllInquiries(); //문의 모든 리스트 
+	
+
+
+	 
+	
+
+
 
 	 
 

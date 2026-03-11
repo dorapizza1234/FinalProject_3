@@ -3,7 +3,7 @@
 
 <mapper namespace="admin">
 	 <!-- 광고 insert해주기  -->
-    <insert id="insertAd" parameterType="com.spring.app.admin.ad.domain.AdDTO">
+    <insert id="insertAd" parameterType="com.spring.app.admin.domain.AdDTO">
     INSERT INTO ADS (
         AD_ID,
         BRAND_NAME,
@@ -38,7 +38,7 @@
     
     
     <!-- AdList가져오기 -->
- <select id="selectAdList" resultType="com.spring.app.admin.ad.domain.AdDTO">
+ <select id="selectAdList" resultType="com.spring.app.admin.domain.AdDTO">
     SELECT 
         AD_ID           as adId, 
         BRAND_NAME      as brandName,
@@ -57,7 +57,15 @@
     ORDER BY CREATED_AT DESC
 </select>
     
-    
+    <select id="getMemberById" parameterType="String" resultType="com.spring.app.security.domain.MemberDTO">
+        SELECT 
+            USER_NO as userNo, 
+            NAME as name, 
+            EMAIL as email, 
+            PHONE as phone
+        FROM MEMBER
+        WHERE LOGINID = #{loginid}
+    </select>
     
     <!--  회원 전체 목록 -->
     <select id="selectMemberList"
@@ -137,8 +145,12 @@
     SELECT 
         p.product_no AS productNo, 
         p.product_name AS productName, 
-        p.product_price AS productPrice,
-        p.seller_email AS sellerEmail,   p.category_no AS categoryNo,      p.trade_status AS tradeStatus,    p.reg_date AS regDate,            m.nickname AS sellerNickname
+        p.product_desc AS productDesc,  p.product_price AS productPrice,
+        p.seller_email AS sellerEmail,   
+        p.category_no AS categoryNo,      
+        p.trade_status AS tradeStatus,    
+        p.reg_date AS regDate,            
+        m.nickname AS sellerNickname
     FROM products p
     JOIN member m ON p.seller_email = m.email
     ORDER BY p.reg_date DESC
@@ -154,7 +166,7 @@
     WHERE TRADE_STATUS = '판매중'
 </select>
             <!-- 컨텐츠 -->
-   <select id="getAd" resultType="com.spring.app.admin.ad.domain.AdDTO">
+   <select id="getAd" resultType="com.spring.app.admin.domain.AdDTO">
     SELECT
         AD_ID AS adId,
         BRAND_NAME AS brandName,
@@ -190,17 +202,100 @@
 		
 		</update>
 		
+		<select id="getConflictAds" resultType="com.spring.app.admin.domain.AdDTO">
+
+			SELECT *
+			FROM ADS
+			WHERE STATUS = 'CONFIRM'
+			AND START_DATE &lt;= #{endDate}
+			AND END_DATE &lt;= #{startDate}
+			AND AD_ID != #{adId}
+
+			</select>
 		
-		<select id="checkAdConflict" resultType="int">
-SELECT COUNT(*)
-FROM ADS
-WHERE STATUS = 'CONFIRM'
-AND (
-    START_DATE &lt;= TO_DATE(#{endDate}, 'YYYY-MM-DD')
-    AND END_DATE &gt;= TO_DATE(#{startDate}, 'YYYY-MM-DD')
-)
+		<select id="getUserStats" parameterType="string" resultType="com.spring.app.admin.domain.StatDTO">
+    <choose>
+        <when test="type == 'week'">
+            SELECT 
+                TO_CHAR(reg_date, 'MM/DD') as label, 
+                COUNT(*) as count
+            FROM member
+            WHERE reg_date >= TRUNC(SYSDATE) - 6
+            GROUP BY TO_CHAR(reg_date, 'MM/DD')
+            ORDER BY label ASC
+        </when>
+        
+        <otherwise>
+            SELECT 
+                TO_CHAR(reg_date, 'YYYY-MM') as label, 
+                COUNT(*) as count
+            FROM member
+            WHERE reg_date >= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -5)
+            GROUP BY TO_CHAR(reg_date, 'YYYY-MM')
+            ORDER BY label ASC
+        </otherwise>
+    </choose>
+</select>
+		<select id="getPopularKeywords" resultType="com.spring.app.admin.domain.SearchDTO">
+    SELECT 
+        keyword, 
+        COUNT(*) as "count"  FROM search_log
+    WHERE searched_at >= SYSDATE - 1
+    GROUP BY keyword
+    ORDER BY "count" DESC
+    FETCH FIRST 10 ROWS ONLY
 </select>
 		
+		
+		
+		<select id="getTop3FAQ" resultType="com.spring.app.admin.domain.InquiryDTO">
+        SELECT * FROM (
+            SELECT inquiry_id as inquiryId, 
+                   title, 
+                   member_email as memberEmail, 
+                   created_at as createdAt, 
+                   inquiry_status as inquiryStatus,
+                   is_faq as isFaq,
+                   is_private as isPrivate
+            FROM inquiries
+            WHERE is_faq = 'Y'
+            ORDER BY created_at DESC
+        )
+        WHERE ROWNUM &lt;= 3
+    </select>
+
+    <select id="getAllInquiries" resultType="com.spring.app.admin.domain.InquiryDTO">
+        SELECT inquiry_id as inquiryId, 
+               title, 
+               member_email as memberEmail, 
+               created_at as createdAt, 
+               inquiry_status as inquiryStatus,
+               is_faq as isFaq,
+               is_private as isPrivate
+        FROM inquiries
+        WHERE is_faq = 'N'
+        ORDER BY created_at DESC
+    </select>
+		
+		<select id="getReportedProductCount" resultType="int">
+    SELECT COUNT(*) FROM REPORTS
+</select>
+
+<select id="getDailyProductStats" resultType="map">
+    SELECT TO_CHAR(REG_DATE, 'MM-DD') AS REG_DATE, COUNT(*) AS CNT
+    FROM PRODUCTS
+    WHERE REG_DATE >= SYSDATE - 7
+    GROUP BY TO_CHAR(REG_DATE, 'MM-DD')
+    ORDER BY REG_DATE ASC
+</select>
+
+<select id="getCategoryProductStats" resultType="map">
+    SELECT C.CATEGORY_NAME, COUNT(P.PRODUCT_NO) AS CNT
+    FROM CATEGORY C
+    LEFT JOIN PRODUCTS P ON C.CATEGORY_NO = P.CATEGORY_NO
+    GROUP BY C.CATEGORY_NAME
+    ORDER BY CNT DESC
+</select>
 		
 		
 		

@@ -1,6 +1,5 @@
 package com.spring.app.product.controller;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -9,6 +8,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +26,7 @@ import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductPriceStatsDTO;
+import com.spring.app.product.domain.ProductPriceTrendDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
 import com.spring.app.product.domain.SearchKeywordDTO;
 import com.spring.app.product.domain.SearchLogDTO;
@@ -46,11 +47,32 @@ public class ProductController {
     private final ProductService pservice;
     private final FileManager fileManager;
     private final ObjectMapper objectMapper;
-    
+
     @Value("${file.images-dir}")
     private String imagesDir;
 
-    private static final String IMAGE_WEB_PREFIX = "/upload/";
+    private static final String IMAGE_WEB_PREFIX = "/images/";
+
+    private String getLoginEmail(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+
+        String email = authentication.getName();
+
+        if (email == null || email.trim().isEmpty() || "anonymousUser".equals(email)) {
+            return null;
+        }
+
+        return email.trim();
+    }
+
+    private Map<String, Object> failResult(String message) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("success", false);
+        result.put("message", message);
+        return result;
+    }
 
     @GetMapping("/product_list")
     public String product_list(
@@ -63,13 +85,15 @@ public class ProductController {
             @RequestParam(name = "priceMin", required = false) Integer priceMin,
             @RequestParam(name = "priceMax", required = false) Integer priceMax,
             Model model,
-            Principal principal,
+            Authentication authentication,
             HttpServletRequest request,
             HttpSession session) {
 
         if (searchWord != null) searchWord = searchWord.trim();
         if (areaDong != null) areaDong = areaDong.trim();
         if (sortType == null || "".equals(sortType.trim())) sortType = "latest";
+
+        String memberEmail = getLoginEmail(authentication);
 
         if (searchWord != null && !"".equals(searchWord)) {
             SearchLogDTO searchLogDto = new SearchLogDTO();
@@ -78,10 +102,9 @@ public class ProductController {
             searchLogDto.setIpAddress(request.getRemoteAddr());
             searchLogDto.setUserAgent(request.getHeader("User-Agent"));
 
-            if (principal != null && principal.getName() != null && !"".equals(principal.getName().trim())) {
-                searchLogDto.setMemberEmail(principal.getName().trim());
-            }
-            else {
+            if (memberEmail != null) {
+                searchLogDto.setMemberEmail(memberEmail);
+            } else {
                 searchLogDto.setSessionId(session.getId());
             }
 
@@ -90,11 +113,6 @@ public class ProductController {
 
         int startRow = 1;
         int endRow = 12;
-
-        String memberEmail = null;
-        if (principal != null && principal.getName() != null && !"".equals(principal.getName().trim())) {
-            memberEmail = principal.getName().trim();
-        }
 
         Map<String, Object> paraMap = new HashMap<>();
         paraMap.put("searchWord", searchWord);
@@ -110,9 +128,8 @@ public class ProductController {
         paraMap.put("memberEmail", memberEmail);
 
         List<ProductDTO> list = pservice.selectProductListByConditionMore(paraMap);
-        
         List<SearchKeywordDTO> popularKeywordList = pservice.selectPopularKeywordList();
-        
+
         Map<String, Object> priceParaMap = new HashMap<>();
         priceParaMap.put("searchWord", searchWord);
         priceParaMap.put("areaDong", areaDong);
@@ -123,49 +140,36 @@ public class ProductController {
         priceParaMap.put("priceMax", priceMax);
 
         ProductPriceStatsDTO priceStats = pservice.selectRecentProductPriceStats(priceParaMap);
-        
+
         model.addAttribute("list", list);
         model.addAttribute("popularKeywordList", popularKeywordList);
         model.addAttribute("priceStats", priceStats);
-        model.addAttribute("isLogin", principal != null);
-        
+        model.addAttribute("isLogin", memberEmail != null);
+
         return "product/product_list";
     }
+
     
-   
- 
-    
-    //판매하기
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/sell")
     public String sellPage() {
         return "product/sell";
     }
 
-    /**
-     * 판매하기 등록 (상품 + 이미지(1~3) + 배송옵션(N) + 직거래위치(1~3))
-     * - shippingOptionsJson / meetLocationsJson 을 컨트롤러에서 List로 파싱해 DTO에 세팅
-     * - sellerEmail은 Principal에서 서버가 직접 세팅
-     */
-    @PreAuthorize("isAuthenticated()")
-    @PostMapping("sellRegister")
+    
+    @PostMapping("/sellRegister")
     @ResponseBody
     public Map<String, Object> sellRegister(
             ProductDTO productDto,
             @RequestParam(name = "images", required = false) List<MultipartFile> images,
             @RequestParam(name = "mainIndex", required = false) Integer mainIndex,
-            Principal principal
-    ) {
+            Authentication authentication) {
 
-        Map<String, Object> fail = new LinkedHashMap<>();
-        fail.put("success", false);
-
-        // ===== 0) 로그인 이메일을 판매자 이메일로 세팅 =====
-        if (principal == null || principal.getName() == null || principal.getName().trim().isEmpty()) {
-            fail.put("message", "로그인 정보가 없습니다. 다시 로그인 해주세요.");
-            return fail;
+        String loginEmail = getLoginEmail(authentication);
+        if (loginEmail == null) {
+            return failResult("로그인 정보가 없습니다. 다시 로그인 해주세요.");
         }
-        productDto.setSellerEmail(principal.getName().trim());
+
+        productDto.setSellerEmail(loginEmail);
 
         if (images == null) images = new ArrayList<>();
         if (mainIndex == null) mainIndex = 0;
@@ -173,52 +177,45 @@ public class ProductController {
         if (mainIndex < 0) mainIndex = 0;
         if (mainIndex >= images.size()) mainIndex = 0;
 
-        // ===== 1) JSON(hidden) -> List 파싱해서 DTO에 세팅 =====
         List<ProductShippingOptionDTO> shippingOptionList = parseShippingOptions(productDto.getShippingOptionsJson());
         List<ProductMeetLocationDTO> meetLocationList = parseMeetLocations(productDto.getMeetLocationsJson());
 
         productDto.setShippingOptionList(shippingOptionList);
         productDto.setMeetLocationList(meetLocationList);
 
-        // ===== 2) 검증 =====
         if (images.size() > 3) {
-            fail.put("message", "이미지는 최대 3장까지 가능합니다.");
-            return fail;
+            return failResult("이미지는 최대 3장까지 가능합니다.");
         }
 
-        String tradeMethod = productDto.getTradeMethod(); // radio(name=tradeMethod)
+        String tradeMethod = productDto.getTradeMethod();
 
         if ("택배".equals(tradeMethod)) {
             if (shippingOptionList == null || shippingOptionList.isEmpty()) {
-                fail.put("message", "택배 거래는 배송옵션을 1개 이상 선택해야 합니다.");
-                return fail;
+                return failResult("택배 거래는 배송옵션을 1개 이상 선택해야 합니다.");
             }
+
             for (ProductShippingOptionDTO opt : shippingOptionList) {
                 if (opt.getParcelType() == null || opt.getParcelType().trim().isEmpty()) {
-                    fail.put("message", "배송옵션 타입이 비어있습니다.");
-                    return fail;
+                    return failResult("배송옵션 타입이 비어있습니다.");
                 }
                 if (opt.getShippingFee() == null) {
-                    fail.put("message", opt.getParcelType() + " 배송비를 입력해 주세요.");
-                    return fail;
+                    return failResult(opt.getParcelType() + " 배송비를 입력해 주세요.");
                 }
             }
         }
 
         if ("직거래".equals(tradeMethod)) {
             if (meetLocationList == null || meetLocationList.isEmpty() || meetLocationList.size() > 3) {
-                fail.put("message", "직거래 위치는 1~3개까지 설정해야 합니다.");
-                return fail;
+                return failResult("직거래 위치는 1~3개까지 설정해야 합니다.");
             }
+
             for (ProductMeetLocationDTO loc : meetLocationList) {
                 if (loc.getFullAddress() == null || loc.getFullAddress().trim().isEmpty()) {
-                    fail.put("message", "직거래 위치 주소가 비어있습니다.");
-                    return fail;
+                    return failResult("직거래 위치 주소가 비어있습니다.");
                 }
             }
         }
 
-        // ===== 3) 파일 업로드 -> ProductImageDTO 생성 =====
         List<ProductImageDTO> imageDtoList = new ArrayList<>();
         List<String> savedFileNames = new ArrayList<>();
 
@@ -227,6 +224,7 @@ public class ProductController {
 
             for (int i = 0; i < images.size(); i++) {
                 MultipartFile mf = images.get(i);
+
                 if (mf == null || mf.isEmpty()) continue;
 
                 String originalFilename = mf.getOriginalFilename();
@@ -238,9 +236,7 @@ public class ProductController {
                 ProductImageDTO imgDto = new ProductImageDTO();
                 imgDto.setOrgfilename(originalFilename);
                 imgDto.setFilename(savedFileName);
-
                 imgDto.setImgUrl(IMAGE_WEB_PREFIX + savedFileName);
-
                 imgDto.setSortNo(sortNo++);
                 imgDto.setIsMain(i == mainIndex ? "Y" : "N");
 
@@ -249,48 +245,53 @@ public class ProductController {
 
         } catch (Exception e) {
             log.error("이미지 업로드 실패", e);
+
             for (String fn : savedFileNames) {
-                try { fileManager.doFileDelete(fn, imagesDir); } catch (Exception ignore) {}
+                try {
+                    fileManager.doFileDelete(fn, imagesDir);
+                } catch (Exception ignore) {}
             }
-            fail.put("message", "이미지 업로드 실패");
-            return fail;
+
+            return failResult("이미지 업로드 실패");
         }
 
-        // ===== 4) DB 저장 =====
         try {
             int n = pservice.productSellRegister(productDto, imageDtoList, shippingOptionList, meetLocationList);
 
             if (n != 1) {
-                // 서비스가 0 리턴하는 경우도 대비
                 log.warn("DB 저장 실패: productNo={}, sellerEmail={}", productDto.getProductNo(), productDto.getSellerEmail());
+
                 for (String fn : savedFileNames) {
-                    try { fileManager.doFileDelete(fn, imagesDir); } catch (Exception ignore) {}
+                    try {
+                        fileManager.doFileDelete(fn, imagesDir);
+                    } catch (Exception ignore) {}
                 }
-                fail.put("message", "DB 저장 실패");
-                return fail;
+
+                return failResult("DB 저장 실패");
             }
 
         } catch (Exception e) {
             log.error("DB 저장 중 예외 발생", e);
 
             for (String fn : savedFileNames) {
-                try { fileManager.doFileDelete(fn, imagesDir); } catch (Exception ignore) {}
+                try {
+                    fileManager.doFileDelete(fn, imagesDir);
+                } catch (Exception ignore) {}
             }
-            fail.put("message", "DB 저장 실패");
-            return fail;
+
+            return failResult("DB 저장 실패");
         }
 
-        // ===== 5) 프론트 응답 =====
         Map<String, Object> ok = new LinkedHashMap<>();
         ok.put("success", true);
         ok.put("productNo", productDto.getProductNo());
-        ok.put("redirectUrl", "/product/product_list");
+        ok.put("redirectUrl", "/finalProject_3/product/product_list");
         return ok;
     }
 
-    // ---------- JSON 파싱 유틸 ----------
     private List<ProductShippingOptionDTO> parseShippingOptions(String json) {
         if (json == null || json.trim().isEmpty()) return new ArrayList<>();
+
         try {
             return objectMapper.readValue(json, new TypeReference<List<ProductShippingOptionDTO>>() {});
         } catch (Exception e) {
@@ -301,6 +302,7 @@ public class ProductController {
 
     private List<ProductMeetLocationDTO> parseMeetLocations(String json) {
         if (json == null || json.trim().isEmpty()) return new ArrayList<>();
+
         try {
             return objectMapper.readValue(json, new TypeReference<List<ProductMeetLocationDTO>>() {});
         } catch (Exception e) {
@@ -308,9 +310,7 @@ public class ProductController {
             return new ArrayList<>();
         }
     }
-    
-    
-    //상품 더보기
+
     @GetMapping("/product_list_more")
     @ResponseBody
     public List<ProductDTO> product_list_more(
@@ -324,8 +324,8 @@ public class ProductController {
             @RequestParam(name = "priceMax", required = false) Integer priceMax,
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "12") int size,
-            Principal principal
-    ) {
+            Authentication authentication) {
+
         if (searchWord != null) searchWord = searchWord.trim();
         if (areaDong != null) areaDong = areaDong.trim();
         if (sortType == null || "".equals(sortType.trim())) sortType = "latest";
@@ -333,10 +333,7 @@ public class ProductController {
         int startRow = ((page - 1) * size) + 1;
         int endRow = page * size;
 
-        String memberEmail = null;
-        if (principal != null && principal.getName() != null && !"".equals(principal.getName().trim())) {
-            memberEmail = principal.getName().trim();
-        }
+        String memberEmail = getLoginEmail(authentication);
 
         Map<String, Object> paraMap = new HashMap<>();
         paraMap.put("searchWord", searchWord);
@@ -353,80 +350,133 @@ public class ProductController {
 
         return pservice.selectProductListByConditionMore(paraMap);
     }
-    
-    // 나눔하기
+
     @GetMapping("/share")
     public String share() {
         return "product/share";
     }
 
-    
-    //상품상세페이지
     @GetMapping("/product_detail/{productNo}")
     public String detail(@PathVariable("productNo") int productNo,
-                         Principal principal,
+                         Authentication authentication,
                          Model model) {
 
         pservice.updateViewCount(productNo);
 
-        ProductDTO productDTO = pservice.getProductDetailFull(productNo);
+        ProductDTO productDto = pservice.getProductDetailFull(productNo);
+        List<ProductDTO> similarProductList = pservice.selectSimilarProducts(productDto);
 
-        boolean isLogin = false;
-        if (principal != null && principal.getName() != null && !"".equals(principal.getName().trim())) {
-            isLogin = true;
-        }
+        String memberEmail = getLoginEmail(authentication);
 
-        model.addAttribute("product", productDTO);
-        model.addAttribute("isLogin", isLogin);
+        model.addAttribute("product", productDto);
+        model.addAttribute("similarProductList", similarProductList);
+        model.addAttribute("isLogin", memberEmail != null);
 
         return "product/product_detail";
     }
+
     
-    
-    //찜
     @PostMapping("/wishlist/toggle")
     @ResponseBody
     public Map<String, Object> toggleWishlist(@RequestParam("productNo") Integer productNo,
-                                              Principal principal) {
+                                              Authentication authentication) {
 
-        Map<String, Object> result = new LinkedHashMap<>();
-
-        if(principal == null || principal.getName() == null || "".equals(principal.getName().trim())) {
-            result.put("success", false);
-            result.put("message", "로그인이 필요합니다.");
-            return result;
+        String memberEmail = getLoginEmail(authentication);
+        if (memberEmail == null) {
+            return failResult("로그인이 필요합니다.");
         }
 
         WishlistDTO wishlistDto = new WishlistDTO();
-        wishlistDto.setMemberEmail(principal.getName().trim());
+        wishlistDto.setMemberEmail(memberEmail);
         wishlistDto.setProductNo(productNo);
 
         boolean wished = pservice.toggleWishlist(wishlistDto);
 
+        Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
         result.put("wished", wished);
-
         return result;
     }
-    
 
-
-    // 시세조회
     @GetMapping("/price_check")
-    public String price_check() {
+    public String price_check(
+            @RequestParam(name = "searchWord", required = false) String searchWord,
+            @RequestParam(name = "sortType", required = false) String sortType,
+            @RequestParam(name = "priceMode", required = false) String priceMode,
+            Authentication authentication,
+            HttpServletRequest request,
+            HttpSession session,
+            Model model) {
+
+        if (searchWord != null) {
+            searchWord = searchWord.trim();
+        }
+
+        if (sortType == null || "".equals(sortType.trim())) {
+            sortType = "latest";
+        }
+
+        if (priceMode == null || "".equals(priceMode.trim())) {
+            priceMode = "list";
+        }
+
+        boolean hasSearch = searchWord != null && !"".equals(searchWord);
+
+        String memberEmail = getLoginEmail(authentication);
+
+        List<ProductDTO> list = new ArrayList<>();
+        ProductPriceStatsDTO priceStats = null;
+        List<ProductPriceTrendDTO> priceChartData = new ArrayList<>();
+
+        if (hasSearch) {
+            SearchLogDTO searchLogDto = new SearchLogDTO();
+            searchLogDto.setKeyword(searchWord);
+            searchLogDto.setSearchType("PRICE");
+            searchLogDto.setIpAddress(request.getRemoteAddr());
+            searchLogDto.setUserAgent(request.getHeader("User-Agent"));
+
+            if (memberEmail != null) {
+                searchLogDto.setMemberEmail(memberEmail);
+            } else {
+                searchLogDto.setSessionId(session.getId());
+            }
+
+            pservice.insertSearchLog(searchLogDto);
+
+            Map<String, Object> paraMap = new LinkedHashMap<>();
+            paraMap.put("searchWord", searchWord);
+            paraMap.put("sortType", sortType);
+            paraMap.put("memberEmail", memberEmail);
+
+            list = pservice.selectPriceCheckProductList(paraMap);
+
+            if (list != null && !list.isEmpty()) {
+                priceStats = pservice.selectPriceCheckStats(paraMap);
+                priceChartData = pservice.selectPriceCheckChartData(paraMap);
+            }
+        }
+
+        boolean hasResult = list != null && !list.isEmpty();
+
+        model.addAttribute("searchWord", searchWord);
+        model.addAttribute("sortType", sortType);
+        model.addAttribute("priceMode", priceMode);
+        model.addAttribute("priceStats", priceStats);
+        model.addAttribute("priceChartData", priceChartData);
+        model.addAttribute("list", list);
+        model.addAttribute("hasSearch", hasSearch);
+        model.addAttribute("hasResult", hasResult);
+        model.addAttribute("isLogin", memberEmail != null);
+
         return "product/price_check";
     }
 
- 
-
-    // 판매자정보
     @GetMapping("/product_user_profile")
     public String product_user_profile() {
         return "product/product_user_profile";
     }
-    
-    //검색
-    @GetMapping("wordSearchShow")
+
+    @GetMapping("/wordSearchShow")
     @ResponseBody
     public List<Map<String, String>> wordSearchShow(@RequestParam Map<String, String> paraMap) {
         List<String> wordList = pservice.wordSearchShow(paraMap);

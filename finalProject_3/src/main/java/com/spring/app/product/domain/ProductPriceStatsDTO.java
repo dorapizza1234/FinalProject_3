@@ -5,8 +5,9 @@ import lombok.Data;
 @Data
 public class ProductPriceStatsDTO {
 
-    private Integer avgPrice;
+	private Integer avgPrice;
     private Integer maxPrice;
     private Integer minPrice;
+    private Integer sampleCount;
 
 }

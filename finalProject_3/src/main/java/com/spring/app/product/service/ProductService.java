@@ -7,6 +7,7 @@ import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductPriceStatsDTO;
+import com.spring.app.product.domain.ProductPriceTrendDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
 import com.spring.app.product.domain.SearchKeywordDTO;
 import com.spring.app.product.domain.SearchLogDTO;
@@ -26,6 +27,9 @@ public interface ProductService {
 	//상품상세페이지
 	ProductDTO getProductDetailFull(int productNo);
 	
+	// 비슷한 거래물품
+	List<ProductDTO> selectSimilarProducts(ProductDTO productDto);
+	
 	//검색
 	List<String> wordSearchShow(Map<String, String> paraMap);
 
@@ -41,9 +45,10 @@ public interface ProductService {
             Integer priceMin,
             Integer priceMax);
 
-	//인기검색어
-	void insertSearchLog(SearchLogDTO searchLogDto);
+	//인기검색어+시세 검색
+	public int insertSearchLog(SearchLogDTO searchLogDto);
 	List<SearchKeywordDTO> selectPopularKeywordList();
+	
 	
 	//조회수
 	void updateViewCount(int productNo);
@@ -57,6 +62,16 @@ public interface ProductService {
 	//찜
 	boolean toggleWishlist(WishlistDTO wishlistDto);
 	boolean isWished(WishlistDTO wishlistDto);
+
+	//시세조회
+	public ProductPriceStatsDTO selectPriceCheckStats(Map<String, Object> paraMap);
+
+	public List<ProductPriceTrendDTO> selectPriceCheckChartData(Map<String, Object> paraMap);
+
+	public List<ProductDTO> selectPriceCheckProductList(Map<String, Object> paraMap);
+
+	
+	
 	
 	}
 	
