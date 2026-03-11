@@ -75,7 +75,8 @@ public class SecurityConfig {
                         "/mypage/**",
                         "/product/sell",
                         "/product/sellRegister",
-                        "/product/wishlist/**"
+                        "/product/wishlist/**",
+                        "/payment/**"
                     ).authenticated()
                 
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()

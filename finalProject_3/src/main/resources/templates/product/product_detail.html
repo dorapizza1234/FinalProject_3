@@ -71,7 +71,7 @@
 				<span class="pd-dot">|</span>
 				조회 <span th:text="${product.viewCount}"></span>
 				<span class="pd-dot">|</span>
-				찜 <span id="wishCountText" th:text="${product.wishCount}">0</span>
+				찜 <span th:text="${product.wishCount}"></span>
 			</div>
         </div>
 
@@ -211,14 +211,13 @@
   </div>
 
      <div class="pd-cta">
-     
-<button class="pd-like"
-    type="button"
-    aria-label="찜하기"
-    th:classappend="${product.wished} ? ' is-active' : ''"
-    th:attr="data-product-no=${product.productNo},
-             data-login=${isLogin}">
-    <i th:class="${product.wished ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"></i>
+    <button class="pd-like"
+        type="button"
+        aria-label="찜하기"
+        th:classappend="${product.wished} ? ' is-active' : ''"
+        th:attr="data-product-no=${product.productNo},
+                 data-login=${isLogin}">
+    <i th:class="${product.wished} ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
 </button>
 
     <div class="pd-btns">
@@ -230,7 +229,8 @@
         </button>
 
         <button class="pd-btn pd-btn-pay" type="button"
-                th:attr="data-product-no=${product.productNo}">
+                th:attr="data-product-no=${product.productNo}"
+                onclick="goToPayment(this)">
             안전결제
         </button>
     </div>
@@ -539,8 +539,11 @@
             console.error("방 생성 에러:", error);
         });
     }
+    function goToPayment(btn) {
+        const productNo = btn.getAttribute('data-product-no');
+        location.href = '/finalProject_3/payment/checkout?productNo=' + productNo;
+    }
     
-   
 </script>
 </main>
 <script th:src="@{/js/product/product_detail.js}"></script>
