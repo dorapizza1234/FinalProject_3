@@ -71,7 +71,7 @@
 				<span class="pd-dot">|</span>
 				조회 <span th:text="${product.viewCount}"></span>
 				<span class="pd-dot">|</span>
-				찜 <span th:text="${product.wishCount}"></span>
+				찜 <span id="wishCountText" th:text="${product.wishCount}">0</span>
 			</div>
         </div>
 
@@ -211,13 +211,14 @@
   </div>
 
      <div class="pd-cta">
-    <button class="pd-like"
-        type="button"
-        aria-label="찜하기"
-        th:classappend="${product.wished} ? ' is-active' : ''"
-        th:attr="data-product-no=${product.productNo},
-                 data-login=${isLogin}">
-    <i th:class="${product.wished} ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
+     
+<button class="pd-like"
+    type="button"
+    aria-label="찜하기"
+    th:classappend="${product.wished} ? ' is-active' : ''"
+    th:attr="data-product-no=${product.productNo},
+             data-login=${isLogin}">
+    <i th:class="${product.wished ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"></i>
 </button>
 
     <div class="pd-btns">

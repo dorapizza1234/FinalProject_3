@@ -153,15 +153,14 @@
 	<!-- 상품 상세 - 기본정보 (PRODUCTS) -->
 
 	<select id="selectProductDetail"
+        parameterType="hashMap"
         resultType="com.spring.app.product.domain.ProductDTO">
 
 SELECT
     PRODUCTS.PRODUCT_NO AS productNo,
     PRODUCTS.SELLER_EMAIL AS sellerEmail,
     PRODUCTS.CATEGORY_NO AS categoryNo,
-
     CATEGORY.CATEGORY_NAME AS categoryName,
-
     PRODUCTS.SALE_TYPE AS saleType,
     PRODUCTS.PRODUCT_NAME AS productName,
     PRODUCTS.PRODUCT_PRICE AS productPrice,
@@ -171,24 +170,38 @@ SELECT
     PRODUCTS.TRADE_METHOD AS tradeMethod,
     PRODUCTS.VIEW_COUNT AS viewCount,
     PRODUCTS.REG_DATE AS regDate,
-
     MEMBER.NICKNAME AS sellerName,
     MEMBER.MANNER_TEMP AS mannerTemp,
     MEMBER.PROFILE_IMG AS sellerProfileImg,
-
     (
         SELECT COUNT(*)
         FROM WISHLIST
         WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-    ) AS wishCount
+    ) AS wishCount,
+
+    <choose>
+        <when test="memberEmail != null and memberEmail != ''">
+            CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM WISHLIST
+                    WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                      AND WISHLIST.MEMBER_EMAIL = #{memberEmail}
+                )
+                THEN 1
+                ELSE 0
+            END AS wished
+        </when>
+        <otherwise>
+            0 AS wished
+        </otherwise>
+    </choose>
 
 FROM PRODUCTS
 LEFT JOIN CATEGORY
 ON PRODUCTS.CATEGORY_NO = CATEGORY.CATEGORY_NO
-
 LEFT JOIN MEMBER
 ON PRODUCTS.SELLER_EMAIL = MEMBER.EMAIL
-
 WHERE PRODUCTS.PRODUCT_NO = #{productNo}
 
 </select>

@@ -32,7 +32,7 @@ public interface ProductDAO {
     List<ProductDTO> selectProductListSimple();
     
     //상품상세(기본정보+이미지+배송온셥+거래위치)
-    ProductDTO selectProductDetail(int productNo);
+    ProductDTO selectProductDetail(Map<String, Object> paraMap);
 
     List<ProductImageDTO> selectProductImages(int productNo);
 

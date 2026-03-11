@@ -363,10 +363,14 @@ public class ProductController {
 
         pservice.updateViewCount(productNo);
 
-        ProductDTO productDto = pservice.getProductDetailFull(productNo);
-        List<ProductDTO> similarProductList = pservice.selectSimilarProducts(productDto);
-
         String memberEmail = getLoginEmail(authentication);
+
+        Map<String, Object> paraMap = new HashMap<>();
+        paraMap.put("productNo", productNo);
+        paraMap.put("memberEmail", memberEmail);
+
+        ProductDTO productDto = pservice.getProductDetailFull(paraMap);
+        List<ProductDTO> similarProductList = pservice.selectSimilarProducts(productDto);
 
         model.addAttribute("product", productDto);
         model.addAttribute("similarProductList", similarProductList);
