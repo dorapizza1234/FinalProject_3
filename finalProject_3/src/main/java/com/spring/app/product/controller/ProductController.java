@@ -80,6 +80,7 @@ public class ProductController {
             @RequestParam(name = "areaDong", required = false) String areaDong,
             @RequestParam(name = "tradeAvailable", required = false) String tradeAvailable,
             @RequestParam(name = "parcelAvailable", required = false) String parcelAvailable,
+            @RequestParam(name = "freeOnly", required = false) String freeOnly,
             @RequestParam(name = "categoryNo", required = false) Integer categoryNo,
             @RequestParam(name = "sortType", required = false) String sortType,
             @RequestParam(name = "priceMin", required = false) Integer priceMin,
@@ -92,6 +93,11 @@ public class ProductController {
         if (searchWord != null) searchWord = searchWord.trim();
         if (areaDong != null) areaDong = areaDong.trim();
         if (sortType == null || "".equals(sortType.trim())) sortType = "latest";
+
+        if (freeOnly != null && !"".equals(freeOnly.trim())) {
+            priceMin = null;
+            priceMax = null;
+        }
 
         String memberEmail = getLoginEmail(authentication);
 
@@ -119,6 +125,7 @@ public class ProductController {
         paraMap.put("areaDong", areaDong);
         paraMap.put("tradeAvailable", tradeAvailable);
         paraMap.put("parcelAvailable", parcelAvailable);
+        paraMap.put("freeOnly", freeOnly);
         paraMap.put("categoryNo", categoryNo);
         paraMap.put("sortType", sortType);
         paraMap.put("priceMin", priceMin);
@@ -135,6 +142,7 @@ public class ProductController {
         priceParaMap.put("areaDong", areaDong);
         priceParaMap.put("tradeAvailable", tradeAvailable);
         priceParaMap.put("parcelAvailable", parcelAvailable);
+        priceParaMap.put("freeOnly", freeOnly);
         priceParaMap.put("categoryNo", categoryNo);
         priceParaMap.put("priceMin", priceMin);
         priceParaMap.put("priceMax", priceMax);
@@ -148,7 +156,6 @@ public class ProductController {
 
         return "product/product_list";
     }
-
     
     @GetMapping("/sell")
     public String sellPage() {
@@ -318,6 +325,7 @@ public class ProductController {
             @RequestParam(name = "areaDong", required = false) String areaDong,
             @RequestParam(name = "tradeAvailable", required = false) String tradeAvailable,
             @RequestParam(name = "parcelAvailable", required = false) String parcelAvailable,
+            @RequestParam(name = "freeOnly", required = false) String freeOnly,
             @RequestParam(name = "categoryNo", required = false) Integer categoryNo,
             @RequestParam(name = "sortType", required = false) String sortType,
             @RequestParam(name = "priceMin", required = false) Integer priceMin,
@@ -330,6 +338,11 @@ public class ProductController {
         if (areaDong != null) areaDong = areaDong.trim();
         if (sortType == null || "".equals(sortType.trim())) sortType = "latest";
 
+        if (freeOnly != null && !"".equals(freeOnly.trim())) {
+            priceMin = null;
+            priceMax = null;
+        }
+
         int startRow = ((page - 1) * size) + 1;
         int endRow = page * size;
 
@@ -340,6 +353,7 @@ public class ProductController {
         paraMap.put("areaDong", areaDong);
         paraMap.put("tradeAvailable", tradeAvailable);
         paraMap.put("parcelAvailable", parcelAvailable);
+        paraMap.put("freeOnly", freeOnly);
         paraMap.put("categoryNo", categoryNo);
         paraMap.put("sortType", sortType);
         paraMap.put("priceMin", priceMin);
@@ -350,7 +364,8 @@ public class ProductController {
 
         return pservice.selectProductListByConditionMore(paraMap);
     }
-
+    
+    
     @GetMapping("/share")
     public String share() {
         return "product/share";

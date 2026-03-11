@@ -440,11 +440,11 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
         PRODUCTS.CATEGORY_NO AS categoryNo,
 
         (
-		    SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
-		    FROM PRODUCT_MEET_LOCATION
-		    WHERE PRODUCT_MEET_LOCATION.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-		    AND ROWNUM = 1
-		) AS placeName,
+            SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
+            FROM PRODUCT_MEET_LOCATION
+            WHERE PRODUCT_MEET_LOCATION.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+            AND ROWNUM = 1
+        ) AS placeName,
 
         (
             SELECT PRODUCT_IMAGE.IMG_URL
@@ -478,15 +478,19 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
         AND PRODUCTS.TRADE_METHOD = '택배'
     </if>
 
+    <if test="freeOnly != null and freeOnly != ''">
+        AND PRODUCTS.SALE_TYPE = '나눔'
+    </if>
+
     <if test="categoryNo != null">
         AND PRODUCTS.CATEGORY_NO = #{categoryNo}
     </if>
 
-    <if test="priceMin != null">
+    <if test="priceMin != null and (freeOnly == null or freeOnly == '')">
         AND PRODUCTS.PRODUCT_PRICE &gt;= #{priceMin}
     </if>
 
-    <if test="priceMax != null">
+    <if test="priceMax != null and (freeOnly == null or freeOnly == '')">
         AND PRODUCTS.PRODUCT_PRICE &lt;= #{priceMax}
     </if>
 
@@ -569,13 +573,11 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
         resultType="com.spring.app.product.domain.ProductPriceStatsDTO">
 
     SELECT
-        NVL(ROUND(AVG(PRODUCTS.PRODUCT_PRICE)), 0) AS avgPrice,
-        NVL(MAX(PRODUCTS.PRODUCT_PRICE), 0) AS maxPrice,
-        NVL(MIN(PRODUCTS.PRODUCT_PRICE), 0) AS minPrice
+        NVL(ROUND(AVG(NVL(PRODUCTS.PRODUCT_PRICE, 0))), 0) AS avgPrice,
+        NVL(MAX(NVL(PRODUCTS.PRODUCT_PRICE, 0)), 0) AS maxPrice,
+        NVL(MIN(NVL(PRODUCTS.PRODUCT_PRICE, 0)), 0) AS minPrice
     FROM PRODUCTS
-    WHERE PRODUCTS.SALE_TYPE = '판매'
-      AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
-      AND PRODUCTS.TRADE_STATUS = '판매중'
+    WHERE PRODUCTS.TRADE_STATUS = '판매중'
       AND PRODUCTS.REG_DATE >= SYSDATE - 7
 
     <if test="searchWord != null and searchWord != ''">
@@ -599,15 +601,24 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
         AND PRODUCTS.TRADE_METHOD = '택배'
     </if>
 
+    <if test="freeOnly != null and freeOnly != ''">
+        AND PRODUCTS.SALE_TYPE = '나눔'
+    </if>
+
+    <if test="freeOnly == null or freeOnly == ''">
+        AND PRODUCTS.SALE_TYPE = '판매'
+        AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
+    </if>
+
     <if test="categoryNo != null">
         AND PRODUCTS.CATEGORY_NO = #{categoryNo}
     </if>
 
-    <if test="priceMin != null">
+    <if test="priceMin != null and (freeOnly == null or freeOnly == '')">
         AND PRODUCTS.PRODUCT_PRICE &gt;= #{priceMin}
     </if>
 
-    <if test="priceMax != null">
+    <if test="priceMax != null and (freeOnly == null or freeOnly == '')">
         AND PRODUCTS.PRODUCT_PRICE &lt;= #{priceMax}
     </if>
 
@@ -716,15 +727,19 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
             AND PRODUCTS.TRADE_METHOD = '택배'
         </if>
 
+        <if test="freeOnly != null and freeOnly != ''">
+            AND PRODUCTS.SALE_TYPE = '나눔'
+        </if>
+
         <if test="categoryNo != null">
             AND PRODUCTS.CATEGORY_NO = #{categoryNo}
         </if>
 
-        <if test="priceMin != null">
+        <if test="priceMin != null and (freeOnly == null or freeOnly == '')">
             AND PRODUCTS.PRODUCT_PRICE &gt;= #{priceMin}
         </if>
 
-        <if test="priceMax != null">
+        <if test="priceMax != null and (freeOnly == null or freeOnly == '')">
             AND PRODUCTS.PRODUCT_PRICE &lt;= #{priceMax}
         </if>
     )
