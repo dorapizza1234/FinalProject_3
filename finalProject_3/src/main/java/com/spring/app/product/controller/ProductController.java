@@ -285,7 +285,7 @@ public class ProductController {
         Map<String, Object> ok = new LinkedHashMap<>();
         ok.put("success", true);
         ok.put("productNo", productDto.getProductNo());
-        ok.put("redirectUrl", "/product/product_list");
+        ok.put("redirectUrl", "/finalProject_3/product/product_list");
         return ok;
     }
 
