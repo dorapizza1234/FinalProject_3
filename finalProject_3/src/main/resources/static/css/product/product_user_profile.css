@@ -397,15 +397,13 @@
       transition: color .12s ease, transform .12s ease;
     }
 
-    /* ✅ 하트 클릭 시 빨간색 */
-    .sps-like.is-on i {
-      color: #e53935;
-    }
+  .sps-like.is-active i {
+  color: #e53935;
+}
 
-    .sps-like.is-on:hover i {
-      transform: scale(1.05);
-    }
-
+.sps-like.is-active:hover i {
+  transform: scale(1.05);
+}
     .sps-body {
       padding: 10px 10px 12px;
     }

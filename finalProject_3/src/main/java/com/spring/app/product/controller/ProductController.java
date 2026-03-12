@@ -496,8 +496,11 @@ public class ProductController {
 
   //판매자 정보 페이지
     @GetMapping("/product_user_profile")
-    public String product_user_profile(@RequestParam("productNo") int productNo, Model model) {
+    public String product_user_profile(@RequestParam("productNo") int productNo,
+                                       Model model,
+                                       Authentication authentication) {
         model.addAttribute("productNo", productNo);
+        model.addAttribute("isLogin", getLoginEmail(authentication) != null);
         return "product/product_user_profile";
     }
     

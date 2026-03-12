@@ -180,21 +180,21 @@ SELECT
     ) AS wishCount,
 
     <choose>
-        <when test="memberEmail != null and memberEmail != ''">
-            CASE
-                WHEN EXISTS (
-                    SELECT 1
-                    FROM WISHLIST
-                    WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-                      AND WISHLIST.MEMBER_EMAIL = #{memberEmail}
-                )
-                THEN 1
-                ELSE 0
-            END AS wished
-        </when>
-        <otherwise>
-            0 AS wished
-        </otherwise>
+       <when test="memberEmail != null and memberEmail != ''">
+    CASE
+        WHEN EXISTS (
+            SELECT 1
+            FROM WISHLIST
+            WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+              AND WISHLIST.MEMBER_EMAIL = #{memberEmail}
+        )
+        THEN 1
+        ELSE 0
+    END AS wished
+</when>
+<otherwise>
+    0 AS wished
+</otherwise>
     </choose>
 
 FROM PRODUCTS
