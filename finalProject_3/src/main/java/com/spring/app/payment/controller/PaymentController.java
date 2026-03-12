@@ -105,8 +105,8 @@ public class PaymentController {
         try {
             TransactionDTO txn = paymentService.createTransaction(productNo, buyerEmail, paymentType);
 
-            // 생성된 거래의 금액 조회
-            TransactionDTO fullTxn = paymentService.getTransactionByOrderId(txn.getTossOrderId());
+            // 🌟 수정된 부분: 무료나눔일 경우 DB의 tossOrderId가 null이므로, 확실한 PK인 transactionId로 조회합니다!
+            TransactionDTO fullTxn = paymentService.getTransactionById(txn.getTransactionId());
 
             result.put("success", true);
             result.put("orderId", txn.getTossOrderId());
@@ -123,12 +123,63 @@ public class PaymentController {
     }
 
     /**
+     * 무료나눔 거래 완료 API — 토스 결제 없이 바로 거래 처리
+     */
+    @PostMapping("free-order")
+    @ResponseBody
+    public Map<String, Object> freeOrder(@RequestBody Map<String, Object> params,
+                                          Authentication authentication) {
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        String buyerEmail = getLoginEmail(authentication);
+        if (buyerEmail == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+
+        String orderId = (String) params.get("orderId");
+        int transactionId = ((Number) params.get("transactionId")).intValue();
+
+        try {
+            TransactionDTO txn = paymentService.getTransactionById(transactionId);
+            
+            // 🌟 수정: DB에서 가져온 정보 자체가 없으면 에러
+            if (txn == null) {
+                result.put("success", false);
+                result.put("message", "거래 정보를 찾을 수 없습니다.");
+                return result;
+            }
+
+            // 🌟 수정: 무료나눔은 DB에 tossOrderId가 null로 저장될 수 있으므로, null이 아닐 때만 비교하도록 방어!
+            if (txn.getTossOrderId() != null && !orderId.equals(txn.getTossOrderId())) {
+                result.put("success", false);
+                result.put("message", "주문 번호가 일치하지 않습니다.");
+                return result;
+            }
+
+            // 무료 거래 완료 처리
+            paymentService.completeFreeOrder(transactionId);
+
+            result.put("success", true);
+        } catch (Exception e) {
+            log.error("무료 거래 처리 실패", e);
+            result.put("success", false);
+            result.put("message", "나눔 신청에 실패했습니다.");
+        }
+
+        return result;
+    }
+
+    /**
      * 토스 결제 성공 콜백 — 결제 승인 처리
      */
     @GetMapping("success")
     public String paymentSuccess(@RequestParam("paymentKey") String paymentKey,
                                   @RequestParam("orderId") String orderId,
                                   @RequestParam("amount") int amount,
+                                  @RequestParam(value = "transactionId", required = false) Integer transactionId,
                                   Authentication authentication,
                                   HttpServletRequest request,
                                   Model model) {
@@ -138,6 +189,15 @@ public class PaymentController {
             return "redirect:/security/login";
         }
 
+        // 무료나눔 거래: 토스 승인 불필요, transactionId로 조회
+        if ("FREE".equals(paymentKey) && amount == 0 && transactionId != null) {
+            TransactionDTO txn = paymentService.getTransactionById(transactionId);
+            model.addAttribute("transaction", txn);
+            model.addAttribute("paymentKey", "FREE");
+            return "payment/success";
+        }
+
+        // 유료 결제: 토스 결제 승인 처리
         String requestIp = request.getRemoteAddr();
         Map<String, Object> confirmResult = paymentService.confirmPayment(paymentKey, orderId, amount, requestIp);
 

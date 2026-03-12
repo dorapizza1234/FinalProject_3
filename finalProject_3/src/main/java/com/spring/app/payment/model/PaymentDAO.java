@@ -27,6 +27,9 @@ public interface PaymentDAO {
     // 에스크로 구매확인 (거래완료 처리)
     int updateEscrowConfirm(int transactionId);
 
+    // 무료나눔 거래 완료
+    int updateFreeOrderComplete(int transactionId);
+
     // 상품 거래상태 업데이트
     int updateProductTradeStatus(Map<String, Object> paraMap);
 

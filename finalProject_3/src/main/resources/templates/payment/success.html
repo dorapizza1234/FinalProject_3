@@ -80,11 +80,11 @@
     </div>
 </section>
 
-<input type="hidden" id="contextPath" th:value="${#request.contextPath}">
+<input type="hidden" id="contextPath" th:value="@{/}">
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const contextPath = document.getElementById('contextPath').value;
+    const contextPath = document.getElementById('contextPath').value.replace(/\/$/, '');
 
     const confirmBtn = document.getElementById('btnEscrowConfirm');
     if (confirmBtn) {

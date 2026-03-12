@@ -54,15 +54,48 @@ public class PaymentService_imple implements PaymentService {
         TransactionDTO dto = new TransactionDTO();
         dto.setProductNo(productNo);
         dto.setBuyerEmail(buyerEmail);
-        dto.setPaymentType(paymentType);
-        dto.setTossOrderId(orderId);
-        dto.setTossPayKey("PENDING");   // Oracle에서 빈문자열=NULL이므로 임시값 설정 (승인 후 실제 키로 업데이트)
         dto.setPayStatus("READY");
-        dto.setUseEscrow("Y");          // 안전결제(에스크로)
+
+        // 무료나눔: 토스 결제 없이 처리 (DB 제약조건에 맞게 '캐시결제' + NULL toss keys)
+        if ("무료나눔".equals(paymentType)) {
+            dto.setPaymentType("캐시결제");
+            dto.setTossOrderId(null);
+            dto.setTossPayKey(null);
+            dto.setUseEscrow("N");
+        } else {
+            dto.setPaymentType(paymentType);
+            dto.setTossOrderId(orderId);
+            dto.setTossPayKey("PENDING");
+            dto.setUseEscrow("Y");
+        }
 
         paymentDAO.insertTransaction(dto);
 
+        // 무료나눔이어도 orderId를 반환 (JS 리다이렉트용, DB에는 저장 안 됨)
+        if (dto.getTossOrderId() == null) {
+            dto.setTossOrderId(orderId);
+        }
+
         return dto;
+    }
+
+    /**
+     * 무료나눔 거래 완료 처리
+     */
+    @Override
+    @Transactional
+    public void completeFreeOrder(int transactionId) {
+        // 무료나눔 거래 완료 처리 (PAY_STATUS=DONE)
+        paymentDAO.updateFreeOrderComplete(transactionId);
+
+        // 상품 상태를 '예약중'으로 변경
+        TransactionDTO txn = paymentDAO.selectTransactionById(transactionId);
+        if (txn != null) {
+            Map<String, Object> productMap = new HashMap<>();
+            productMap.put("productNo", txn.getProductNo());
+            productMap.put("tradeStatus", "예약중");
+            paymentDAO.updateProductTradeStatus(productMap);
+        }
     }
 
     /**
