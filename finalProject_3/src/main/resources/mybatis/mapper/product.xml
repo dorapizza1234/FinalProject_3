@@ -512,6 +512,13 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
 </select>
 
 <!-- 인기검색어 -->
+<!-- 기준
+ 최근 7일 검색 데이터
+ 상품 검색만
+ 검색어 길이 2글자 이상
+ 2번 이상 검색된 키워드
+ 검색 횟수 기준 정렬
+ Top 10 -->
 <insert id="insertSearchLog"
         parameterType="com.spring.app.product.domain.SearchLogDTO">
 
@@ -539,7 +546,6 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
     )
 
 </insert>
-
 <select id="selectPopularKeywordList"
         resultType="com.spring.app.product.domain.SearchKeywordDTO">
 
@@ -547,19 +553,21 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
     SELECT keyword, searchCount
     FROM (
         SELECT
-            SEARCH_LOG.KEYWORD AS keyword,
+            TRIM(SEARCH_LOG.KEYWORD) AS keyword,
             COUNT(*) AS searchCount
         FROM SEARCH_LOG
         WHERE SEARCH_LOG.SEARCH_TYPE = 'PRODUCT'
           AND SEARCH_LOG.SEARCHED_AT >= SYSTIMESTAMP - 7
-        GROUP BY SEARCH_LOG.KEYWORD
-        ORDER BY COUNT(*) DESC, SEARCH_LOG.KEYWORD ASC
+          AND SEARCH_LOG.KEYWORD IS NOT NULL
+          AND LENGTH(TRIM(SEARCH_LOG.KEYWORD)) >= 2
+        GROUP BY TRIM(SEARCH_LOG.KEYWORD)
+        HAVING COUNT(*) >= 2
+        ORDER BY COUNT(*) DESC, TRIM(SEARCH_LOG.KEYWORD) ASC
     )
     WHERE ROWNUM <= 10
 ]]>
 
 </select>
-
 <!-- 조회수 -->
 <update id="updateViewCount" parameterType="int">
     UPDATE PRODUCTS

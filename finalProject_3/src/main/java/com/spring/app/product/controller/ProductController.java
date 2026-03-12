@@ -94,6 +94,9 @@ public class ProductController {
         if (searchWord != null) searchWord = searchWord.trim();
         if (areaDong != null) areaDong = areaDong.trim();
         if (sortType == null || "".equals(sortType.trim())) sortType = "latest";
+        if (searchWord != null) {
+            searchWord = searchWord.trim().replaceAll("\\s+", " ");
+        }
 
         if (freeOnly != null && !"".equals(freeOnly.trim())) {
             priceMin = null;
@@ -102,21 +105,7 @@ public class ProductController {
 
         String memberEmail = getLoginEmail(authentication);
 
-        if (searchWord != null && !"".equals(searchWord)) {
-            SearchLogDTO searchLogDto = new SearchLogDTO();
-            searchLogDto.setKeyword(searchWord);
-            searchLogDto.setSearchType("PRODUCT");
-            searchLogDto.setIpAddress(request.getRemoteAddr());
-            searchLogDto.setUserAgent(request.getHeader("User-Agent"));
-
-            if (memberEmail != null) {
-                searchLogDto.setMemberEmail(memberEmail);
-            } else {
-                searchLogDto.setSessionId(session.getId());
-            }
-
-            pservice.insertSearchLog(searchLogDto);
-        }
+        
 
         int startRow = 1;
         int endRow = 12;
@@ -136,6 +125,23 @@ public class ProductController {
         paraMap.put("memberEmail", memberEmail);
 
         List<ProductDTO> list = pservice.selectProductListByConditionMore(paraMap);
+        
+        if (searchWord != null && searchWord.length() >= 2 && list != null && !list.isEmpty()) {
+            SearchLogDTO searchLogDto = new SearchLogDTO();
+            searchLogDto.setKeyword(searchWord);
+            searchLogDto.setSearchType("PRODUCT");
+            searchLogDto.setIpAddress(request.getRemoteAddr());
+            searchLogDto.setUserAgent(request.getHeader("User-Agent"));
+
+            if (memberEmail != null) {
+                searchLogDto.setMemberEmail(memberEmail);
+            } else {
+                searchLogDto.setSessionId(session.getId());
+            }
+
+            pservice.insertSearchLog(searchLogDto);
+        }
+        
         List<SearchKeywordDTO> popularKeywordList = pservice.selectPopularKeywordList();
 
         Map<String, Object> priceParaMap = new HashMap<>();
@@ -431,9 +437,9 @@ public class ProductController {
             HttpSession session,
             Model model) {
 
-        if (searchWord != null) {
-            searchWord = searchWord.trim();
-        }
+    	if (searchWord != null) {
+    	    searchWord = searchWord.trim().replaceAll("\\s+", " ");
+    	}
 
         if (sortType == null || "".equals(sortType.trim())) {
             sortType = "latest";
@@ -452,26 +458,28 @@ public class ProductController {
         List<ProductPriceTrendDTO> priceChartData = new ArrayList<>();
 
         if (hasSearch) {
-            SearchLogDTO searchLogDto = new SearchLogDTO();
-            searchLogDto.setKeyword(searchWord);
-            searchLogDto.setSearchType("PRICE");
-            searchLogDto.setIpAddress(request.getRemoteAddr());
-            searchLogDto.setUserAgent(request.getHeader("User-Agent"));
-
-            if (memberEmail != null) {
-                searchLogDto.setMemberEmail(memberEmail);
-            } else {
-                searchLogDto.setSessionId(session.getId());
-            }
-
-            pservice.insertSearchLog(searchLogDto);
-
             Map<String, Object> paraMap = new LinkedHashMap<>();
             paraMap.put("searchWord", searchWord);
             paraMap.put("sortType", sortType);
             paraMap.put("memberEmail", memberEmail);
 
             list = pservice.selectPriceCheckProductList(paraMap);
+
+            if (searchWord.length() >= 2 && list != null && !list.isEmpty()) {
+                SearchLogDTO searchLogDto = new SearchLogDTO();
+                searchLogDto.setKeyword(searchWord);
+                searchLogDto.setSearchType("PRICE");
+                searchLogDto.setIpAddress(request.getRemoteAddr());
+                searchLogDto.setUserAgent(request.getHeader("User-Agent"));
+
+                if (memberEmail != null) {
+                    searchLogDto.setMemberEmail(memberEmail);
+                } else {
+                    searchLogDto.setSessionId(session.getId());
+                }
+
+                pservice.insertSearchLog(searchLogDto);
+            }
 
             if (list != null && !list.isEmpty()) {
                 priceStats = pservice.selectPriceCheckStats(paraMap);
@@ -564,8 +572,10 @@ public class ProductController {
         List<String> wordList = pservice.wordSearchShow(paraMap);
 
         List<Map<String, String>> mapList = new ArrayList<>();
-
+        
+        
         if (wordList != null) {
+        	
             for (String word : wordList) {
                 Map<String, String> map = new HashMap<>();
                 map.put("word", word);
