@@ -5,7 +5,7 @@
 <mapper namespace="com.spring.app.payment.model.PaymentDAO">
 
     <!-- ===================== 거래 생성 ===================== -->
-    <insert id="insertTransaction" parameterType="com.spring.app.payment.domain.TransactionDTO">
+<insert id="insertTransaction" parameterType="com.spring.app.payment.domain.TransactionDTO">
         <selectKey keyProperty="transactionId" resultType="int" order="BEFORE">
             SELECT SEQ_TRANSACTION_ID.NEXTVAL FROM DUAL
         </selectKey>
@@ -21,19 +21,23 @@
             P.SELLER_EMAIL,
             #{buyerEmail},
             #{paymentType},
-            P.PRODUCT_PRICE,
+            NVL(P.PRODUCT_PRICE, 0) + NVL(
+                (SELECT MIN(SO.SHIPPING_FEE)
+                 FROM PRODUCT_SHIPPING_OPTION SO
+                 WHERE SO.PRODUCT_NO = P.PRODUCT_NO), 0
+            ),
             '거래중',
             SYSTIMESTAMP,
-            #{tossPayKey},
-            #{tossOrderId},
-            #{payStatus},
-            #{useEscrow}
+            #{tossPayKey, jdbcType=VARCHAR},
+            #{tossOrderId, jdbcType=VARCHAR},
+            #{payStatus, jdbcType=VARCHAR},
+            #{useEscrow, jdbcType=VARCHAR}
         FROM PRODUCTS P
         WHERE P.PRODUCT_NO = #{productNo}
     </insert>
 
     <!-- ===================== 거래 조회 (orderId) ===================== -->
-    <select id="selectTransactionByOrderId" parameterType="String"
+	<select id="selectTransactionByOrderId" parameterType="String"
             resultType="com.spring.app.payment.domain.TransactionDTO">
         SELECT T.TRANSACTION_ID    AS transactionId,
                T.PRODUCT_NO        AS productNo,
@@ -57,14 +61,14 @@
                MS.USER_NAME        AS sellerName,
                MB.USER_NAME        AS buyerName
         FROM TRANSACTIONS T
-        JOIN PRODUCTS P ON T.PRODUCT_NO = P.PRODUCT_NO
-        JOIN MEMBER MS ON T.SELLER_EMAIL = MS.EMAIL
+        LEFT JOIN PRODUCTS P ON T.PRODUCT_NO = P.PRODUCT_NO
+        LEFT JOIN MEMBER MS ON T.SELLER_EMAIL = MS.EMAIL
         LEFT JOIN MEMBER MB ON T.BUYER_EMAIL = MB.EMAIL
         WHERE T.TOSS_ORDER_ID = #{orderId}
     </select>
 
     <!-- ===================== 거래 조회 (transactionId) ===================== -->
-    <select id="selectTransactionById" parameterType="int"
+	<select id="selectTransactionById" parameterType="int"
             resultType="com.spring.app.payment.domain.TransactionDTO">
         SELECT T.TRANSACTION_ID    AS transactionId,
                T.PRODUCT_NO        AS productNo,
@@ -88,8 +92,8 @@
                MS.USER_NAME        AS sellerName,
                MB.USER_NAME        AS buyerName
         FROM TRANSACTIONS T
-        JOIN PRODUCTS P ON T.PRODUCT_NO = P.PRODUCT_NO
-        JOIN MEMBER MS ON T.SELLER_EMAIL = MS.EMAIL
+        LEFT JOIN PRODUCTS P ON T.PRODUCT_NO = P.PRODUCT_NO
+        LEFT JOIN MEMBER MS ON T.SELLER_EMAIL = MS.EMAIL
         LEFT JOIN MEMBER MB ON T.BUYER_EMAIL = MB.EMAIL
         WHERE T.TRANSACTION_ID = #{transactionId}
     </select>
@@ -118,6 +122,16 @@
         WHERE TRANSACTION_ID = #{transactionId}
           AND USE_ESCROW = 'Y'
           AND PAY_STATUS = 'DONE'
+    </update>
+
+    <!-- ===================== 무료나눔 거래 완료 ===================== -->
+    <update id="updateFreeOrderComplete" parameterType="int">
+        UPDATE TRANSACTIONS
+        SET PAY_STATUS    = 'DONE',
+            TRADE_STATUS  = '거래중',
+            COMPLETE_DATE = SYSTIMESTAMP
+        WHERE TRANSACTION_ID = #{transactionId}
+          AND AMOUNT = 0
     </update>
 
     <!-- ===================== 상품 거래상태 변경 ===================== -->

@@ -15,6 +15,9 @@ public interface PaymentService {
     // 에스크로 구매확인 (구매자가 수령 확인)
     Map<String, Object> confirmEscrow(int transactionId, String buyerEmail);
 
+    // 무료나눔 거래 완료
+    void completeFreeOrder(int transactionId);
+
     // 거래 조회
     TransactionDTO getTransactionByOrderId(String orderId);
 
