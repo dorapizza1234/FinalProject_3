@@ -49,17 +49,5 @@
     });
   });
 
-  // 하트 토글
-  document.addEventListener('click', (e) => {
-    const likeBtn = e.target.closest('.sps-like');
-    if (!likeBtn) return;
-
-    const icon = likeBtn.querySelector('i');
-    const isOn = likeBtn.classList.contains('is-on');
-
-    likeBtn.classList.toggle('is-on', !isOn);
-    likeBtn.setAttribute('aria-pressed', String(!isOn));
-    icon.classList.toggle('fa-solid', !isOn);
-    icon.classList.toggle('fa-regular', isOn);
-  });
+ 
 })();
