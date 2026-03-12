@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:replace="~{layout/layout_main :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>공지사항 / FAQ</title>
+</head>
+<body>
+<main>
+    <!-- 공지사항 섹션 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>공지사항</h3>
+        <a th:href="@{/board-service/notice/write}" class="btn btn-primary btn-sm"
+           sec:authorize="hasRole('ADMIN')">글쓰기</a>
+    </div>
+
+    <table class="table table-hover table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th style="width:80px;">번호</th>
+                <th>제목</th>
+                <th style="width:120px;">작성일</th>
+                <th style="width:80px;">조회수</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:if="${#lists.isEmpty(noticeList)}">
+                <td colspan="4" class="text-center text-muted">등록된 공지사항이 없습니다.</td>
+            </tr>
+            <tr th:each="notice, stat : ${noticeList}"
+                th:class="${notice.importance == 1} ? 'table-warning' : ''">
+                <td th:text="${stat.index + 1}"></td>
+                <td>
+                    <span th:if="${notice.importance == 1}" class="badge badge-warning mr-1">중요</span>
+                    <a th:href="@{/board-service/notice/view(noticeId=${notice.noticeId})}"
+                       th:text="${notice.title}" class="text-dark"></a>
+                </td>
+                <td th:text="${notice.createdAt}"></td>
+                <td th:text="${notice.viewCount}"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr class="my-5">
+
+    <!-- FAQ 섹션 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>자주 묻는 질문 (FAQ)</h3>
+        <a th:href="@{/board-service/notice/write}" class="btn btn-primary btn-sm"
+           sec:authorize="hasRole('ADMIN')">FAQ 등록</a>
+    </div>
+
+    <div id="faqAccordion">
+        <div th:if="${#lists.isEmpty(faqList)}" class="text-center text-muted py-3">
+            등록된 FAQ가 없습니다.
+        </div>
+        <div th:each="faq, stat : ${faqList}" class="card mb-2">
+            <div class="card-header" th:id="${'faqHeading' + stat.index}">
+                <h5 class="mb-0">
+                    <button class="btn btn-link collapsed w-100 text-left"
+                            type="button"
+                            data-toggle="collapse"
+                            th:data-target="${'#faqCollapse' + stat.index}"
+                            aria-expanded="false">
+                        <span class="badge badge-info mr-2">Q</span>
+                        <span th:text="${faq.title}"></span>
+                    </button>
+                </h5>
+            </div>
+            <div th:id="${'faqCollapse' + stat.index}"
+                 class="collapse"
+                 th:attr="aria-labelledby=${'faqHeading' + stat.index}"
+                 data-parent="#faqAccordion">
+                <div class="card-body">
+                    <span class="badge badge-success mr-2">A</span>
+                    <span th:text="${faq.content}" style="white-space: pre-wrap;"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
