@@ -2,7 +2,6 @@ package com.spring.app.security.loginfail;
 
 import java.io.IOException;
 
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,12 @@ public class MyAuthenticationFailureHandler implements AuthenticationFailureHand
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException exception) throws IOException, ServletException {
 
-        if (exception instanceof DisabledException && "IDLE_ACCOUNT".equals(exception.getMessage())) {
+        String msg = exception.getMessage();
+        Throwable cause = exception.getCause();
+        boolean isIdle = "IDLE_ACCOUNT".equals(msg) ||
+                         (cause != null && "IDLE_ACCOUNT".equals(cause.getMessage()));
+
+        if (isIdle) {
             // 휴면 계정 → 복구 팝업을 위해 이메일 세션 저장 후 idle=true 로 리다이렉트
             request.getSession().setAttribute("idleEmail", request.getParameter("email"));
             response.sendRedirect(request.getContextPath() + "/security/login?idle=true");
