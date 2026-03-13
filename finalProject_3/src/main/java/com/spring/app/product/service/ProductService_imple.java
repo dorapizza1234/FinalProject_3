@@ -1,6 +1,7 @@
 package com.spring.app.product.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -342,6 +343,16 @@ public class ProductService_imple implements ProductService {
     @Override
     public int selectSellerProductCountByProductNo(int productNo) {
         return pdao.selectSellerProductCountByProductNo(productNo);
+    }
+
+
+    @Override
+    public boolean isBuyerOfProduct(int productNo, String memberEmail) {
+        Map<String, Object> paraMap = new HashMap<>();
+        paraMap.put("productNo", productNo);
+        paraMap.put("memberEmail", memberEmail);
+
+        return pdao.isBuyerOfProduct(paraMap) > 0;
     }
     
     

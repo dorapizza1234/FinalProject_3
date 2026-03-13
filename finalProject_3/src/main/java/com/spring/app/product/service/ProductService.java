@@ -74,6 +74,9 @@ public interface ProductService {
 	int selectSellerProductCountByProductNo(int productNo);
 
 	
+	boolean isBuyerOfProduct(int productNo, String memberEmail);
+
+	
 
 	
 	

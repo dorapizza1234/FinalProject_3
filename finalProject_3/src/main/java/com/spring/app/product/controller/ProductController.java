@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -105,8 +106,6 @@ public class ProductController {
 
         String memberEmail = getLoginEmail(authentication);
 
-        
-
         int startRow = 1;
         int endRow = 12;
 
@@ -125,7 +124,7 @@ public class ProductController {
         paraMap.put("memberEmail", memberEmail);
 
         List<ProductDTO> list = pservice.selectProductListByConditionMore(paraMap);
-        
+
         if (searchWord != null && searchWord.length() >= 2 && list != null && !list.isEmpty()) {
             SearchLogDTO searchLogDto = new SearchLogDTO();
             searchLogDto.setKeyword(searchWord);
@@ -135,13 +134,14 @@ public class ProductController {
 
             if (memberEmail != null) {
                 searchLogDto.setMemberEmail(memberEmail);
-            } else {
+            }
+            else {
                 searchLogDto.setSessionId(session.getId());
             }
 
             pservice.insertSearchLog(searchLogDto);
         }
-        
+
         List<SearchKeywordDTO> popularKeywordList = pservice.selectPopularKeywordList();
 
         Map<String, Object> priceParaMap = new HashMap<>();
@@ -163,7 +163,7 @@ public class ProductController {
 
         return "product/product_list";
     }
-    
+
     //판매하기
     @GetMapping("/sell")
     public String sellPage() {
@@ -258,13 +258,15 @@ public class ProductController {
                 imageDtoList.add(imgDto);
             }
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("이미지 업로드 실패", e);
 
             for (String fn : savedFileNames) {
                 try {
                     fileManager.doFileDelete(fn, imagesDir);
-                } catch (Exception ignore) {}
+                }
+                catch (Exception ignore) {}
             }
 
             return failResult("이미지 업로드 실패");
@@ -279,19 +281,22 @@ public class ProductController {
                 for (String fn : savedFileNames) {
                     try {
                         fileManager.doFileDelete(fn, imagesDir);
-                    } catch (Exception ignore) {}
+                    }
+                    catch (Exception ignore) {}
                 }
 
                 return failResult("DB 저장 실패");
             }
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("DB 저장 중 예외 발생", e);
 
             for (String fn : savedFileNames) {
                 try {
                     fileManager.doFileDelete(fn, imagesDir);
-                } catch (Exception ignore) {}
+                }
+                catch (Exception ignore) {}
             }
 
             return failResult("DB 저장 실패");
@@ -309,7 +314,8 @@ public class ProductController {
 
         try {
             return objectMapper.readValue(json, new TypeReference<List<ProductShippingOptionDTO>>() {});
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.warn("shippingOptionsJson 파싱 실패: {}", json, e);
             return new ArrayList<>();
         }
@@ -320,7 +326,8 @@ public class ProductController {
 
         try {
             return objectMapper.readValue(json, new TypeReference<List<ProductMeetLocationDTO>>() {});
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.warn("meetLocationsJson 파싱 실패: {}", json, e);
             return new ArrayList<>();
         }
@@ -373,7 +380,7 @@ public class ProductController {
 
         return pservice.selectProductListByConditionMore(paraMap);
     }
-    
+
     //나눔하기
     @GetMapping("/share")
     public String share() {
@@ -383,9 +390,8 @@ public class ProductController {
     @GetMapping("/product_detail/{productNo}")
     public String detail(@PathVariable("productNo") int productNo,
                          Authentication authentication,
-                         Model model) {
-
-        pservice.updateViewCount(productNo);
+                         Model model,
+                         RedirectAttributes redirectAttr) {
 
         String memberEmail = getLoginEmail(authentication);
 
@@ -394,6 +400,25 @@ public class ProductController {
         paraMap.put("memberEmail", memberEmail);
 
         ProductDTO productDto = pservice.getProductDetailFull(paraMap);
+
+        if (productDto == null) {
+            redirectAttr.addFlashAttribute("message", "존재하지 않는 상품입니다.");
+            return "redirect:/product/product_list";
+        }
+
+        String tradeStatus = productDto.getTradeStatus();
+
+        boolean isSeller = memberEmail != null && memberEmail.equals(productDto.getSellerEmail());
+        boolean isBuyer = memberEmail != null && pservice.isBuyerOfProduct(productNo, memberEmail);
+
+        if (("예약중".equals(tradeStatus) || "판매완료".equals(tradeStatus))
+                && !isSeller && !isBuyer) {
+            redirectAttr.addFlashAttribute("message", "해당 상품은 거래 당사자만 조회할 수 있습니다.");
+            return "redirect:/product/product_list";
+        }
+
+        pservice.updateViewCount(productNo);
+
         List<ProductDTO> similarProductList = pservice.selectSimilarProducts(productDto);
 
         model.addAttribute("product", productDto);
@@ -437,9 +462,9 @@ public class ProductController {
             HttpSession session,
             Model model) {
 
-    	if (searchWord != null) {
-    	    searchWord = searchWord.trim().replaceAll("\\s+", " ");
-    	}
+        if (searchWord != null) {
+            searchWord = searchWord.trim().replaceAll("\\s+", " ");
+        }
 
         if (sortType == null || "".equals(sortType.trim())) {
             sortType = "latest";
@@ -474,7 +499,8 @@ public class ProductController {
 
                 if (memberEmail != null) {
                     searchLogDto.setMemberEmail(memberEmail);
-                } else {
+                }
+                else {
                     searchLogDto.setSessionId(session.getId());
                 }
 
@@ -502,7 +528,7 @@ public class ProductController {
         return "product/price_check";
     }
 
-  //판매자 정보 페이지
+    //판매자 정보 페이지
     @GetMapping("/product_user_profile")
     public String product_user_profile(@RequestParam("productNo") int productNo,
                                        Model model,
@@ -511,8 +537,8 @@ public class ProductController {
         model.addAttribute("isLogin", getLoginEmail(authentication) != null);
         return "product/product_user_profile";
     }
-    
- // 판매자 기본 정보 조회
+
+    // 판매자 기본 정보 조회
     @GetMapping("/seller/profile")
     @ResponseBody
     public Map<String, Object> sellerProfile(@RequestParam("productNo") int productNo) {
@@ -531,8 +557,8 @@ public class ProductController {
         result.put("seller", sellerDto);
         return result;
     }
-    
- // 판매자 판매상품 조회
+
+    // 판매자 판매상품 조회
     @GetMapping("/seller/products")
     @ResponseBody
     public Map<String, Object> sellerProducts(@RequestParam("productNo") int productNo,
@@ -572,10 +598,8 @@ public class ProductController {
         List<String> wordList = pservice.wordSearchShow(paraMap);
 
         List<Map<String, String>> mapList = new ArrayList<>();
-        
-        
+
         if (wordList != null) {
-        	
             for (String word : wordList) {
                 Map<String, String> map = new HashMap<>();
                 map.put("word", word);

@@ -85,5 +85,8 @@ public interface ProductDAO {
 	ProductDTO selectSellerProfileByProductNo(int productNo);
 	List<ProductDTO> selectSellerProductsByProductNo(Map<String, Object> paraMap);
 	int selectSellerProductCountByProductNo(int productNo);
+
+	
+	int isBuyerOfProduct(Map<String, Object> paraMap);
     
 }

@@ -151,61 +151,72 @@
 
 
 	<!-- 상품 상세 - 기본정보 (PRODUCTS) -->
-
-	<select id="selectProductDetail"
+<select id="selectProductDetail"
         parameterType="hashMap"
         resultType="com.spring.app.product.domain.ProductDTO">
 
-SELECT
-    PRODUCTS.PRODUCT_NO AS productNo,
-    PRODUCTS.SELLER_EMAIL AS sellerEmail,
-    PRODUCTS.CATEGORY_NO AS categoryNo,
-    CATEGORY.CATEGORY_NAME AS categoryName,
-    PRODUCTS.SALE_TYPE AS saleType,
-    PRODUCTS.PRODUCT_NAME AS productName,
-    PRODUCTS.PRODUCT_PRICE AS productPrice,
-    PRODUCTS.PRODUCT_DESC AS productDesc,
-    PRODUCTS.PRODUCT_CONDITION AS productCondition,
-    PRODUCTS.TRADE_STATUS AS tradeStatus,
-    PRODUCTS.TRADE_METHOD AS tradeMethod,
-    PRODUCTS.VIEW_COUNT AS viewCount,
-    PRODUCTS.REG_DATE AS regDate,
-    MEMBER.NICKNAME AS sellerName,
-    MEMBER.MANNER_TEMP AS mannerTemp,
-    MEMBER.PROFILE_IMG AS sellerProfileImg,
-    (
-        SELECT COUNT(*)
-        FROM WISHLIST
-        WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-    ) AS wishCount,
-
-    <choose>
-       <when test="memberEmail != null and memberEmail != ''">
-    CASE
-        WHEN EXISTS (
-            SELECT 1
+    SELECT
+        PRODUCTS.PRODUCT_NO AS productNo,
+        PRODUCTS.SELLER_EMAIL AS sellerEmail,
+        PRODUCTS.CATEGORY_NO AS categoryNo,
+        CATEGORY.CATEGORY_NAME AS categoryName,
+        PRODUCTS.SALE_TYPE AS saleType,
+        PRODUCTS.PRODUCT_NAME AS productName,
+        PRODUCTS.PRODUCT_PRICE AS productPrice,
+        PRODUCTS.PRODUCT_DESC AS productDesc,
+        PRODUCTS.PRODUCT_CONDITION AS productCondition,
+        PRODUCTS.TRADE_STATUS AS tradeStatus,
+        PRODUCTS.TRADE_METHOD AS tradeMethod,
+        PRODUCTS.VIEW_COUNT AS viewCount,
+        PRODUCTS.REG_DATE AS regDate,
+        MEMBER.NICKNAME AS sellerName,
+        MEMBER.MANNER_TEMP AS mannerTemp,
+        MEMBER.PROFILE_IMG AS sellerProfileImg,
+        (
+            SELECT COUNT(*)
             FROM WISHLIST
             WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-              AND WISHLIST.MEMBER_EMAIL = #{memberEmail}
-        )
-        THEN 1
-        ELSE 0
-    END AS wished
-</when>
-<otherwise>
-    0 AS wished
-</otherwise>
-    </choose>
+        ) AS wishCount,
 
-FROM PRODUCTS
-LEFT JOIN CATEGORY
-ON PRODUCTS.CATEGORY_NO = CATEGORY.CATEGORY_NO
-LEFT JOIN MEMBER
-ON PRODUCTS.SELLER_EMAIL = MEMBER.EMAIL
-WHERE PRODUCTS.PRODUCT_NO = #{productNo}
+        <choose>
+            <when test="memberEmail != null and memberEmail != ''">
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM WISHLIST
+                        WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                          AND WISHLIST.MEMBER_EMAIL = #{memberEmail}
+                    )
+                    THEN 1
+                    ELSE 0
+                END AS wished
+            </when>
+            <otherwise>
+                0 AS wished
+            </otherwise>
+        </choose>
+
+    FROM PRODUCTS
+    LEFT JOIN CATEGORY
+      ON PRODUCTS.CATEGORY_NO = CATEGORY.CATEGORY_NO
+    LEFT JOIN MEMBER
+      ON PRODUCTS.SELLER_EMAIL = MEMBER.EMAIL
+    WHERE PRODUCTS.PRODUCT_NO = #{productNo}
 
 </select>
 
+<select id="isBuyerOfProduct"
+        parameterType="hashMap"
+        resultType="int">
+
+    SELECT COUNT(*)
+    FROM CHAT_ROOM
+    WHERE CHAT_ROOM.PRODUCT_NO = #{productNo}
+      AND CHAT_ROOM.BUYER_EMAIL = #{memberEmail}
+
+</select>
+
+	
 	<!-- 상품 상세 - 이미지 목록 -->
 
 	<select id="selectProductImages" parameterType="int"
@@ -427,7 +438,8 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
 </select>
 
 	<select id="selectProductListByCondition"
-    resultType="com.spring.app.product.domain.ProductDTO">
+        parameterType="hashMap"
+        resultType="com.spring.app.product.domain.ProductDTO">
 
     SELECT
         PRODUCTS.PRODUCT_NO AS productNo,
@@ -443,16 +455,56 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
             SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
             FROM PRODUCT_MEET_LOCATION
             WHERE PRODUCT_MEET_LOCATION.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-            AND ROWNUM = 1
+              AND ROWNUM = 1
         ) AS placeName,
 
         (
             SELECT PRODUCT_IMAGE.IMG_URL
             FROM PRODUCT_IMAGE
             WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-            AND PRODUCT_IMAGE.IS_MAIN = 'Y'
-            AND ROWNUM = 1
-        ) AS imgUrl
+              AND PRODUCT_IMAGE.IS_MAIN = 'Y'
+              AND ROWNUM = 1
+        ) AS imgUrl,
+
+        <choose>
+            <when test="memberEmail != null and memberEmail != ''">
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM WISHLIST
+                        WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                          AND WISHLIST.MEMBER_EMAIL = #{memberEmail}
+                    )
+                    THEN 1
+                    ELSE 0
+                END AS wished
+            </when>
+            <otherwise>
+                0 AS wished
+            </otherwise>
+        </choose>,
+
+        <choose>
+            <when test="memberEmail != null and memberEmail != ''">
+                CASE
+                    WHEN PRODUCTS.TRADE_STATUS = '판매중' THEN 1
+                    WHEN PRODUCTS.SELLER_EMAIL = #{memberEmail} THEN 1
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM CHAT_ROOM
+                        WHERE CHAT_ROOM.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                          AND CHAT_ROOM.BUYER_EMAIL = #{memberEmail}
+                    ) THEN 1
+                    ELSE 0
+                END AS canAccessDetail
+            </when>
+            <otherwise>
+                CASE
+                    WHEN PRODUCTS.TRADE_STATUS = '판매중' THEN 1
+                    ELSE 0
+                END AS canAccessDetail
+            </otherwise>
+        </choose>
 
     FROM PRODUCTS
     WHERE 1 = 1
@@ -650,7 +702,8 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
         categoryNo,
         placeName,
         imgUrl,
-        wished
+        wished,
+        canAccessDetail
     FROM
     (
         SELECT
@@ -684,15 +737,15 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
                 SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
                 FROM PRODUCT_MEET_LOCATION
                 WHERE PRODUCT_MEET_LOCATION.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-                AND ROWNUM = 1
+                  AND ROWNUM = 1
             ) AS placeName,
 
             (
                 SELECT PRODUCT_IMAGE.IMG_URL
                 FROM PRODUCT_IMAGE
                 WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-                AND PRODUCT_IMAGE.IS_MAIN = 'Y'
-                AND ROWNUM = 1
+                  AND PRODUCT_IMAGE.IS_MAIN = 'Y'
+                  AND ROWNUM = 1
             ) AS imgUrl,
 
             <choose>
@@ -702,7 +755,7 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
                             SELECT 1
                             FROM WISHLIST
                             WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-                              AND WISHLIST.MEMBER_EMAIL = #{memberEmail, jdbcType=VARCHAR}
+                              AND WISHLIST.MEMBER_EMAIL = #{memberEmail}
                         )
                         THEN 1
                         ELSE 0
@@ -710,6 +763,28 @@ WHERE PRODUCTS.PRODUCT_NO = #{productNo}
                 </when>
                 <otherwise>
                     0 AS wished
+                </otherwise>
+            </choose>,
+
+            <choose>
+                <when test="memberEmail != null and memberEmail != ''">
+                    CASE
+                        WHEN PRODUCTS.TRADE_STATUS = '판매중' THEN 1
+                        WHEN PRODUCTS.SELLER_EMAIL = #{memberEmail} THEN 1
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM CHAT_ROOM
+                            WHERE CHAT_ROOM.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                              AND CHAT_ROOM.BUYER_EMAIL = #{memberEmail}
+                        ) THEN 1
+                        ELSE 0
+                    END AS canAccessDetail
+                </when>
+                <otherwise>
+                    CASE
+                        WHEN PRODUCTS.TRADE_STATUS = '판매중' THEN 1
+                        ELSE 0
+                    END AS canAccessDetail
                 </otherwise>
             </choose>
 
