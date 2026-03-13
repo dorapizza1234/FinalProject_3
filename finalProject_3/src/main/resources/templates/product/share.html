@@ -10,94 +10,138 @@
 
 
 <script th:inline="javascript">
-    $(document).ready(function () {
-    const ctxPath = /*[[@{/}]]*/ "";
-    	
-      const registerUrl = /*[[@{/product/sellRegister}]]*/ "";
+	$(document)
+			.ready(
+					function() {
+						const ctxPath = /*[[@{/}]]*/"";
 
-      $(document).on("submit", "#pfForm", function (e) {
-        e.preventDefault();
+						const registerUrl = /*[[@{/product/sellRegister}]]*/"";
 
-        const form = this;
-        const $btn = $("#pfSubmitBtn");
+						$(document)
+								.on(
+										"submit",
+										"#pfForm",
+										function(e) {
+											e.preventDefault();
 
-        // ===== 1) 검증 =====
-        if (!window.PF || !window.PF.Image) {
-          alert("이미지 모듈 초기화 실패(외부 JS 로드/요소 id 확인)");
-          return;
-        }
+											const form = this;
+											const $btn = $("#pfSubmitBtn");
 
-        const imgR = window.PF.Image.validate();
-        if (!imgR.ok) { alert(imgR.msg); return; }
+											// ===== 1) 검증 =====
+											if (!window.PF || !window.PF.Image) {
+												alert("이미지 모듈 초기화 실패(외부 JS 로드/요소 id 확인)");
+												return;
+											}
 
-        const tradeMethod = $("#pfMeetToggle").is(":checked") ? "직거래" : "택배";
+											const imgR = window.PF.Image
+													.validate();
+											if (!imgR.ok) {
+												alert(imgR.msg);
+												return;
+											}
 
-        if (tradeMethod === "택배" && window.PF.Shipping) {
-          const r = window.PF.Shipping.validate();
-          if (!r.ok) { alert(r.msg); return; }
-          window.PF.Shipping.syncShipOptionsJson();
-        }
+											const tradeMethod = $(
+													"#pfMeetToggle").is(
+													":checked") ? "직거래" : "택배";
 
-        if (window.PF.Shipping) {
-          const r = window.PF.Shipping.validate();
-          if (!r.ok) { alert(r.msg); return; }
-          // ✅ hidden(name=shippingOptionsJson) 채워주기
-          window.PF.Shipping.syncShipOptionsJson();
-        }
+											if (tradeMethod === "택배"
+													&& window.PF.Shipping) {
+												const r = window.PF.Shipping
+														.validate();
+												if (!r.ok) {
+													alert(r.msg);
+													return;
+												}
+												window.PF.Shipping
+														.syncShipOptionsJson();
+											}
 
-        if (window.PF.Meet) {
-          const r = window.PF.Meet.validate(tradeMethod);
-          if (!r.ok) { alert(r.msg); return; }
-          // ✅ hidden(name=meetLocationsJson)은 PF.Meet 모듈이 저장함
-        }
+											if (window.PF.Shipping) {
+												const r = window.PF.Shipping
+														.validate();
+												if (!r.ok) {
+													alert(r.msg);
+													return;
+												}
+												// ✅ hidden(name=shippingOptionsJson) 채워주기
+												window.PF.Shipping
+														.syncShipOptionsJson();
+											}
 
-        // ===== 2) FormData 구성 =====
-        const formData = new FormData(form);
+											if (window.PF.Meet) {
+												const r = window.PF.Meet
+														.validate(tradeMethod);
+												if (!r.ok) {
+													alert(r.msg);
+													return;
+												}
+												// ✅ hidden(name=meetLocationsJson)은 PF.Meet 모듈이 저장함
+											}
 
-        // ✅ product_form.js가 selectedFiles 기준으로 fd.delete("images") 후 다시 append 함
-        window.PF.Image.appendToFormData(formData);
+											// ===== 2) FormData 구성 =====
+											const formData = new FormData(form);
 
-        // ===== 3) AJAX =====
-        $btn.prop("disabled", true).addClass("is-loading");
+											// ✅ product_form.js가 selectedFiles 기준으로 fd.delete("images") 후 다시 append 함
+											window.PF.Image
+													.appendToFormData(formData);
 
-        $.ajax({
-          url: registerUrl,
-          type: "post",
-          data: formData,
-          processData: false,
-          contentType: false,
-          dataType: "json",
-          success: function (json) {
-            $btn.prop("disabled", false).removeClass("is-loading");
+											// ===== 3) AJAX =====
+											$btn.prop("disabled", true)
+													.addClass("is-loading");
 
-            if (json && json.success) {
-              alert("등록 완료");
+											$
+													.ajax({
+														url : registerUrl,
+														type : "post",
+														data : formData,
+														processData : false,
+														contentType : false,
+														dataType : "json",
+														success : function(json) {
+															$btn
+																	.prop(
+																			"disabled",
+																			false)
+																	.removeClass(
+																			"is-loading");
 
-              const redirectUrl = json.redirectUrl
-                ? json.redirectUrl
-                : (json.productNo ? ("/product/detail/" + json.productNo) : null);
+															if (json
+																	&& json.success) {
+																alert("등록 완료");
 
-              if (redirectUrl) location.href = ctxPath + "product/product_list";
-              else location.reload();
-            }
-            else {
-              const msg = (json && json.message) ? json.message : "등록에 실패했습니다. 입력값을 확인해 주세요.";
-              alert("등록 실패: " + msg);
-            }
-          },
-          error: function (jqXHR, textStatus, errorThrown) {
-        	  const msg =
-        	    (jqXHR.responseJSON && jqXHR.responseJSON.message)
-        	      ? jqXHR.responseJSON.message
-        	      : (jqXHR.responseText ? jqXHR.responseText : ("요청 실패(" + jqXHR.status + ")"));
+																const redirectUrl = json.redirectUrl ? json.redirectUrl
+																		: (json.productNo ? ("/product/detail/" + json.productNo)
+																				: null);
 
-        	  alert("등록 실패: " + msg);
-        	}
-        });
+																if (redirectUrl)
+																	location.href = ctxPath
+																			+ "product/product_list";
+																else
+																	location
+																			.reload();
+															} else {
+																const msg = (json && json.message) ? json.message
+																		: "등록에 실패했습니다. 입력값을 확인해 주세요.";
+																alert("등록 실패: "
+																		+ msg);
+															}
+														},
+														error : function(jqXHR,
+																textStatus,
+																errorThrown) {
+															const msg = (jqXHR.responseJSON && jqXHR.responseJSON.message) ? jqXHR.responseJSON.message
+																	: (jqXHR.responseText ? jqXHR.responseText
+																			: ("요청 실패("
+																					+ jqXHR.status + ")"));
 
-      });
-    });
-  </script>
+															alert("등록 실패: "
+																	+ msg);
+														}
+													});
+
+										});
+					});
+</script>
 </head>
 
 <main class="pf-wrap" data-active="share">
@@ -115,8 +159,8 @@
 		<form id="pfForm" class="pf-form" th:action="@{/product/sellRegister}"
 			method="post" enctype="multipart/form-data">
 
-			<input type="hidden" name="saleType" value="나눔"> 
-			<input type="hidden" name="tradeStatus" value="판매중">
+			<input type="hidden" name="saleType" value="나눔"> <input
+				type="hidden" name="tradeStatus" value="판매중">
 
 			<!-- 이미지 -->
 			<div class="pf-row">
@@ -162,7 +206,8 @@
 			<div class="pf-row">
 				<div class="pf-label">카테고리</div>
 				<div class="pf-field pf-field-narrow">
-					<select class="pf-select" name="categoryNo" aria-label="카테고리" required>
+					<select class="pf-select" name="categoryNo" aria-label="카테고리"
+						required>
 						<option value="" disabled selected>카테고리를 선택해 주세요</option>
 						<option value="1">패션(수입명품 / 패션의류 / 패션잡화)</option>
 						<option value="2">육아(출산 / 유아동)</option>
@@ -171,12 +216,13 @@
 						<option value="5">취미(게임, 반려동물, 독서)</option>
 						<option value="6">여행(등산, 캠핑 등등)</option>
 						<option value="7">공구/산업용품</option>
-						<option value="8">디지털·전자기기(모바일 / 태블릿 / 노트북 / PC / 카메라 / 캠코더)</option>
+						<option value="8">디지털·전자기기(모바일 / 태블릿 / 노트북 / PC / 카메라 /
+							캠코더)</option>
 					</select>
 				</div>
 			</div>
 
-			
+
 
 			<!-- 설명 -->
 			<div class="pf-row">
@@ -201,19 +247,15 @@
 				<div class="pf-label">상품 상태</div>
 				<div class="pf-field">
 					<div class="pf-radio-row" role="radiogroup" aria-label="상품 상태">
-						<label class="pf-radio"> <input type="radio" name="productCondition" value="상" checked />
-							 <span class="pf-dot" aria-hidden="true"></span>
-							 <span>상</span>
-						</label> 
-							 
-						<label class="pf-radio"> <input type="radio" name="productCondition" value="중" />
-							 <span class="pf-dot" aria-hidden="true"></span>
-							 <span>중</span>
-						</label>
-						
-						 <label class="pf-radio"> <input type="radio" name="productCondition" value="하" />
-						  	<span class="pf-dot" aria-hidden="true"></span>
-							<span>하</span>
+						<label class="pf-radio"> <input type="radio"
+							name="productCondition" value="상" checked /> <span
+							class="pf-dot" aria-hidden="true"></span> <span>상</span>
+						</label> <label class="pf-radio"> <input type="radio"
+							name="productCondition" value="중" /> <span class="pf-dot"
+							aria-hidden="true"></span> <span>중</span>
+						</label> <label class="pf-radio"> <input type="radio"
+							name="productCondition" value="하" /> <span class="pf-dot"
+							aria-hidden="true"></span> <span>하</span>
 						</label>
 					</div>
 				</div>
@@ -295,8 +337,8 @@
 								</label>
 								<div class="pf-ship-fee-desc">택배사나 편의점에서 접수해 문 앞까지 배송돼요.</div>
 								<input class="pf-input pf-ship-fee-input" type="text"
-									inputmode="numeric" data-fee-for="일반택배" placeholder="2,700원 ~ 17,000원 이내"
-									disabled />
+									inputmode="numeric" data-fee-for="일반택배"
+									placeholder="2,700원 ~ 17,000원 이내" disabled />
 							</div>
 
 							<div class="pf-ship-fee-block">
@@ -307,19 +349,20 @@
 								</label>
 								<div class="pf-ship-fee-desc">편의점 발송 → 지정 편의점 수령</div>
 								<input class="pf-input pf-ship-fee-input" type="text"
-									inputmode="numeric" data-fee-for="CU반값" placeholder="1,800원 ~ 2,700원 이내"
-									disabled />
+									inputmode="numeric" data-fee-for="CU반값"
+									placeholder="1,800원 ~ 2,700원 이내" disabled />
 							</div>
 
 							<div class="pf-ship-fee-block">
-								<label class="pf-check"> <input type="checkbox" class="pf-ship-opt" data-type="GS반값" />
-									<span class="pf-check-ui" aria-hidden="true"></span>
-									<span class="pf-check-text">GS 반값택배</span>
+								<label class="pf-check"> <input type="checkbox"
+									class="pf-ship-opt" data-type="GS반값" /> <span
+									class="pf-check-ui" aria-hidden="true"></span> <span
+									class="pf-check-text">GS 반값택배</span>
 								</label>
 								<div class="pf-ship-fee-desc">편의점 발송 → 지정 편의점 수령</div>
 								<input class="pf-input pf-ship-fee-input" type="text"
-									inputmode="numeric" data-fee-for="GS반값" placeholder="1,900원 ~ 4,400원 이내"
-									disabled />
+									inputmode="numeric" data-fee-for="GS반값"
+									placeholder="1,900원 ~ 4,400원 이내" disabled />
 							</div>
 						</div>
 
@@ -329,6 +372,7 @@
 					</section>
 
 					<!-- 직거래 -->
+
 					<section class="pf-section" id="pfMeetSection">
 						<div class="pf-section-title">직거래</div>
 
@@ -351,53 +395,78 @@
 
 						<input type="hidden" id="pfMeetLocations" name="meetLocationsJson"
 							value="[]">
-							
 
 						<section class="area-modal" id="areaModal" aria-hidden="true">
-						  <div class="area-modal__backdrop" data-area-close="true"></div>
-						
-						  <div class="area-modal__panel" role="dialog" aria-modal="true" aria-labelledby="areaModalTitle">
-						    <div class="area-modal__header">
-						      <h2 class="area-modal__title" id="areaModalTitle">지역 변경</h2>
-						      <button type="button" class="area-modal__close" aria-label="닫기" data-area-close="true">×</button>
-						    </div>
-						
-						    <div class="area-modal__body">
-						      <!-- 1) 검색 버튼(문구 변경) -->
-						      <button type="button" class="area-search" id="areaSearchBtn">
-						        <i class="fa-solid fa-location-dot"></i> 검색어로
-						      </button>
-						
-						      <!-- 2) 현재 내 위치 버튼(그대로) -->
-						      <button type="button" class="area-geo" id="areaUseGeoBtn">
-						        <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
-						        현재 내 위치 사용하기
-						      </button>
-						
-						      <!-- ✅ 3) 지도/검색 UI: geo 버튼 아래에 위치 -->
-						      <div class="area-searchwrap" id="areaSearchWrap" aria-hidden="true">
-						        <div class="area-searchwrap__search">
-						          <input type="text" id="areaKakaoKeyword" placeholder="장소/동네/역 이름으로 검색" />
-						          <button type="button" id="areaKakaoSearchBtn">검색</button>
-						        </div>
-						
-						        <div id="areaKakaoMap" class="area-searchwrap__map"></div>
-						
-						        <ul id="areaKakaoResult" class="area-searchwrap__result"></ul>
-						        <div class="area-searchwrap__hint">지도에서 클릭해도 선택돼요.</div>
-						      </div>
-						
-						      <div class="area-list">
-						        <div class="area-list__title">최근 검색한 동네</div>
-						        <ul class="area-list__items" id="areaList">
-						          <li style="padding: 10px 6px; opacity: .7;">최근 검색 기록이 없어요.</li>
-						        </ul>
-						      </div>
-						    </div>
-						  </div>
-						</section>
-						
+							<div class="area-modal__backdrop" data-area-close="true"></div>
 
+							<div class="area-modal__panel" role="dialog" aria-modal="true"
+								aria-labelledby="areaModalTitle">
+								<div class="area-modal__header">
+									<h2 class="area-modal__title" id="areaModalTitle">거래 위치 설정</h2>
+									<button type="button" class="area-modal__close" aria-label="닫기"
+										data-area-close="true">×</button>
+								</div>
+
+								<div class="area-modal__body">
+									<div class="area-modal__layout">
+
+										<!-- LEFT : 최근 검색한 지역 -->
+										<div class="area-modal__left">
+											<div class="area-list">
+												<div class="area-list__title">최근 검색한 동네</div>
+												<ul class="area-list__items" id="areaList">
+													<li style="padding: 10px 8px; opacity: .7;">최근 검색 기록이
+														없어요.</li>
+												</ul>
+											</div>
+										</div>
+
+										<!-- CENTER : 검색 / 현재 위치 / 검색 결과 -->
+										<div class="area-modal__center">
+											<div class="area-modal__actions">
+												<button type="button" class="area-search" id="areaSearchBtn">
+													<i class="fa-solid fa-location-dot"></i> 검색어로 찾기
+												</button>
+
+												<button type="button" class="area-geo" id="areaUseGeoBtn">
+													<i class="fa-solid fa-location-crosshairs"
+														aria-hidden="true"></i> 현재 내 위치 사용하기
+												</button>
+											</div>
+
+											<div class="area-searchwrap" id="areaSearchWrap"
+												aria-hidden="true">
+												<div class="area-searchwrap__search">
+													<input type="text" id="areaKakaoKeyword"
+														placeholder="장소/동네/역 이름으로 검색" />
+													<button type="button" id="areaKakaoSearchBtn">검색</button>
+												</div>
+
+												<ul id="areaKakaoResult" class="area-searchwrap__result"></ul>
+											</div>
+
+											<div class="area-search-empty" id="areaSearchEmpty">
+												<i class="fa-solid fa-map-location-dot"></i>
+												<div>검색어로 찾기를 누르면 검색창과 결과가 표시돼요.</div>
+											</div>
+										</div>
+
+										<!-- RIGHT : 지도 -->
+										<div class="area-modal__right">
+											<div class="area-map-head">
+												<div class="area-map-title">지도</div>
+												<div class="area-searchwrap__hint">지도에서 클릭해도 선택돼요.</div>
+											</div>
+
+											<div class="area-map-box">
+												<div id="areaKakaoMap" class="area-searchwrap__map"></div>
+											</div>
+										</div>
+
+									</div>
+								</div>
+							</div>
+						</section>
 					</section>
 
 				</div>

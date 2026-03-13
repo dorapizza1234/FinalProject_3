@@ -20,14 +20,14 @@
 							aria-hidden="true" alt="판매자 프로필 이미지">
 						<div>
 							<div class="spx-sellerName">판매자 이름</div>
-							<div class="spx-sellerSub">최근 접속 시간 전 | 응답률 92%</div>
+						
 						</div>
 					</div>
 
 					<div class="spx-tempBlock">
 						<div class="spx-tempLabel">매너온도</div>
 						<div class="spx-tempValue">
-							<strong>36.8°C</strong>
+							<strong>36.5°C</strong>
 						</div>
 						<div class="spx-bar" aria-label="매너온도 바">
 							<i></i>
@@ -152,9 +152,9 @@
 				<div class="sps-grid" id="sps-grid">
 
 
-					<!--  <article class="sps-card" data-price="450000" data-time="1699990000" data-pop="8">
+					  <article class="sps-card" data-price="450000" data-time="1699990000" data-pop="8">
           <a class="sps-thumb" href="#">
-            <span class="sps-badge">판매중</span>
+            <span class="sps-badge chip-sale-ing">판매중</span>
             <button class="sps-like" type="button" aria-label="찜" aria-pressed="false">
               <i class="fa-regular fa-heart"></i>
             </button>
@@ -171,7 +171,7 @@
               <span><i class="fa-solid fa-heart"></i> 10</span>
             </div>
           </div>
-        </article> -->
+        </article> 
 
 
 				</div>
@@ -378,12 +378,43 @@ document.addEventListener("DOMContentLoaded", function () {
             const tradeCount = seller.tradeCount != null ? seller.tradeCount : 0;
 
             sellerNameEl.textContent = sellerName;
-            sellerSubEl.textContent = "판매자 정보";
+            
             avatarEl.src = sellerProfileImg;
             tempStrongEl.textContent = Number(mannerTemp).toFixed(1) + "°C";
 
-            const percent = calcTempPercent(mannerTemp);
-            tempBarEl.style.width = percent + "%";
+            const tempInfo = calcTempStyle(mannerTemp);
+            tempBarEl.style.width = tempInfo.percent + "%";
+            tempBarEl.style.backgroundColor = tempInfo.color;
+            tempStrongEl.style.color = tempInfo.color;
+            
+            function calcTempStyle(temp) {
+                let value = parseFloat(temp);
+
+                if (isNaN(value)) value = 0;
+                if (value < 0) value = 0;
+                if (value > 100) value = 100;
+
+                let color = "#9ca3af";
+
+                if (value <= 12.5) {
+                    color = "#9ca3af";
+                } else if (value <= 30) {
+                    color = "#60a5fa";
+                } else if (value <= 36.5) {
+                    color = "#2563eb";
+                } else if (value <= 50.5) {
+                    color = "#22c55e";
+                } else if (value <= 65.5) {
+                    color = "#eab308";
+                } else {
+                    color = "#ef4444";
+                }
+
+                return {
+                    percent: value,
+                    color: color
+                };
+            }
 
             if (statEls.length >= 3) {
                 statEls[0].textContent = safePayCount;
@@ -459,8 +490,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function makeProductCard(product) {
         const productNo = product.productNo;
         const productName = escapeHtml(product.productName || "상품명");
-        const productPrice = formatPrice(product.productPrice);
+        const productPrice = formatProductPrice(product.saleType, product.productPrice);
         const tradeStatus = escapeHtml(product.tradeStatus || "판매중");
+        const badgeClass = getTradeStatusClass(product.tradeStatus);
         const placeName = escapeHtml(product.placeName || "위치정보 없음");
         const imgUrl = buildImageUrl(
             product.imgUrl,
@@ -469,11 +501,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const timeAgo = formatTimeAgo(product.regDate);
         const viewCount = product.viewCount != null ? product.viewCount : 0;
         const wished = Number(product.wished) === 1;
+        
+        
 
         return `
             <article class="sps-card">
                 <a class="sps-thumb" href="${ctxPath}/product/product_detail/${productNo}">
-                    <span class="sps-badge">${tradeStatus}</span>
+                <span class="sps-badge ${badgeClass}">${tradeStatus}</span>
                     <button class="sps-like ${wished ? "is-active" : ""}" 
                     type="button" 
                     aria-label="찜" 
@@ -495,6 +529,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>
             </article>
         `;
+    }
+    
+    function formatProductPrice(saleType, price) {
+        const num = Number(price || 0);
+
+        if (saleType === "나눔" || num === 0) {
+            return "무료나눔";
+        }
+
+        if (price == null || price === "") {
+            return "가격없음";
+        }
+
+        return num.toLocaleString("ko-KR") + "원";
+    }
+    
+    function getTradeStatusClass(tradeStatus) {
+        if (tradeStatus === "판매중") return "chip-sale-ing";
+        if (tradeStatus === "예약중") return "chip-sale-reserved";
+        if (tradeStatus === "판매완료") return "chip-sale-done";
+        return "";
     }
 
     function buildImageUrl(path, defaultUrl) {
@@ -581,13 +636,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function calcTempPercent(temp) {
-        const min = 0;
-        const max = 100;
-        const current = Number(temp) || 36.5;
-        const percent = (current - min) / (max - min) * 100;
-        return Math.max(0, Math.min(100, percent));
-    }
+    
 
     function formatPrice(price) {
         const num = Number(price || 0);

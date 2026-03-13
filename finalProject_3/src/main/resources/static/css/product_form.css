@@ -624,17 +624,18 @@ textarea { resize: none; }
 /* =========================
    지역 변경 모달
 ========================= */
-.area-modal{
+
+.area-modal {
   position: fixed;
   inset: 0;
   display: none;
   z-index: 9999;
-
-  /* ✅ 화면 밖 컨텐츠 방지 + 모바일 스크롤 안정화 */
   overflow: hidden;
 }
 
-.area-modal.is-open { display: block; }
+.area-modal.is-open {
+  display: block;
+}
 
 .area-modal__backdrop {
   position: absolute;
@@ -642,27 +643,19 @@ textarea { resize: none; }
   background: rgba(0, 0, 0, .35);
 }
 
-.area-modal__panel{
+.area-modal__panel {
   position: relative;
-  width: min(720px, calc(100% - 48px));
-
-  /* ✅ 화면 높이에 맞춰 */
-  max-height: calc(100vh - 80px);
-
-  margin: 40px auto;
+  width: min(1240px, calc(100% - 40px));
+  height: min(760px, calc(100vh - 48px));
+  margin: 24px auto;
   border-radius: 18px;
   background: #fff;
   color: #111;
   box-shadow: 0 20px 60px rgba(0, 0, 0, .18);
   border: 1px solid rgba(0, 0, 0, .08);
-
-  /* 🔥 핵심: 스크롤 */
-  overflow: auto;
-
-  /* ✅ iOS 스크롤 부드럽게 */
+  overflow: hidden;
   -webkit-overflow-scrolling: touch;
 }
-
 
 .area-modal__header {
   display: flex;
@@ -670,9 +663,15 @@ textarea { resize: none; }
   justify-content: space-between;
   padding: 18px 18px 12px;
   border-bottom: 1px solid rgba(0, 0, 0, .08);
+  height: 64px;
+  box-sizing: border-box;
 }
 
-.area-modal__title { font-size: 18px; font-weight: 700; margin: 0; }
+.area-modal__title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
 
 .area-modal__close {
   width: 40px;
@@ -686,79 +685,83 @@ textarea { resize: none; }
   line-height: 1;
 }
 
-.area-modal__close:hover { background: rgba(0, 0, 0, .05); }
-
-.area-modal__body{
-  padding: 14px 18px 18px;
-
-  /* 🔥 핵심: 바디가 스크롤 */
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-
-  /* ✅ 헤더 높이 제외한 나머지 */
-  max-height: calc(100vh - 80px - 56px); /* 56px은 헤더 대략값 */
+.area-modal__close:hover {
+  background: rgba(0, 0, 0, .05);
 }
 
-.area-search {
-  width: 100%;
-  margin-top: 12px;
-  border-radius: 12px;
-  padding: 12px 14px;
-  background: #f6f7f9;
-  border: 1px solid rgba(0, 0, 0, .10);
-  color: rgba(0, 0, 0, .45);
-  font-weight: 700;
-  cursor: pointer;
+.area-modal__body {
+  padding: 16px 18px 18px;
+  height: calc(100% - 64px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.area-modal__layout {
+  display: grid;
+  grid-template-columns: 250px 340px 1fr;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.area-modal__left,
+.area-modal__center,
+.area-modal__right {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  border: 1px solid rgba(0, 0, 0, .08);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px;
+  box-sizing: border-box;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.area-search:hover { filter: brightness(1.02); }
-
-.area-geo {
-  width: 100%;
-  margin-top: 12px;
-  border-radius: 12px;
-  padding: 12px 14px;
-  background: #fff3ea;
-  color: #ff6a00;
-  font-weight: 700;
-  cursor: pointer;
+/* ===== left ===== */
+.area-list {
+  height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: 1px solid rgba(255, 106, 0, .25);
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 0;
 }
-
-.area-geo:hover { filter: brightness(1.02); }
-
-.area-list { margin-top: 16px; }
 
 .area-list__title {
   font-size: 14px;
   color: rgba(0, 0, 0, .55);
   margin-bottom: 10px;
+  font-weight: 700;
+  flex: 0 0 auto;
 }
 
 .area-list__items {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 360px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   border-radius: 12px;
-  background: #fff;
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, .08);
 }
 
-.area-list__items::-webkit-scrollbar { width: 10px; }
-.area-list__items::-webkit-scrollbar-thumb {
+.area-list__items::-webkit-scrollbar,
+.area-searchwrap__result::-webkit-scrollbar {
+  width: 10px;
+}
+
+.area-list__items::-webkit-scrollbar-thumb,
+.area-searchwrap__result::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, .18);
   border-radius: 999px;
 }
-.area-list__items::-webkit-scrollbar-track {
+
+.area-list__items::-webkit-scrollbar-track,
+.area-searchwrap__result::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, .06);
   border-radius: 999px;
 }
@@ -769,89 +772,232 @@ textarea { resize: none; }
   border: 0;
   background: transparent;
   color: #111;
-  padding: 14px 10px;
+  padding: 14px 12px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(0, 0, 0, .08);
+  border-bottom: 1px solid rgba(0, 0, 0, .06);
+  font-size: 14px;
 }
 
-.area-item:hover { background: rgba(0, 0, 0, .04); }
-
-/* =========================
-   ✅ areaModal 내부 지도/검색 UI
-========================= */
-.area-searchwrap{
-  display:none;
-  margin-top:12px;
-  padding:12px;
-  border-radius:14px;
-  border:1px solid rgba(0,0,0,.10);
-  background:#fff;
+.area-item:hover {
+  background: rgba(0, 0, 0, .04);
 }
 
-.area-searchwrap.is-open{ display:block; }
-
-.area-searchwrap__search{
-  display:flex;
-  gap:8px;
-  margin-bottom:10px;
+/* ===== center ===== */
+.area-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 0 0 auto;
+  margin-bottom: 12px;
 }
 
-.area-searchwrap__search input{
-  flex:1;
-  height:40px;
-  border:1px solid rgba(0,0,0,.12);
-  border-radius:10px;
-  padding:0 12px;
+.area-search,
+.area-geo {
+  width: 100%;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 0;
 }
 
-.area-searchwrap__search button{
-  height:40px;
-  padding:0 14px;
-  border-radius:10px;
-  background:#111;
-  color:#fff;
-  border:0;
-  font-weight:800;
-  cursor:pointer;
+.area-search {
+  background: #f6f7f9;
+  border: 1px solid rgba(0, 0, 0, .10);
+  color: rgba(0, 0, 0, .55);
 }
 
-.area-searchwrap__map{
-  width:100%;
-  height:280px;
-  border-radius:12px;
-  overflow:hidden;
+.area-search:hover {
+  filter: brightness(1.02);
 }
 
-.area-searchwrap__result{
-  list-style:none;
-  margin:10px 0 0;
-  padding:0;
-  max-height:160px;
-  overflow:auto;
-  border-top:1px solid rgba(0,0,0,.06);
+.area-geo {
+  background: #fff3ea;
+  color: #ff6a00;
+  border: 1px solid rgba(255, 106, 0, .25);
 }
 
-.area-searchwrap__result li{
-  border-bottom:1px solid rgba(0,0,0,.06);
+.area-geo:hover {
+  filter: brightness(1.02);
 }
 
-.area-searchwrap__result button{
-  width:100%;
-  text-align:left;
-  padding:10px 8px;
-  border:0;
-  background:transparent;
-  cursor:pointer;
+.area-searchwrap {
+  display: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  flex-direction: column;
 }
 
-.area-searchwrap__result button:hover{
-  background:rgba(0,0,0,.04);
+.area-searchwrap.is-open {
+  display: flex;
 }
 
-.area-searchwrap__hint{
-  margin-top:10px;
-  font-size:12px;
-  opacity:.7;
+.area-searchwrap__search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex: 0 0 auto;
+}
+
+.area-searchwrap__search input {
+  flex: 1;
+  height: 40px;
+  border: 1px solid rgba(0, 0, 0, .12);
+  border-radius: 10px;
+  padding: 0 12px;
+  outline: none;
+}
+
+.area-searchwrap__search input:focus {
+  border-color: #111;
+  box-shadow: 0 0 0 4px rgba(17, 17, 17, .08);
+}
+
+.area-searchwrap__search button {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: #111;
+  color: #fff;
+  border: 0;
+  font-weight: 800;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.area-searchwrap__result {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid rgba(0, 0, 0, .06);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.area-searchwrap__result li {
+  border-bottom: 1px solid rgba(0, 0, 0, .06);
+}
+
+.area-searchwrap__result button {
+  width: 100%;
+  text-align: left;
+  padding: 12px 10px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.area-searchwrap__result button:hover {
+  background: rgba(0, 0, 0, .04);
+}
+
+.area-search-empty {
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 1px dashed rgba(0, 0, 0, .12);
+  border-radius: 14px;
+  background: #fafafa;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+}
+
+.area-search-empty i {
+  font-size: 28px;
+  color: #9ca3af;
+}
+
+/* ===== right ===== */
+.area-map-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex: 0 0 auto;
+}
+
+.area-map-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+}
+
+.area-searchwrap__hint {
+  font-size: 12px;
+  opacity: .7;
+  margin: 0;
+}
+
+.area-map-box {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f3f4f6;
+  border: 1px solid rgba(0, 0, 0, .06);
+}
+
+.area-searchwrap__map {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  background: #f3f4f6;
+}
+
+/* ===== responsive ===== */
+@media (max-width: 1100px) {
+  .area-modal__panel {
+    width: min(980px, calc(100% - 24px));
+    height: min(780px, calc(100vh - 24px));
+    margin: 12px auto;
+  }
+
+  .area-modal__layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 180px 260px 1fr;
+  }
+
+  .area-modal__left,
+  .area-modal__center,
+  .area-modal__right {
+    height: auto;
+  }
+
+  .area-map-box {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 768px) {
+  .area-modal__panel {
+    width: calc(100% - 16px);
+    height: calc(100vh - 16px);
+    margin: 8px auto;
+  }
+
+  .area-modal__body {
+    padding: 12px;
+  }
+
+  .area-modal__layout {
+    grid-template-rows: 160px 300px 1fr;
+    gap: 12px;
+  }
 }
 
 /* =========================

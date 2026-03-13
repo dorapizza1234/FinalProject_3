@@ -613,8 +613,8 @@
     const chipsWrap = $("#pfLocChips");
     const hidden = $("#pfMeetLocations");
 
-    // ✅ areaModal 내부 검색/지도 UI
     const searchWrap = $("#areaSearchWrap");
+    const searchEmpty = $("#areaSearchEmpty");
     const mapEl = $("#areaKakaoMap");
     const kwInput = $("#areaKakaoKeyword");
     const kwBtn = $("#areaKakaoSearchBtn");
@@ -629,11 +629,15 @@
       const v = safeJsonParse(hidden.value || "[]", []);
       return Array.isArray(v) ? v : [];
     }
-    function save(arr) { hidden.value = JSON.stringify(arr); }
+
+    function save(arr) {
+      hidden.value = JSON.stringify(arr);
+    }
 
     function isDupByKey(arr, key) {
       const k = String(key ?? "").trim();
       if (!k) return false;
+
       return arr.some(x => {
         const xKey = (String(x.fullAddress ?? "").trim() || String(x.placeName ?? "").trim());
         return xKey === k;
@@ -656,7 +660,7 @@
         const text = document.createElement("span");
         text.className = "pf-loc-chip__text";
         text.title = (loc.placeName || loc.fullAddress || "");
-        text.textContent = shortText(displayNameOf(loc)); // ✅ placeName 우선
+        text.textContent = shortText(displayNameOf(loc));
 
         const del = document.createElement("button");
         del.type = "button";
@@ -679,12 +683,14 @@
     function updateAddButtonState() {
       const arr = load();
       const span = openBtn.querySelector("span");
+
       if (arr.length >= MAX_LOC) {
         openBtn.disabled = true;
         openBtn.style.opacity = "0.6";
         openBtn.style.cursor = "not-allowed";
         if (span) span.textContent = "위치 3개까지 설정 가능";
-      } else {
+      }
+      else {
         openBtn.disabled = false;
         openBtn.style.opacity = "";
         openBtn.style.cursor = "";
@@ -696,15 +702,22 @@
       const meetToggle = document.querySelector("#pfMeetToggle");
       if (meetToggle && !meetToggle.checked) return;
 
-      if (load().length >= MAX_LOC) { alert("위치는 최대 3개까지 설정할 수 있어요."); return; }
+      if (load().length >= MAX_LOC) {
+        alert("위치는 최대 3개까지 설정할 수 있어요.");
+        return;
+      }
 
       renderRecentAreaList(list);
 
-      // ✅ 검색 UI 기본 접힘
       if (searchWrap) {
         searchWrap.classList.remove("is-open");
         searchWrap.setAttribute("aria-hidden", "true");
       }
+
+      if (searchEmpty) {
+        searchEmpty.style.display = "flex";
+      }
+
       if (resultUl) resultUl.innerHTML = "";
       if (kwInput) kwInput.value = "";
 
@@ -722,28 +735,44 @@
     }
 
     openBtn.addEventListener("click", openModal);
+
     modal.addEventListener("click", (e) => {
-      if (e.target.closest("[data-area-close='true']")) closeModal();
+      if (e.target.closest("[data-area-close='true']")) {
+        closeModal();
+        return;
+      }
+
+      const panel = modal.querySelector(".area-modal__panel");
+      if (panel && !panel.contains(e.target)) {
+        closeModal();
+      }
     });
+
     window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modal.classList.contains("is-open")) closeModal();
+      if (e.key === "Escape" && modal.classList.contains("is-open")) {
+        closeModal();
+      }
     });
 
     function ensureKakaoServices() {
       return !!(window.kakao && kakao.maps && kakao.maps.services);
     }
+
     function waitForKakaoServices(cb, tries = 50) {
       if (ensureKakaoServices()) return cb();
+
       if (tries <= 0) {
         console.error("카카오 SDK 로드 실패: script appkey / libraries=services 확인");
         alert("카카오맵 로드에 실패했어요. appkey/도메인 등록을 확인해 주세요.");
         return;
       }
+
       setTimeout(() => waitForKakaoServices(cb, tries - 1), 100);
     }
 
     function addressToLatLng(address, cb) {
       if (!ensureKakaoServices()) return cb("", "");
+
       const geocoder = new kakao.maps.services.Geocoder();
       geocoder.addressSearch(address, (result, status) => {
         if (status === kakao.maps.services.Status.OK) cb(result[0].y, result[0].x);
@@ -753,13 +782,17 @@
 
     function latLngToFullAddress(lat, lng, cb) {
       if (!ensureKakaoServices()) return cb("");
+
       const geocoder = new kakao.maps.services.Geocoder();
       geocoder.coord2Address(lng, lat, (result, status) => {
         if (status === kakao.maps.services.Status.OK) {
           const jibun = result[0].address ? result[0].address.address_name : "";
           const road = result[0].road_address ? result[0].road_address.address_name : "";
           cb(road || jibun);
-        } else cb("");
+        }
+        else {
+          cb("");
+        }
       });
     }
 
@@ -771,8 +804,16 @@
       if (!key) return;
 
       const arr = load();
-      if (arr.length >= MAX_LOC) { alert("위치는 최대 3개까지 설정할 수 있어요."); return; }
-      if (isDupByKey(arr, key)) { alert("이미 추가된 위치예요."); return; }
+
+      if (arr.length >= MAX_LOC) {
+        alert("위치는 최대 3개까지 설정할 수 있어요.");
+        return;
+      }
+
+      if (isDupByKey(arr, key)) {
+        alert("이미 추가된 위치예요.");
+        return;
+      }
 
       arr.push({
         placeName: pn,
@@ -786,28 +827,30 @@
       updateAddButtonState();
     }
 
-    // =========================
-    // ✅ areaModal 내부에서 검색 UI 열기
-    // =========================
     function openSearchUI() {
       if (!searchWrap) return;
 
       searchWrap.classList.add("is-open");
       searchWrap.setAttribute("aria-hidden", "false");
 
+      if (searchEmpty) {
+        searchEmpty.style.display = "none";
+      }
+
       waitForKakaoServices(() => {
         ensureMap();
+
         setTimeout(() => {
-          try { kakao.maps.event.trigger(map, "resize"); } catch {}
+          try {
+            kakao.maps.event.trigger(map, "resize");
+          }
+          catch {}
         }, 0);
       });
 
       if (kwInput) kwInput.focus();
     }
 
-    // =========================
-    // ✅ 카카오맵(검색 + 지도 클릭) 로직
-    // =========================
     let map = null;
     let places = null;
     let markers = [];
@@ -819,8 +862,7 @@
     }
 
     function ensureMap() {
-      if (map) return;
-      if (!mapEl) return;
+      if (map || !mapEl) return;
 
       map = new kakao.maps.Map(mapEl, {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
@@ -830,8 +872,7 @@
       places = new kakao.maps.services.Places();
       pickMarker = new kakao.maps.Marker();
 
-      // ✅ 지도 클릭으로 선택(역지오코딩은 주소만 나오는 경우가 많아서 placeName은 비움)
-      kakao.maps.event.addListener(map, "click", function(mouseEvent) {
+      kakao.maps.event.addListener(map, "click", function (mouseEvent) {
         const latlng = mouseEvent.latLng;
         const lat = latlng.getLat();
         const lng = latlng.getLng();
@@ -841,12 +882,12 @@
 
         latLngToFullAddress(lat, lng, (fullAddr) => {
           const fa = String(fullAddr || "").trim();
+
           if (!fa) {
             alert("주소를 가져오지 못했어요. 다른 지점을 눌러주세요.");
             return;
           }
 
-          // 최근검색에는 " / " 형태로 들어가도 OK (placeName 없음)
           pushRecentArea(fa);
           addLocation("", fa, lat, lng);
           closeModal();
@@ -856,6 +897,7 @@
 
     function renderSearchResults(items) {
       if (!resultUl) return;
+
       resultUl.innerHTML = "";
 
       if (!items || items.length === 0) {
@@ -874,6 +916,7 @@
 
         const placeName = (p.place_name || "").trim();
         const fullAddress = (p.road_address_name || p.address_name || "").trim();
+
         btn.textContent = `${placeName}${fullAddress ? " · " + fullAddress : ""}`;
 
         btn.addEventListener("click", () => {
@@ -882,10 +925,10 @@
 
           waitForKakaoServices(() => {
             ensureMap();
+
             const latlng = new kakao.maps.LatLng(lat, lng);
             map.setCenter(latlng);
             map.setLevel(3);
-
             pickMarker.setPosition(latlng);
             pickMarker.setMap(map);
           });
@@ -895,7 +938,6 @@
             return;
           }
 
-          // 최근 검색: "place / address" 저장(원하는 형태 유지)
           pushRecentArea(`${placeName}${fullAddress ? " / " + fullAddress : ""}`);
           addLocation(placeName, fullAddress, lat, lng);
           closeModal();
@@ -908,6 +950,7 @@
 
     function searchKeyword() {
       const keyword = String(kwInput?.value ?? "").trim();
+
       if (!keyword) {
         alert("검색어를 입력해 주세요.");
         kwInput?.focus?.();
@@ -937,10 +980,10 @@
 
             bounds.extend(latlng);
 
-            // 마커 클릭도 선택
             kakao.maps.event.addListener(m, "click", () => {
               const placeName = (p.place_name || "").trim();
               const fullAddress = (p.road_address_name || p.address_name || "").trim();
+
               if (!placeName && !fullAddress) return;
 
               pickMarker.setPosition(latlng);
@@ -958,41 +1001,45 @@
       });
     }
 
-	function setMyLocation() {
-	  if (!navigator.geolocation) {
-	    alert("이 브라우저는 위치 기능을 지원하지 않습니다.");
-	    return;
-	  }
+    function setMyLocation() {
+      if (!navigator.geolocation) {
+        alert("이 브라우저는 위치 기능을 지원하지 않습니다.");
+        return;
+      }
 
-	  navigator.geolocation.getCurrentPosition(
-	    (pos) => {
-	      const lat = pos.coords.latitude;
-	      const lng = pos.coords.longitude;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
 
-	      waitForKakaoServices(() => {
-	        latLngToFullAddress(lat, lng, (fullAddr) => {
-	          const fa = (fullAddr || "현재 위치").trim();
+          waitForKakaoServices(() => {
+            ensureMap();
 
-	          pushRecentArea(fa);
+            const latlng = new kakao.maps.LatLng(lat, lng);
+            map.setCenter(latlng);
+            map.setLevel(3);
+            pickMarker.setPosition(latlng);
+            pickMarker.setMap(map);
 
-	          // 현재 위치는 placeName도 fullAddress와 동일하게 저장
-	          addLocation(fa, fa, lat, lng);
+            latLngToFullAddress(lat, lng, (fullAddr) => {
+              const fa = (fullAddr || "현재 위치").trim();
 
-	          closeModal();
-	        });
-	      });
-	    },
-	    (err) => {
-	      if (err.code === 1) alert("위치 권한이 거부되었습니다.");
-	      else if (err.code === 2) alert("위치 정보를 가져올 수 없습니다.");
-	      else if (err.code === 3) alert("위치 조회 시간이 초과되었습니다.");
-	      else alert("위치 조회 중 오류가 발생했습니다.");
-	    },
-	    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-	  );
-	}
+              pushRecentArea(fa);
+              addLocation(fa, fa, lat, lng);
+              closeModal();
+            });
+          });
+        },
+        (err) => {
+          if (err.code === 1) alert("위치 권한이 거부되었습니다.");
+          else if (err.code === 2) alert("위치 정보를 가져올 수 없습니다.");
+          else if (err.code === 3) alert("위치 조회 시간이 초과되었습니다.");
+          else alert("위치 조회 중 오류가 발생했습니다.");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
 
-    // ✅ 최근 리스트 클릭 시: "place / address" 형태면 placeName만 화면에 나오도록 저장
     list.addEventListener("click", (e) => {
       const btn = e.target.closest(".area-item");
       if (!btn) return;
@@ -1001,8 +1048,6 @@
       pushRecentArea(val);
 
       const sp = splitPlaceAndAddress(val);
-
-      // 좌표는 addressSearch에 fullAddress가 유리함(없으면 placeName로 시도)
       const query = sp.fullAddress || sp.placeName || val;
 
       waitForKakaoServices(() => {
@@ -1013,15 +1058,19 @@
       });
     });
 
-    // 이벤트 바인딩
     waitForKakaoServices(() => {
       if (searchBtn) searchBtn.addEventListener("click", openSearchUI);
       if (useGeoBtn) useGeoBtn.addEventListener("click", setMyLocation);
 
       if (kwBtn) kwBtn.addEventListener("click", searchKeyword);
-      if (kwInput) kwInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") { e.preventDefault(); searchKeyword(); }
-      });
+      if (kwInput) {
+        kwInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            searchKeyword();
+          }
+        });
+      }
     });
 
     renderChips();
@@ -1030,14 +1079,15 @@
     return {
       validate(tradeMethod) {
         if (tradeMethod !== "직거래") return { ok: true };
+
         const arr = load();
         if (arr.length === 0) return { ok: false, msg: "직거래를 선택했다면 위치를 1개 이상 설정해 주세요." };
         if (arr.length > 3) return { ok: false, msg: "직거래 위치는 최대 3개까지 설정할 수 있어요." };
+
         return { ok: true };
       }
     };
   })();
-
   window.PF.Meet = MeetLocationModule;
 
   // =========================================================

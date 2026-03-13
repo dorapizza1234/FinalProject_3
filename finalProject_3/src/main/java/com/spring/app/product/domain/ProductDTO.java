@@ -63,6 +63,8 @@ public class ProductDTO {
     private String placeName;   // 목록에서 장소명 표시
     private String imgUrl;      // 대표 이미지
     
+    private int canAccessDetail;
+    
     private String areaGu;
     /* ============================= */
     /* 찜 */
@@ -79,7 +81,8 @@ public class ProductDTO {
     // 관리자 페이지 전용 의심 플래그
     private boolean suspect;
     
-    //
-    private int canAccessDetail;
+    //로그인 접속 시간
+    private Date lastLoginDate;
 
+   
 }

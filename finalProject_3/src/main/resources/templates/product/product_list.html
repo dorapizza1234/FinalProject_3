@@ -66,34 +66,61 @@
 				</div>
 
 				<div class="area-modal__body">
-					<button type="button" class="area-search" id="areaSearchBtn">
-						<i class="fa-solid fa-location-dot"></i> 검색어로
-					</button>
+					<div class="area-modal__layout">
 
-					<button type="button" class="area-geo" id="areaUseGeoBtn">
-						<i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
-						현재 내 위치 사용하기
-					</button>
-
-					<div class="area-searchwrap" id="areaSearchWrap" aria-hidden="true">
-						<div class="area-searchwrap__search">
-							<input type="text" id="areaKakaoKeyword"
-								placeholder="장소/동네/역 이름으로 검색" />
-							<button type="button" id="areaKakaoSearchBtn">검색</button>
+						<!-- LEFT : 최근 검색한 지역 -->
+						<div class="area-modal__left">
+							<div class="area-list">
+								<div class="area-list__title">최근 검색한 지역</div>
+								<ul class="area-list__items" id="areaList">
+									<li style="padding: 10px 8px; opacity: .7;">최근 검색 기록이 없어요.</li>
+								</ul>
+							</div>
 						</div>
 
-						<div id="areaKakaoMap" class="area-searchwrap__map"></div>
-						<ul id="areaKakaoResult" class="area-searchwrap__result"></ul>
-						<div class="area-searchwrap__hint">지도에서 클릭해도 선택돼요.</div>
-					</div>
+						<!-- CENTER : 검색 / 현재 위치 / 검색 결과 -->
+						<div class="area-modal__center">
+							<div class="area-modal__actions">
+								<button type="button" class="area-search" id="areaSearchBtn">
+									<i class="fa-solid fa-location-dot"></i> 검색어로 찾기
+								</button>
 
-					<div class="area-list">
-						<div class="area-list__title">최근 검색한 지역</div>
-						<ul class="area-list__items" id="areaList">
-							<li style="padding: 10px 6px; opacity: .7;">최근 검색 기록이 없어요.</li>
-						</ul>
+								<button type="button" class="area-geo" id="areaUseGeoBtn">
+									<i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+									현재 내 위치 사용하기
+								</button>
+							</div>
+
+							<div class="area-searchwrap" id="areaSearchWrap" aria-hidden="true">
+								<div class="area-searchwrap__search">
+									<input type="text" id="areaKakaoKeyword"
+										placeholder="장소/동네/역 이름으로 검색" />
+									<button type="button" id="areaKakaoSearchBtn">검색</button>
+								</div>
+
+								<ul id="areaKakaoResult" class="area-searchwrap__result"></ul>
+							</div>
+
+							<div class="area-search-empty" id="areaSearchEmpty">
+								<i class="fa-solid fa-map-location-dot"></i>
+								<div>검색어로 찾기를 누르면 검색창과 결과가 표시돼요.</div>
+							</div>
+						</div>
+
+						<!-- RIGHT : 지도 -->
+						<div class="area-modal__right">
+							<div class="area-map-head">
+								<div class="area-map-title">지도</div>
+								<div class="area-searchwrap__hint">지도에서 클릭해도 선택돼요.</div>
+							</div>
+							<div class="area-map-box">
+								<div id="areaKakaoMap" class="area-searchwrap__map"></div>
+							</div>
+						</div>
+
 					</div>
 				</div>
+
 			</div>
 		</section>
 
@@ -581,6 +608,7 @@ $(function () {
 	const useGeoBtn = document.getElementById("areaUseGeoBtn");
 	const openSearchBtn = document.getElementById("areaSearchBtn");
 	const searchWrap = document.getElementById("areaSearchWrap");
+	const searchEmpty = document.getElementById("areaSearchEmpty");
 	const mapEl = document.getElementById("areaKakaoMap");
 	const kwInput = document.getElementById("areaKakaoKeyword");
 	const kwBtn = document.getElementById("areaKakaoSearchBtn");
@@ -744,6 +772,10 @@ $(function () {
 			if (searchWrap) {
 				searchWrap.classList.remove("is-open");
 				searchWrap.setAttribute("aria-hidden", "true");
+			}
+
+			if (searchEmpty) {
+				searchEmpty.style.display = "flex";
 			}
 
 			if (resultUl) resultUl.innerHTML = "";
@@ -984,6 +1016,10 @@ $(function () {
 			searchWrap.classList.add("is-open");
 			searchWrap.setAttribute("aria-hidden", "false");
 
+			if (searchEmpty) {
+				searchEmpty.style.display = "none";
+			}
+
 			waitForKakaoServices(() => {
 				ensureMap();
 
@@ -1010,6 +1046,14 @@ $(function () {
 					const lng = pos.coords.longitude;
 
 					waitForKakaoServices(() => {
+						ensureMap();
+
+						const latlng = new kakao.maps.LatLng(lat, lng);
+						map.setCenter(latlng);
+						map.setLevel(3);
+						pickMarker.setPosition(latlng);
+						pickMarker.setMap(map);
+
 						coordToAddressInfo(lat, lng, ({ roadAddress, jibunAddress }) => {
 							const regionName = pickRegionName(roadAddress, jibunAddress);
 
