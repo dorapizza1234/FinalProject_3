@@ -57,6 +57,14 @@
 <!-- 공통 JS (body 끝) -->
 <script defer th:src="@{/js/header.js}"></script>
 
+<!-- accessToken 쿠키 → localStorage 동기화 -->
+<script>
+  (function() {
+    const match = document.cookie.match(/(?:^|; )accessToken=([^;]*)/);
+    if (match) localStorage.setItem('accessToken', decodeURIComponent(match[1]));
+  })();
+</script>
+
 <!-- 페이지별 JS (body 끝 전용) -->
 <th:block th:replace="${bodyJs}"></th:block>
 </body>
