@@ -869,9 +869,9 @@
         COUNT(*) AS sampleCount
     FROM PRODUCTS
     WHERE PRODUCTS.SALE_TYPE = '판매'
-      AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
-      AND PRODUCTS.TRADE_STATUS = '판매중'
-      AND PRODUCTS.REG_DATE >= TRUNC(SYSDATE) - 29
+  AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
+  AND PRODUCTS.TRADE_STATUS IN ('판매중', '예약중','판매완료')
+  AND PRODUCTS.REG_DATE >= TRUNC(SYSDATE) - 29
       <if test="searchWord != null and searchWord != ''">
           AND LOWER(PRODUCTS.PRODUCT_NAME) LIKE '%' || LOWER(#{searchWord}) || '%'
       </if>
@@ -899,9 +899,9 @@
             ROUND(AVG(PRODUCTS.PRODUCT_PRICE)) AS AVG_PRICE
         FROM PRODUCTS
         WHERE PRODUCTS.SALE_TYPE = '판매'
-          AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
-          AND PRODUCTS.TRADE_STATUS = '판매중'
-          AND PRODUCTS.REG_DATE >= TRUNC(SYSDATE) - 29
+  AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
+  AND PRODUCTS.TRADE_STATUS IN ('판매중', '예약중','판매완료')
+  AND PRODUCTS.REG_DATE >= TRUNC(SYSDATE) - 29
           <if test="searchWord != null and searchWord != ''">
               AND LOWER(PRODUCTS.PRODUCT_NAME) LIKE '%' || LOWER(#{searchWord}) || '%'
           </if>
@@ -962,9 +962,9 @@
 
     FROM PRODUCTS
     WHERE PRODUCTS.SALE_TYPE = '판매'
-      AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
-      AND PRODUCTS.TRADE_STATUS = '판매중'
-      AND PRODUCTS.REG_DATE >= TRUNC(SYSDATE) - 29
+  AND PRODUCTS.PRODUCT_PRICE IS NOT NULL
+  AND PRODUCTS.TRADE_STATUS IN ('판매중', '예약중','판매완료')
+  AND PRODUCTS.REG_DATE >= TRUNC(SYSDATE) - 29
       <if test="searchWord != null and searchWord != ''">
           AND LOWER(PRODUCTS.PRODUCT_NAME) LIKE '%' || LOWER(#{searchWord}) || '%'
       </if>

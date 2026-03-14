@@ -169,7 +169,7 @@
 							<div class="fg-title">정렬</div>
 							<select class="select" id="sortType" name="sortType" aria-label="정렬">
 								<option value="latest" th:selected="${param.sortType == null or param.sortType[0] == 'latest'}">최신순</option>
-								<option value="view" th:selected="${param.sortType != null and param.sortType[0] == 'view'}">인기순</option>
+								<option value="view" th:selected="${param.sortType != null and param.sortType[0] == 'view'}">조회순</option>
 								<option value="priceAsc" th:selected="${param.sortType != null and param.sortType[0] == 'priceAsc'}">가격 낮은순</option>
 								<option value="priceDesc" th:selected="${param.sortType != null and param.sortType[0] == 'priceDesc'}">가격 높은순</option>
 							</select>
