@@ -500,19 +500,21 @@
 
                 <div class="pdinfo-card">
                     <div class="pdinfo-cardbody">
-                        <div class="pdinfo-seller-top">
-                            <div class="pdinfo-avatar">
-                                <img th:if="${product.sellerProfileImg != null and product.sellerProfileImg != ''}"
-                                     th:src="@{${product.sellerProfileImg}}"
-                                     alt="판매자 프로필">
-
-                                <img th:if="${product.sellerProfileImg == null or product.sellerProfileImg == ''}"
-                                     th:src="@{/images/default_profile.png}"
-                                     alt="기본 프로필">
-                            </div>
-
-                            <div class="pdinfo-seller-name" th:text="${product.sellerName}">판매자 이름</div>
-                        </div>
+                       <div class="pdinfo-seller-top">
+						    <div class="pdinfo-avatar">
+						        <img id="pdinfoSellerImg"
+						             th:if="${product.sellerProfileImg != null and product.sellerProfileImg != ''}"
+						             th:src="@{${product.sellerProfileImg}}"
+						             alt="판매자 프로필">
+						
+						        <img id="pdinfoSellerImg"
+						             th:if="${product.sellerProfileImg == null or product.sellerProfileImg == ''}"
+						             th:src="@{/images/default_profile.png}"
+						             alt="기본 프로필">
+						    </div>
+						
+						    <div class="pdinfo-seller-name" id="pdinfoSellerName" th:text="${product.sellerName}">판매자 이름</div>
+						</div>
 
                         <div class="pdinfo-temp-row">
                             <div class="pdinfo-temp-label">매너온도</div>
@@ -531,19 +533,19 @@
                         </div>
 
                         <div class="pdinfo-stats">
-                            <div class="pdinfo-stat">
-                                <div class="k">안심결제</div>
-                                <div class="v">9</div>
-                            </div>
-                            <div class="pdinfo-stat">
-                                <div class="k">거래후기</div>
-                                <div class="v">10</div>
-                            </div>
-                            <div class="pdinfo-stat">
-                                <div class="k">거래횟수</div>
-                                <div class="v">10</div>
-                            </div>
-                        </div>
+						    <div class="pdinfo-stat">
+						        <div class="k">안심결제</div>
+						        <div class="v" th:text="${product.safePayCount != null ? product.safePayCount : 0}">0</div>
+						    </div>
+						    <div class="pdinfo-stat">
+						        <div class="k">거래후기</div>
+						        <div class="v" th:text="${product.reviewCount != null ? product.reviewCount : 0}">0</div>
+						    </div>
+						    <div class="pdinfo-stat">
+						        <div class="k">거래횟수</div>
+						        <div class="v" th:text="${product.tradeCount != null ? product.tradeCount : 0}">0</div>
+						    </div>
+						</div>
                     </div>
 
                     <div class="pdinfo-reviews-head">
@@ -787,8 +789,9 @@
 
 <script th:inline="javascript">
     /* =========================================
-       상태 변수
+       상태 변수 / 기본값
        ========================================= */
+    const ctxPath = /*[[@{/}]]*/ "";
     let isChatLoading = false;
     let isSubmittingProductReport = false;
     let productReportSelectedFile = null;
@@ -805,21 +808,179 @@
     };
 
     /* =========================================
-       DOM 로드 후 채팅 버튼 바인딩
+       DOMContentLoaded
        ========================================= */
-    document.addEventListener('DOMContentLoaded', function() {
-        const chatBtn = document.getElementById('btnStartChat');
-
-        if (chatBtn) {
-            chatBtn.addEventListener('click', function() {
-                const pNo = this.getAttribute('data-product-no');
-                const sEmail = this.getAttribute('data-seller-email');
-                const pName = this.getAttribute('data-product-name');
-
-                startChat(pNo, sEmail, pName);
-            });
-        }
+    document.addEventListener("DOMContentLoaded", function () {
+        bindChatButton();
+        loadProductDetailSellerProfile();
     });
+
+    /* =========================================
+       채팅 버튼 바인딩
+       ========================================= */
+    function bindChatButton() {
+        const chatBtn = document.getElementById("btnStartChat");
+
+        if (!chatBtn) return;
+
+        chatBtn.addEventListener("click", function () {
+            const productNo = this.getAttribute("data-product-no");
+            const sellerEmail = this.getAttribute("data-seller-email");
+            const productName = this.getAttribute("data-product-name");
+
+            startChat(productNo, sellerEmail, productName);
+        });
+    }
+
+    /* =========================================
+       상품상세 판매자 정보 로드
+       - 판매자 정보 페이지에서 쓰는 API 재사용
+       ========================================= */
+    function loadProductDetailSellerProfile() {
+        const mainEl = document.querySelector("main");
+        const productNo = mainEl ? mainEl.getAttribute("data-product-no") : "";
+
+        if (!productNo) return;
+
+        fetch(ctxPath + "product/seller/profile?productNo=" + encodeURIComponent(productNo), {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        })
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error("판매자 정보를 불러오지 못했습니다.");
+            }
+            return response.json();
+        })
+        .then(function (data) {
+            if (!data.success) {
+                throw new Error(data.message || "판매자 정보를 불러오지 못했습니다.");
+            }
+
+            const seller = data.seller || {};
+
+            const sellerName = seller.sellerName || "판매자";
+            const sellerProfileImg = buildImageUrl(
+                seller.sellerProfileImg,
+                ctxPath + "images/default_profile.png"
+            );
+            const mannerTemp = seller.mannerTemp != null ? Number(seller.mannerTemp) : 36.5;
+            const safePayCount = seller.safePayCount != null ? seller.safePayCount : 0;
+            const reviewCount = seller.reviewCount != null ? seller.reviewCount : 0;
+            const tradeCount = seller.tradeCount != null ? seller.tradeCount : 0;
+
+            const sellerNameEl = document.getElementById("pdinfoSellerName");
+            const sellerImgEl = document.getElementById("pdinfoSellerImg");
+            const tempValueEl = document.getElementById("pdinfoTempValue");
+            const tempBarFillEl = document.getElementById("pdinfoBarFill");
+
+            const safePayEl = document.getElementById("pdinfoSafePayCount");
+            const reviewEl = document.getElementById("pdinfoReviewCount");
+            const tradeEl = document.getElementById("pdinfoTradeCount");
+
+            if (sellerNameEl) {
+                sellerNameEl.textContent = sellerName;
+            }
+
+            if (sellerImgEl) {
+                sellerImgEl.src = sellerProfileImg;
+            }
+
+            if (tempValueEl) {
+                tempValueEl.textContent = mannerTemp.toFixed(1) + "°C";
+                tempValueEl.setAttribute("data-temp", String(mannerTemp));
+            }
+
+            const tempInfo = calcTempStyle(mannerTemp);
+
+            if (tempBarFillEl) {
+                tempBarFillEl.style.width = tempInfo.percent + "%";
+                tempBarFillEl.style.backgroundColor = tempInfo.color;
+            }
+
+            if (tempValueEl) {
+                tempValueEl.style.color = tempInfo.color;
+            }
+
+            if (safePayEl) {
+                safePayEl.textContent = String(safePayCount);
+            }
+
+            if (reviewEl) {
+                reviewEl.textContent = String(reviewCount);
+            }
+
+            if (tradeEl) {
+                tradeEl.textContent = String(tradeCount);
+            }
+        })
+        .catch(function (error) {
+            console.error("상품상세 판매자 정보 로딩 오류:", error);
+        });
+    }
+
+    /* =========================================
+       매너온도 색상 / 퍼센트 계산
+       ========================================= */
+    function calcTempStyle(temp) {
+        let value = parseFloat(temp);
+
+        if (isNaN(value)) value = 0;
+        if (value < 0) value = 0;
+        if (value > 100) value = 100;
+
+        let color = "#9ca3af";
+
+        if (value <= 12.5) {
+            color = "#9ca3af";
+        } else if (value <= 30) {
+            color = "#60a5fa";
+        } else if (value <= 36.5) {
+            color = "#2563eb";
+        } else if (value <= 50.5) {
+            color = "#22c55e";
+        } else if (value <= 65.5) {
+            color = "#eab308";
+        } else {
+            color = "#ef4444";
+        }
+
+        return {
+            percent: value,
+            color: color
+        };
+    }
+
+    /* =========================================
+       이미지 경로 보정
+       ========================================= */
+    function buildImageUrl(path, defaultUrl) {
+        if (!path || String(path).trim() === "") {
+            return defaultUrl;
+        }
+
+        let value = String(path).trim();
+
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+            return value;
+        }
+
+        if (value.startsWith(ctxPath)) {
+            return value;
+        }
+
+        if (value.startsWith("/images/") || value.startsWith("/upload/")) {
+            return ctxPath.replace(/\/$/, "") + value;
+        }
+
+        if (value.startsWith("images/") || value.startsWith("upload/")) {
+            return ctxPath + value;
+        }
+
+        return ctxPath + "images/" + value;
+    }
 
     /* =========================================
        채팅방 생성
@@ -828,44 +989,47 @@
         if (isChatLoading) return;
         isChatLoading = true;
 
-        fetch('/finalProject_3/api/chat/createRoom', {
-            method: 'POST',
+        fetch(ctxPath + "api/chat/createRoom", {
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                productNo: parseInt(productNo),
+                productNo: parseInt(productNo, 10),
                 sellerEmail: sellerEmail
             })
         })
-        .then(response => {
-            if (!response.ok) throw new Error("서버 에러 발생");
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error("서버 에러 발생");
+            }
             return response.json();
         })
-        .then(data => {
+        .then(function (data) {
             isChatLoading = false;
 
             if (data.success) {
-                const modal = document.getElementById('chatModal');
+                const modal = document.getElementById("chatModal");
 
-                if (!modal || modal.style.display === 'none' || modal.style.display === '') {
-                    if (typeof window.toggleChatPopup === 'function') {
+                if (!modal || modal.style.display === "none" || modal.style.display === "") {
+                    if (typeof window.toggleChatPopup === "function") {
                         window.toggleChatPopup();
                     }
                 }
 
-                setTimeout(() => {
-                    if (typeof window.openChatRoom === 'function') {
+                setTimeout(function () {
+                    if (typeof window.openChatRoom === "function") {
                         window.openChatRoom(data.roomId, sellerEmail, productName);
                     }
                 }, 300);
             } else {
-                alert(data.message);
+                alert(data.message || "채팅방 생성에 실패했습니다.");
             }
         })
-        .catch(error => {
+        .catch(function (error) {
             isChatLoading = false;
             console.error("방 생성 에러:", error);
+            alert("채팅방 생성 중 오류가 발생했습니다.");
         });
     }
 
@@ -873,116 +1037,139 @@
        안전결제 이동
        ========================================= */
     function goToPayment(btn) {
-        const productNo = btn.getAttribute('data-product-no');
-        location.href = '/finalProject_3/payment/checkout?productNo=' + productNo;
+        const productNo = btn.getAttribute("data-product-no");
+        location.href = ctxPath + "payment/checkout?productNo=" + encodeURIComponent(productNo);
     }
 
     /* =========================================
        신고 모달 열기
-       - 비로그인이면 로그인 페이지 이동
-       - 본인 게시글이면 경고만 출력
        ========================================= */
-    window.openProductReportModal = function() {
-        const mainEl = document.querySelector('main');
-        const isLogin = mainEl ? mainEl.getAttribute('data-login') === 'true' : false;
-        const isOwner = mainEl ? mainEl.getAttribute('data-owner') === 'true' : false;
+    window.openProductReportModal = function () {
+        const mainEl = document.querySelector("main");
+        const isLogin = mainEl ? mainEl.getAttribute("data-login") === "true" : false;
+        const isOwner = mainEl ? mainEl.getAttribute("data-owner") === "true" : false;
 
         if (!isLogin) {
-            alert('로그인 후 신고할 수 있습니다.');
-            location.href = '/finalProject_3/login';
+            alert("로그인 후 신고할 수 있습니다.");
+            location.href = ctxPath + "security/login";
             return;
         }
 
         if (isOwner) {
-            alert('본인 게시글은 신고할 수 없습니다.');
+            alert("본인 게시글은 신고할 수 없습니다.");
             return;
         }
 
-        const overlay = document.getElementById('productReportOverlay');
-        const panel = document.getElementById('productReportPanel');
+        const overlay = document.getElementById("productReportOverlay");
+        const panel = document.getElementById("productReportPanel");
 
         if (!overlay || !panel) return;
 
-        overlay.classList.add('show');
-        panel.classList.add('show');
+        overlay.classList.add("show");
+        panel.classList.add("show");
         window.backToProductReportStep1();
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = "hidden";
     };
 
     /* =========================================
        신고 모달 닫기 + 초기화
        ========================================= */
-    window.closeProductReportModal = function() {
-        const overlay = document.getElementById('productReportOverlay');
-        const panel = document.getElementById('productReportPanel');
+    window.closeProductReportModal = function () {
+        const overlay = document.getElementById("productReportOverlay");
+        const panel = document.getElementById("productReportPanel");
 
         if (!overlay || !panel) return;
 
-        overlay.classList.remove('show');
-        panel.classList.remove('show');
-        document.body.style.overflow = '';
+        overlay.classList.remove("show");
+        panel.classList.remove("show");
+        document.body.style.overflow = "";
 
-        document.getElementById('productReportText').value = '';
-        document.getElementById('productReportCurrentCharCount').innerText = '0';
-        document.getElementById('productReportFileInput').value = '';
-        document.getElementById('productReportPhotoCount').textContent = '0/1';
-        document.getElementById('productReportPhotoPreview').innerHTML = '';
+        const textEl = document.getElementById("productReportText");
+        const countEl = document.getElementById("productReportCurrentCharCount");
+        const fileInputEl = document.getElementById("productReportFileInput");
+        const photoCountEl = document.getElementById("productReportPhotoCount");
+        const previewEl = document.getElementById("productReportPhotoPreview");
+
+        if (textEl) textEl.value = "";
+        if (countEl) countEl.innerText = "0";
+        if (fileInputEl) fileInputEl.value = "";
+        if (photoCountEl) photoCountEl.textContent = "0/1";
+        if (previewEl) previewEl.innerHTML = "";
+
         productReportSelectedFile = null;
-
         window.backToProductReportStep1();
     };
 
     /* =========================================
        신고 2단계 이동
        ========================================= */
-    window.goProductReportStep2 = function(typeName) {
-        document.getElementById('productReportStep1').classList.remove('is-active');
-        document.getElementById('productReportStep2').classList.add('is-active');
-        document.getElementById('productReportMainTitle').innerText = typeName;
+    window.goProductReportStep2 = function (typeName) {
+        const step1 = document.getElementById("productReportStep1");
+        const step2 = document.getElementById("productReportStep2");
+        const titleEl = document.getElementById("productReportMainTitle");
+        const subSelect = document.getElementById("productReportSubCategory");
+        const textEl = document.getElementById("productReportText");
+        const fileInputEl = document.getElementById("productReportFileInput");
+        const photoCountEl = document.getElementById("productReportPhotoCount");
+        const previewEl = document.getElementById("productReportPhotoPreview");
 
-        const subSelect = document.getElementById('productReportSubCategory');
-        subSelect.innerHTML = '';
+        if (step1) step1.classList.remove("is-active");
+        if (step2) step2.classList.add("is-active");
+        if (titleEl) titleEl.innerText = typeName;
 
-        const subItems = productReportData[typeName] || [];
-        subItems.forEach(function(item) {
-            const option = document.createElement('option');
-            option.value = item;
-            option.text = item;
-            subSelect.appendChild(option);
-        });
+        if (subSelect) {
+            subSelect.innerHTML = "";
 
-        document.getElementById('productReportText').value = '';
-        window.updateProductReportCharCount(document.getElementById('productReportText'));
+            const subItems = productReportData[typeName] || [];
+            subItems.forEach(function (item) {
+                const option = document.createElement("option");
+                option.value = item;
+                option.text = item;
+                subSelect.appendChild(option);
+            });
+        }
+
+        if (textEl) {
+            textEl.value = "";
+            window.updateProductReportCharCount(textEl);
+        }
 
         productReportSelectedFile = null;
-        document.getElementById('productReportFileInput').value = '';
-        document.getElementById('productReportPhotoCount').textContent = '0/1';
-        document.getElementById('productReportPhotoPreview').innerHTML = '';
+
+        if (fileInputEl) fileInputEl.value = "";
+        if (photoCountEl) photoCountEl.textContent = "0/1";
+        if (previewEl) previewEl.innerHTML = "";
     };
 
     /* =========================================
        신고 1단계 복귀
        ========================================= */
-    window.backToProductReportStep1 = function() {
-        document.getElementById('productReportStep1').classList.add('is-active');
-        document.getElementById('productReportStep2').classList.remove('is-active');
+    window.backToProductReportStep1 = function () {
+        const step1 = document.getElementById("productReportStep1");
+        const step2 = document.getElementById("productReportStep2");
+
+        if (step1) step1.classList.add("is-active");
+        if (step2) step2.classList.remove("is-active");
     };
 
     /* =========================================
        신고 글자 수 카운트
        ========================================= */
-    window.updateProductReportCharCount = function(obj) {
-        document.getElementById('productReportCurrentCharCount').innerText = obj.value.length;
+    window.updateProductReportCharCount = function (obj) {
+        const countEl = document.getElementById("productReportCurrentCharCount");
+        if (countEl) {
+            countEl.innerText = obj.value.length;
+        }
     };
 
     /* =========================================
        신고 이미지 선택
        ========================================= */
-    window.onProductReportFileSelected = function(input) {
+    window.onProductReportFileSelected = function (input) {
         if (!input.files || input.files.length === 0) return;
 
         productReportSelectedFile = input.files[0];
-        input.value = '';
+        input.value = "";
         renderProductReportPhotoPreview();
     };
 
@@ -990,30 +1177,34 @@
        신고 이미지 미리보기
        ========================================= */
     function renderProductReportPhotoPreview() {
-        const preview = document.getElementById('productReportPhotoPreview');
-        preview.innerHTML = '';
+        const preview = document.getElementById("productReportPhotoPreview");
+        const countEl = document.getElementById("productReportPhotoCount");
+
+        if (!preview || !countEl) return;
+
+        preview.innerHTML = "";
 
         if (!productReportSelectedFile) {
-            document.getElementById('productReportPhotoCount').textContent = '0/1';
+            countEl.textContent = "0/1";
             return;
         }
 
-        document.getElementById('productReportPhotoCount').textContent = '1/1';
+        countEl.textContent = "1/1";
 
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const wrap = document.createElement('div');
-            wrap.style.cssText = 'position:relative; width:60px; height:60px;';
+        reader.onload = function (e) {
+            const wrap = document.createElement("div");
+            wrap.style.cssText = "position:relative; width:60px; height:60px;";
 
-            const img = document.createElement('img');
+            const img = document.createElement("img");
             img.src = e.target.result;
-            img.style.cssText = 'width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #ddd;';
+            img.style.cssText = "width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #ddd;";
 
-            const del = document.createElement('button');
-            del.type = 'button';
-            del.textContent = '✕';
-            del.style.cssText = 'position:absolute; top:-6px; right:-6px; width:18px; height:18px; border-radius:50%; border:none; background:#e44; color:#fff; font-size:10px; cursor:pointer; padding:0; line-height:18px; text-align:center;';
-            del.onclick = function() {
+            const del = document.createElement("button");
+            del.type = "button";
+            del.textContent = "✕";
+            del.style.cssText = "position:absolute; top:-6px; right:-6px; width:18px; height:18px; border-radius:50%; border:none; background:#e44; color:#fff; font-size:10px; cursor:pointer; padding:0; line-height:18px; text-align:center;";
+            del.onclick = function () {
                 productReportSelectedFile = null;
                 renderProductReportPhotoPreview();
             };
@@ -1028,58 +1219,70 @@
     /* =========================================
        신고 제출
        ========================================= */
-    window.submitProductReport = function() {
+    window.submitProductReport = function () {
         if (isSubmittingProductReport) return;
 
-        const mainType = document.getElementById('productReportMainTitle').innerText;
-        const subType = document.getElementById('productReportSubCategory').value;
-        const content = document.getElementById('productReportText').value.trim();
-        const productNo = document.querySelector('main').getAttribute('data-product-no');
+        const mainTypeEl = document.getElementById("productReportMainTitle");
+        const subTypeEl = document.getElementById("productReportSubCategory");
+        const contentEl = document.getElementById("productReportText");
+        const mainEl = document.querySelector("main");
+
+        const mainType = mainTypeEl ? mainTypeEl.innerText : "";
+        const subType = subTypeEl ? subTypeEl.value : "";
+        const content = contentEl ? contentEl.value.trim() : "";
+        const productNo = mainEl ? mainEl.getAttribute("data-product-no") : "";
 
         if (!subType) {
-            alert('상세 신고 유형을 선택해주세요.');
+            alert("상세 신고 유형을 선택해주세요.");
             return;
         }
 
         if (!content) {
-            alert('신고 사유를 입력해주세요.');
+            alert("신고 사유를 입력해주세요.");
+            return;
+        }
+
+        if (!productNo) {
+            alert("상품 정보가 올바르지 않습니다.");
             return;
         }
 
         isSubmittingProductReport = true;
 
         const formData = new FormData();
-        formData.append('productNo', productNo);
-        formData.append('reportMainCategory', mainType);
-        formData.append('reportSubCategory', subType);
-        formData.append('reportContent', content);
+        formData.append("productNo", productNo);
+        formData.append("reportMainCategory", mainType);
+        formData.append("reportSubCategory", subType);
+        formData.append("reportContent", content);
 
         if (productReportSelectedFile) {
-            formData.append('image', productReportSelectedFile);
+            formData.append("image", productReportSelectedFile);
         }
 
-        fetch('/finalProject_3/product/report', {
-            method: 'POST',
+        fetch(ctxPath + "product/report", {
+            method: "POST",
             body: formData
         })
-        .then(response => {
-            if (!response.ok) throw new Error('신고 접수 실패');
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error("신고 접수 실패");
+            }
             return response.json();
         })
-        .then(data => {
+        .then(function (data) {
             isSubmittingProductReport = false;
 
             if (data.success) {
-                alert('신고가 정상적으로 접수되었습니다.');
+                alert("신고가 정상적으로 접수되었습니다.");
                 window.closeProductReportModal();
             } else {
-                alert(data.message || '신고 접수에 실패했습니다.');
+                alert(data.message || "신고 접수에 실패했습니다.");
             }
         })
-        .catch(error => {
+        .catch(function (error) {
             isSubmittingProductReport = false;
-            console.error('상품 신고 에러:', error);
-            alert('신고 처리 중 오류가 발생했습니다.');
+            console.error("상품 신고 에러:", error);
+            alert("신고 처리 중 오류가 발생했습니다.");
         });
     };
 </script>

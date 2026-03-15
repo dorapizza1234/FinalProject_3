@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -54,7 +53,7 @@ public class ProductController {
     private String imagesDir;
 
     private static final String IMAGE_WEB_PREFIX = "/images/";
-    
+
     @Value("${file.reports-dir}")
     private String reportsDir;
 
@@ -81,7 +80,7 @@ public class ProductController {
         return result;
     }
 
-    //상품목록(장터)
+    // 상품목록(장터)
     @GetMapping("/product_list")
     public String product_list(
             @RequestParam(name = "searchWord", required = false) String searchWord,
@@ -140,8 +139,7 @@ public class ProductController {
 
             if (memberEmail != null) {
                 searchLogDto.setMemberEmail(memberEmail);
-            }
-            else {
+            } else {
                 searchLogDto.setSessionId(session.getId());
             }
 
@@ -170,13 +168,13 @@ public class ProductController {
         return "product/product_list";
     }
 
-    //판매하기
+    // 판매하기
     @GetMapping("/sell")
     public String sellPage() {
         return "product/sell";
     }
 
-    //상품등록하기
+    // 상품등록하기
     @PostMapping("/sellRegister")
     @ResponseBody
     public Map<String, Object> sellRegister(
@@ -264,15 +262,13 @@ public class ProductController {
                 imageDtoList.add(imgDto);
             }
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("이미지 업로드 실패", e);
 
             for (String fn : savedFileNames) {
                 try {
                     fileManager.doFileDelete(fn, imagesDir);
-                }
-                catch (Exception ignore) {}
+                } catch (Exception ignore) {}
             }
 
             return failResult("이미지 업로드 실패");
@@ -287,22 +283,19 @@ public class ProductController {
                 for (String fn : savedFileNames) {
                     try {
                         fileManager.doFileDelete(fn, imagesDir);
-                    }
-                    catch (Exception ignore) {}
+                    } catch (Exception ignore) {}
                 }
 
                 return failResult("DB 저장 실패");
             }
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("DB 저장 중 예외 발생", e);
 
             for (String fn : savedFileNames) {
                 try {
                     fileManager.doFileDelete(fn, imagesDir);
-                }
-                catch (Exception ignore) {}
+                } catch (Exception ignore) {}
             }
 
             return failResult("DB 저장 실패");
@@ -320,8 +313,7 @@ public class ProductController {
 
         try {
             return objectMapper.readValue(json, new TypeReference<List<ProductShippingOptionDTO>>() {});
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.warn("shippingOptionsJson 파싱 실패: {}", json, e);
             return new ArrayList<>();
         }
@@ -332,14 +324,13 @@ public class ProductController {
 
         try {
             return objectMapper.readValue(json, new TypeReference<List<ProductMeetLocationDTO>>() {});
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.warn("meetLocationsJson 파싱 실패: {}", json, e);
             return new ArrayList<>();
         }
     }
 
-    //상품목록 더보기
+    // 상품목록 더보기
     @GetMapping("/product_list_more")
     @ResponseBody
     public List<ProductDTO> product_list_more(
@@ -387,7 +378,7 @@ public class ProductController {
         return pservice.selectProductListByConditionMore(paraMap);
     }
 
-    //나눔하기
+    // 나눔하기
     @GetMapping("/share")
     public String share() {
         return "product/share";
@@ -417,7 +408,7 @@ public class ProductController {
         boolean isSeller = memberEmail != null && memberEmail.equals(productDto.getSellerEmail());
         boolean isBuyer = memberEmail != null && pservice.isBuyerOfProduct(productNo, memberEmail);
         boolean isOwner = memberEmail != null && memberEmail.equals(productDto.getSellerEmail());
-       
+
         if (("예약중".equals(tradeStatus) || "판매완료".equals(tradeStatus))
                 && !isSeller && !isBuyer) {
             redirectAttr.addFlashAttribute("message", "해당 상품은 거래 당사자만 조회할 수 있습니다.");
@@ -436,7 +427,7 @@ public class ProductController {
         return "product/product_detail";
     }
 
-    //찜
+    // 찜
     @PostMapping("/wishlist/toggle")
     @ResponseBody
     public Map<String, Object> toggleWishlist(@RequestParam("productNo") Integer productNo,
@@ -459,7 +450,7 @@ public class ProductController {
         return result;
     }
 
-    //시세조회
+    // 시세조회
     @GetMapping("/price_check")
     public String price_check(
             @RequestParam(name = "searchWord", required = false) String searchWord,
@@ -483,7 +474,6 @@ public class ProductController {
         }
 
         boolean hasSearch = searchWord != null && !"".equals(searchWord);
-
         String memberEmail = getLoginEmail(authentication);
 
         List<ProductDTO> list = new ArrayList<>();
@@ -494,6 +484,7 @@ public class ProductController {
             Map<String, Object> paraMap = new LinkedHashMap<>();
             paraMap.put("searchWord", searchWord);
             paraMap.put("sortType", sortType);
+            paraMap.put("priceMode", priceMode);
             paraMap.put("memberEmail", memberEmail);
 
             list = pservice.selectPriceCheckProductList(paraMap);
@@ -507,8 +498,7 @@ public class ProductController {
 
                 if (memberEmail != null) {
                     searchLogDto.setMemberEmail(memberEmail);
-                }
-                else {
+                } else {
                     searchLogDto.setSessionId(session.getId());
                 }
 
@@ -536,7 +526,7 @@ public class ProductController {
         return "product/price_check";
     }
 
-    //판매자 정보 페이지
+    // 판매자 정보 페이지
     @GetMapping("/product_user_profile")
     public String product_user_profile(@RequestParam("productNo") int productNo,
                                        Model model,
@@ -599,7 +589,7 @@ public class ProductController {
         return result;
     }
 
-    //자동 검색어
+    // 자동 검색어
     @GetMapping("/wordSearchShow")
     @ResponseBody
     public List<Map<String, String>> wordSearchShow(@RequestParam Map<String, String> paraMap) {
@@ -617,8 +607,8 @@ public class ProductController {
 
         return mapList;
     }
-    
-    //게시글 신고하기
+
+    // 게시글 신고하기
     @PostMapping("/report")
     @ResponseBody
     public Map<String, Object> reportProduct(
@@ -669,16 +659,13 @@ public class ProductController {
         reportDto.setReporterEmail(loginEmail);
         reportDto.setTargetEmail(targetEmail);
         reportDto.setTypeId(null);
-
         reportDto.setProductNum(productNo);
         reportDto.setReviewNum(null);
         reportDto.setRoomId(null);
         reportDto.setNosqlMsgKey(null);
-
         reportDto.setReportDetail(reportContent);
         reportDto.setReportStatus("접수");
         reportDto.setReportImg(null);
-
         reportDto.setReportMainCategory(reportMainCategory);
         reportDto.setReportSubCategory(reportSubCategory);
 
@@ -707,8 +694,7 @@ public class ProductController {
                 if (savedFileName != null) {
                     try {
                         fileManager.doFileDelete(savedFileName, reportsDir);
-                    }
-                    catch (Exception ignore) {}
+                    } catch (Exception ignore) {}
                 }
                 return failResult("신고 접수에 실패했습니다.");
             }
@@ -717,15 +703,13 @@ public class ProductController {
             result.put("success", true);
             result.put("message", "신고가 정상적으로 접수되었습니다.");
             return result;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("상품 신고 등록 실패", e);
 
             if (savedFileName != null) {
                 try {
                     fileManager.doFileDelete(savedFileName, reportsDir);
-                }
-                catch (Exception ignore) {}
+                } catch (Exception ignore) {}
             }
 
             return failResult("신고 처리 중 오류가 발생했습니다.");
