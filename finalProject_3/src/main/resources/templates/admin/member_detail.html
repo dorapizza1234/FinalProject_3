@@ -113,8 +113,8 @@
                             </div>
 
                             <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-primary" onclick="sendMessageOnly()">
-                                    <i class="bi bi-send"></i> 일반 메시지 전송
+                                <button type="button" id="sendMsgBtn" class="btn btn-primary" onclick="sendMessageOnly()">
+                                    <i class="bi bi-send me-1"></i>메시지 전송
                                 </button>
                                 <hr class="my-2">
                                 <button type="button" class="btn btn-outline-danger" onclick="alert('준비 중인 기능입니다.')">
@@ -139,52 +139,38 @@
     <script th:inline="javascript">
     const contextPath = /*[[@{/}]]*/ '/';
     function sendMessageOnly() {
-        const userNo = document.getElementById('targetUserNo').value;
-        const title = document.getElementById('adminTitle').value;
-        const message = document.getElementById('adminMessage').value;
-
-        if(!title.trim()) {
-            alert("제목을 입력해주세요.");
-            return;
-        }
-        if(!message.trim()) {
-            alert("메시지 내용을 입력해주세요.");
-            return;
-        }
-
-        if(confirm("회원에게 메시지를 전송하시겠습니까?")) {
-            const payload = {
-                userNo: parseInt(userNo),
-                targetEmail: document.getElementById('targetEmail').value,
-                title: title,
-                message: message
-            };
-
-          
-             fetch(contextPath + 'admin/api/sendMessage', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json' 
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => {
-                if(!res.ok) throw new Error("서버 응답 에러: " + res.status);
-                return res.json();
-            })
-            .then(data => {
-                if(data.success) {
-                    alert(data.message || "메시지가 성공적으로 전송되었습니다.");
-                    document.getElementById('adminMessage').value = ''; 
-                } else {
-                    alert("실패: " + data.message);
-                }
-            })
-            .catch(err => {
-                console.error("Error:", err);
-                alert("전송 중 오류가 발생했습니다. (관리자 권한을 확인하세요)");
-            });
-        }
+        const email   = document.getElementById('targetEmail').value;
+        const title   = document.getElementById('adminTitle').value.trim();
+        const message = document.getElementById('adminMessage').value.trim();
+        const btn     = document.getElementById('sendMsgBtn');
+        if (!title)   { alert("제목을 입력해주세요."); return; }
+        if (!message) { alert("메시지 내용을 입력해주세요."); return; }
+        if (!confirm("회원에게 메시지를 전송하시겠습니까?")) return;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>전송 중...';
+        fetch(contextPath + 'admin/api/sendMessage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetEmail: email, title, message })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                btn.className = 'btn btn-success';
+                btn.innerHTML = '<i class="bi bi-check2 me-1"></i>전송완료';
+                document.getElementById('adminTitle').value = '';
+                document.getElementById('adminMessage').value = '';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.className = 'btn btn-primary';
+                    btn.innerHTML = '<i class="bi bi-send me-1"></i>메시지 전송';
+                }, 2500);
+            } else {
+                alert("실패: " + data.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send me-1"></i>메시지 전송';
+            }
+        });
     }
     </script>
 </body>

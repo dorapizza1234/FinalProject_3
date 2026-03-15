@@ -181,6 +181,26 @@
         UPDATE MEMBER SET STATUS = 0 WHERE USER_NO = #{userNo}
     </update>
 
+    <!-- ───── 정지 예약 스케줄 ───── -->
+    <insert id="insertSuspendSchedule" parameterType="map">
+        INSERT INTO SUSPEND_SCHEDULE (SCHEDULE_ID, USER_NO, SUSPEND_TYPE, SCHEDULED_AT)
+        VALUES (SEQ_SUSPEND_SCHEDULE.NEXTVAL, #{userNo}, #{suspendType}, SYSDATE + 3)
+    </insert>
+
+    <select id="getDueSuspensions" resultType="map">
+        SELECT SCHEDULE_ID as "scheduleId", USER_NO as "userNo", SUSPEND_TYPE as "suspendType"
+        FROM SUSPEND_SCHEDULE
+        WHERE SCHEDULED_AT &lt;= SYSDATE
+    </select>
+
+    <delete id="deleteSuspendSchedule" parameterType="int">
+        DELETE FROM SUSPEND_SCHEDULE WHERE SCHEDULE_ID = #{scheduleId}
+    </delete>
+
+    <select id="hasPendingSuspension" parameterType="int" resultType="int">
+        SELECT COUNT(*) FROM SUSPEND_SCHEDULE WHERE USER_NO = #{userNo}
+    </select>
+
     <!-- 회원의 거래중인 상품 조회 -->
     <select id="getMemberActiveProducts" parameterType="int"
             resultType="com.spring.app.product.domain.ProductDTO">
@@ -225,24 +245,42 @@
     </select>
 
 
-  <select id="selectProduct" resultType="com.spring.app.product.domain.ProductDTO">
-    SELECT 
-        p.product_no AS productNo, 
-        p.product_name AS productName, 
-        p.product_desc AS productDesc,  p.product_price AS productPrice,
-        p.seller_email AS sellerEmail,   
-        p.category_no AS categoryNo,      
-        p.trade_status AS tradeStatus,    
-        p.reg_date AS regDate,            
-        m.nickname AS sellerNickname
+  <select id="selectProduct" parameterType="map" resultType="com.spring.app.product.domain.ProductDTO">
+    SELECT
+        p.product_no AS productNo,
+        p.product_name AS productName,
+        p.product_desc AS productDesc,
+        p.product_price AS productPrice,
+        p.seller_email AS sellerEmail,
+        p.category_no AS categoryNo,
+        p.trade_status AS tradeStatus,
+        p.reg_date AS regDate,
+        m.nickname AS sellerName
     FROM products p
     JOIN member m ON p.seller_email = m.email
+    <if test="filter == 'reported'">
+    JOIN (SELECT DISTINCT TARGET_NO FROM REPORTS WHERE TARGET_TYPE = '상품') r ON p.PRODUCT_NO = r.TARGET_NO
+    </if>
+    <where>
+        <if test="status != null and status != ''">
+            p.trade_status = #{status}
+        </if>
+    </where>
     ORDER BY p.reg_date DESC
     OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
 </select>
 
-   <select id="selectCount" resultType="int">
-    SELECT COUNT(*) FROM products
+   <select id="selectCount" parameterType="map" resultType="int">
+    SELECT COUNT(*)
+    FROM products p
+    <if test="filter == 'reported'">
+    JOIN (SELECT DISTINCT TARGET_NO FROM REPORTS WHERE TARGET_TYPE = '상품') r ON p.PRODUCT_NO = r.TARGET_NO
+    </if>
+    <where>
+        <if test="status != null and status != ''">
+            p.trade_status = #{status}
+        </if>
+    </where>
 </select>
 
 <select id="getOnsaleProductCount" resultType="int">
@@ -260,10 +298,11 @@
         a.CONTENT        AS content,
         a.START_DATE     AS startDate,
         a.END_DATE       AS endDate,
-        a.FILE_PATH      AS filePath,
-        a.STATUS         AS status,
-        a.CREATED_AT     AS createdAt,
-        a.APPROVED_AT    AS approvedAt
+        a.FILE_PATH        AS filePath,
+        a.STATUS           AS status,
+        a.REJECTED_REASON  AS rejectedReason,
+        a.CREATED_AT       AS createdAt,
+        a.APPROVED_AT      AS approvedAt
     FROM ADS a
     LEFT JOIN MEMBER m ON a.USER_NO = m.USER_NO
     WHERE a.AD_ID = #{adId}
@@ -369,9 +408,18 @@
 <!-- 미처리 신고+문의 건수 -->
 <select id="countPendingReportsAndInquiries" resultType="int">
     SELECT
-        (SELECT COUNT(*) FROM REPORTS) +
+        (SELECT COUNT(*) FROM REPORTS WHERE REPORT_STATUS NOT IN ('처리완료', '기각')) +
         (SELECT COUNT(*) FROM INQUIRIES WHERE INQUIRY_STATUS != '답변완료' AND IS_FAQ = 'N')
     FROM DUAL
+</select>
+
+<!-- 월별 광고 신청 건수 (최근 6개월) -->
+<select id="getAdMonthlyStats" resultType="map">
+    SELECT TO_CHAR(CREATED_AT, 'YYYY-MM') AS MONTH_LABEL, COUNT(*) AS CNT
+    FROM ADS
+    WHERE CREATED_AT >= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -5)
+    GROUP BY TO_CHAR(CREATED_AT, 'YYYY-MM')
+    ORDER BY MONTH_LABEL ASC
 </select>
 
 <!-- 광고 승인 대기 건수 -->
@@ -453,26 +501,69 @@
     <select id="getTransactionList" parameterType="map" resultType="com.spring.app.admin.domain.TransactionAdminDTO">
         SELECT * FROM (
             SELECT a.*, ROWNUM AS rn FROM (
-                SELECT t.TRANSACTION_ID  as transactionId,
+                SELECT DISTINCT t.TRANSACTION_ID  as transactionId,
+                       p.PRODUCT_NO      as productNo,
                        p.PRODUCT_NAME    as productName,
+                       p.PRODUCT_PRICE   as productPrice,
                        mb.NICKNAME       as buyerNickname,
+                       mb.EMAIL          as buyerEmail,
                        ms.NICKNAME       as sellerNickname,
+                       ms.EMAIL          as sellerEmail,
                        t.AMOUNT          as amount,
                        t.TRADE_STATUS    as tradeStatus,
                        t.TRADE_DATE      as tradeDate,
                        ROUND((SYSDATE - CAST(t.TRADE_DATE AS DATE)) * 24, 1) as hoursElapsed
                 FROM TRANSACTIONS t
                 JOIN PRODUCTS p     ON t.PRODUCT_NO  = p.PRODUCT_NO
-                LEFT JOIN MEMBER mb ON t.BUYER_EMAIL  = mb.EMAIL
-                LEFT JOIN MEMBER ms ON t.SELLER_EMAIL = ms.EMAIL
+                LEFT JOIN (SELECT USER_NO, NICKNAME, EMAIL FROM MEMBER WHERE ROWID IN (SELECT MIN(ROWID) FROM MEMBER GROUP BY EMAIL)) mb ON t.BUYER_EMAIL  = mb.EMAIL
+                LEFT JOIN (SELECT USER_NO, NICKNAME, EMAIL FROM MEMBER WHERE ROWID IN (SELECT MIN(ROWID) FROM MEMBER GROUP BY EMAIL)) ms ON t.SELLER_EMAIL = ms.EMAIL
+                <where>
+                    <if test="status != null and status != '' and status != 'ALL'">
+                        t.TRADE_STATUS = #{status}
+                    </if>
+                </where>
                 ORDER BY t.TRADE_DATE DESC
             ) a WHERE ROWNUM &lt;= #{end}
         ) WHERE rn &gt; #{start}
     </select>
 
-    <select id="countTransactions" resultType="int">
+    <select id="countTransactions" parameterType="map" resultType="int">
         SELECT COUNT(*) FROM TRANSACTIONS
+        <where>
+            <if test="status != null and status != '' and status != 'ALL'">
+                TRADE_STATUS = #{status}
+            </if>
+        </where>
     </select>
+
+    <select id="countTransactionsByStatus" resultType="map">
+        SELECT TRADE_STATUS, COUNT(*) AS CNT
+        FROM TRANSACTIONS
+        GROUP BY TRADE_STATUS
+    </select>
+
+    <!-- 신고 단건 상세 조회 -->
+<select id="getReportDetail" parameterType="long" resultType="com.spring.app.admin.domain.ReportAdminDTO">
+    SELECT r.REPORT_ID       as reportId,
+           r.REPORTER_EMAIL  as reporterEmail,
+           r.TARGET_EMAIL    as targetEmail,
+           rt.MAIN_CATEGORY  as mainCategory,
+           rt.TYPE_NAME      as typeName,
+           r.REPORT_DETAIL   as reportDetail,
+           r.REPORT_DATE     as reportDate,
+           r.REPORT_STATUS   as reportStatus,
+           mr.USER_NO        as reporterUserNo,
+           mr.USER_NAME      as reporterName,
+           mt.USER_NO        as targetUserNo,
+           mt.USER_NAME      as targetName,
+           mt.SUSPENDED      as targetSuspended,
+           mt.STATUS         as targetStatus
+    FROM REPORTS r
+    JOIN REPORT_TYPES rt ON r.TYPE_ID = rt.TYPE_ID
+    LEFT JOIN MEMBER mr ON r.REPORTER_EMAIL = mr.EMAIL
+    LEFT JOIN MEMBER mt ON r.TARGET_EMAIL   = mt.EMAIL
+    WHERE r.REPORT_ID = #{reportId}
+</select>
 
     <!-- 신고 목록 페이징 -->
     <select id="getReportList" parameterType="map" resultType="com.spring.app.admin.domain.ReportAdminDTO">
@@ -507,6 +598,35 @@
     <update id="updateReportStatus" parameterType="map">
         UPDATE REPORTS SET REPORT_STATUS = #{status} WHERE REPORT_ID = #{reportId}
     </update>
+
+    <!-- 관리자 쪽지 전송 -->
+<insert id="insertAdminNotification" parameterType="map">
+    INSERT INTO WEB_NOTIFICATION (NOTI_NO, USER_NO, NOTI_TYPE, TITLE, MESSAGE, REG_DATE, READ_STATUS)
+    SELECT SEQ_NOTI.NEXTVAL,
+           m.USER_NO,
+           'ADMIN',
+           #{title},
+           #{message},
+           SYSDATE,
+           0
+    FROM MEMBER m
+    WHERE m.EMAIL = #{email}
+</insert>
+
+    <!-- 미답변 건수 -->
+<select id="countPendingInquiries" resultType="int">
+    SELECT COUNT(*) FROM INQUIRIES WHERE IS_FAQ = 'N' AND INQUIRY_STATUS = '대기'
+</select>
+
+<!-- 답변완료 건수 -->
+<select id="countAnsweredInquiries" resultType="int">
+    SELECT COUNT(*) FROM INQUIRIES WHERE IS_FAQ = 'N' AND INQUIRY_STATUS = '답변완료'
+</select>
+
+<!-- FAQ 키워드 -->
+<select id="getFaqKeywords" resultType="string">
+    SELECT TITLE FROM INQUIRIES WHERE IS_FAQ = 'Y' ORDER BY CREATED_AT DESC
+</select>
 
     <!-- 문의 목록 페이징 (관리자용, IS_FAQ='N') -->
     <select id="getAdminInquiryList" parameterType="map" resultType="com.spring.app.admin.domain.InquiryDTO">

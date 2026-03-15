@@ -13,6 +13,7 @@ import com.spring.app.admin.domain.AdDTO;
 import com.spring.app.admin.domain.InquiryDTO;
 import com.spring.app.admin.domain.SearchDTO;
 import com.spring.app.admin.service.AdminService;
+import com.spring.app.common.AES256;
 import com.spring.app.common.FileManager;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.security.domain.MemberDTO;
@@ -33,6 +34,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final FileManager fileManager;
+    private final AES256 aes256;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -93,7 +95,11 @@ public class AdminController {
         result.put("email", member.getEmail());
         result.put("userName", member.getUserName());
         result.put("nickname", member.getNickname());
-        result.put("phone", member.getPhone());
+        String decryptedPhone = member.getPhone();
+        if (decryptedPhone != null && !decryptedPhone.isEmpty()) {
+            try { decryptedPhone = aes256.decrypt(decryptedPhone); } catch (Exception ignored) {}
+        }
+        result.put("phone", decryptedPhone);
         result.put("regDate", member.getRegDate());
         result.put("status", member.getStatus());
         result.put("suspended", member.getSuspended());
@@ -101,19 +107,31 @@ public class AdminController {
         result.put("mannerTemp", member.getMannerTemp());
         result.put("profileImg", member.getProfileImg());
         result.put("products", adminService.getMemberActiveProducts(userNo));
+        try {
+            result.put("pendingSuspension", adminService.hasPendingSuspension(userNo) > 0);
+        } catch (Exception e) {
+            result.put("pendingSuspension", false);
+        }
         return result;
     }
 
-    //일시정지
+    //일시정지 예약 (3일 후 적용, 즉시 알림 발송)
     @PostMapping("/member/suspend")
     @ResponseBody
-    public Map<String, Object> suspendMember(@RequestParam("userNo") int userNo) {
+    public Map<String, Object> suspendMember(@RequestParam("userNo") int userNo,
+                                              @RequestParam(value="email", required=false) String email) {
         Map<String, Object> result = new HashMap<>();
         try {
-            adminService.suspendMember(userNo);
+            if (email == null || email.isEmpty()) {
+                MemberDTO m = adminService.getMemberByNo(userNo);
+                email = m != null ? m.getEmail() : "";
+            }
+            adminService.scheduleSuspend(userNo, email);
             result.put("success", true);
+            result.put("message", "3일 후 일시정지가 예약되었습니다. 회원에게 알림을 발송했습니다.");
         } catch (Exception e) {
             result.put("success", false);
+            result.put("message", e.getMessage());
         }
         return result;
     }
@@ -132,16 +150,23 @@ public class AdminController {
         return result;
     }
 
-    //영구정지
+    //영구정지 예약 (3일 후 적용, 즉시 알림 발송)
     @PostMapping("/member/ban")
     @ResponseBody
-    public Map<String, Object> permanentBanMember(@RequestParam("userNo") int userNo) {
+    public Map<String, Object> permanentBanMember(@RequestParam("userNo") int userNo,
+                                                   @RequestParam(value="email", required=false) String email) {
         Map<String, Object> result = new HashMap<>();
         try {
-            adminService.permanentBanMember(userNo);
+            if (email == null || email.isEmpty()) {
+                MemberDTO m = adminService.getMemberByNo(userNo);
+                email = m != null ? m.getEmail() : "";
+            }
+            adminService.scheduleBan(userNo, email);
             result.put("success", true);
+            result.put("message", "3일 후 영구정지가 예약되었습니다. 회원에게 알림을 발송했습니다.");
         } catch (Exception e) {
             result.put("success", false);
+            result.put("message", e.getMessage());
         }
         return result;
     }
@@ -152,37 +177,30 @@ public class AdminController {
     @GetMapping("/product")
     public String productPage(Model model,
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size) {
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "status", defaultValue = "") String status,
+            @RequestParam(value = "filter", defaultValue = "") String filter) {
 
         // 1. 기본 데이터 및 페이징
-        List<ProductDTO> productList = adminService.getProductList(page, size);
+        List<ProductDTO> productList = adminService.getProductList(page, size, status, filter);
+        int filteredTotal = adminService.getProductCount(status, filter);
         int totalProducts = adminService.getTotalProductsCount();
         int onsaleCount = adminService.getOnsaleProductCount();
-        int reportCount = adminService.getReportedProductCount(); // 신고 건수 서비스 추가 권장
+        int reportCount = adminService.getReportedProductCount();
 
-        // 2. 카테고리 매핑 (DB에서 가져오거나 상수로 관리)
+        // 2. 카테고리 매핑
         Map<Integer, String> categoryMap = new HashMap<>();
-        categoryMap.put(1, "패션");
-        categoryMap.put(2, "육아");
-        categoryMap.put(3, "가전");
-        categoryMap.put(4, "홈·인테리어");
-        categoryMap.put(5, "취미");
-        categoryMap.put(6, "여행");
-        categoryMap.put(7, "공구/산업용품");
-
+        categoryMap.put(1, "패션"); categoryMap.put(2, "육아"); categoryMap.put(3, "가전");
+        categoryMap.put(4, "홈·인테리어"); categoryMap.put(5, "취미");
+        categoryMap.put(6, "여행"); categoryMap.put(7, "공구/산업용품");
         for(ProductDTO p : productList) {
-            p.setCategoryName(categoryMap.getOrDefault(p.getCategoryNo(), "기타")); 
+            p.setCategoryName(categoryMap.getOrDefault(p.getCategoryNo(), "기타"));
         }
 
-        // 3. [핵심] 차트 데이터 준비
-        // A. 일별 등록 현황 (최근 7일) -> 서비스에서 List<Map<String, Object>> 형태로 받아온다고 가정
-        // 데이터 예시: Labels: ["03-03", "03-04"...], Data: [12, 5, 8...]
-        Map<String, Object> dailyStats = adminService.getDailyProductStats(); 
-        model.addAttribute("dailyLabels", dailyStats.get("labels")); // 날짜 리스트
-        model.addAttribute("dailyData", dailyStats.get("data"));     // 건수 리스트
-
-        // B. 카테고리별 비중 (도넛 차트용)
-        // 데이터 예시: Labels: ["패션", "가전"...], Data: [45, 20...]
+        // 3. 차트 데이터
+        Map<String, Object> dailyStats = adminService.getDailyProductStats();
+        model.addAttribute("dailyLabels", dailyStats.get("labels"));
+        model.addAttribute("dailyData", dailyStats.get("data"));
         Map<String, Object> categoryStats = adminService.getCategoryProductStats();
         model.addAttribute("categoryLabels", categoryStats.get("labels"));
         model.addAttribute("categoryData", categoryStats.get("data"));
@@ -190,13 +208,16 @@ public class AdminController {
         // 4. 모델 담기
         model.addAttribute("productList", productList);
         model.addAttribute("totalProducts", totalProducts);
+        model.addAttribute("filteredTotal", filteredTotal);
         model.addAttribute("onsaleCount", onsaleCount);
         model.addAttribute("reportCount", reportCount);
         model.addAttribute("size", size);
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", (int) Math.ceil((double) totalProducts / size));
+        model.addAttribute("totalPages", (int) Math.ceil((double) filteredTotal / size));
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedFilter", filter);
 
-        return "admin/product"; 
+        return "admin/product";
     }
      
     
@@ -275,14 +296,14 @@ public class AdminController {
         List<List<LocalDate>> calendarWeeks = generateCalendar(firstDay);
 
         List<AdDTO> adList = adminService.getAdList();
-        Map<String, Object> dailyStats = adminService.getDailyProductStats();
+        Map<String, Object> adStats = adminService.getAdMonthlyStats();
 
         model.addAttribute("calendarWeeks", calendarWeeks);
         model.addAttribute("adList", adList);
         model.addAttribute("year", year);
         model.addAttribute("month", month);
-        model.addAttribute("chartLabels", dailyStats.get("labels"));
-        model.addAttribute("chartData", dailyStats.get("data"));
+        model.addAttribute("chartLabels", adStats.get("labels"));
+        model.addAttribute("chartData", adStats.get("data"));
 
         return "admin/contents";
     }
@@ -408,12 +429,16 @@ public class AdminController {
     @GetMapping("/transaction")
     public String transaction(Model model,
                               @RequestParam(value = "page", defaultValue = "1") int page,
-                              @RequestParam(value = "size", defaultValue = "20") int size) {
-        Map<String, Object> data = adminService.getTransactionListPaged(page, size);
+                              @RequestParam(value = "size", defaultValue = "20") int size,
+                              @RequestParam(value = "status", defaultValue = "ALL") String status) {
+        Map<String, Object> data = adminService.getTransactionListPaged(page, size, status);
+        Map<String, Object> statusStats = adminService.getTransactionStatusStats();
         model.addAttribute("tradeList", data.get("list"));
         model.addAttribute("totalCount", data.get("total"));
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", data.get("totalPages"));
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("statusStats", statusStats);
         return "admin/transaction";
     }
 
@@ -431,6 +456,65 @@ public class AdminController {
         model.addAttribute("selectedType", type);
         model.addAttribute("reportStats", adminService.getReportStats());
         return "admin/complaint";
+    }
+
+    @GetMapping("/complaint/detail")
+    public String complaintDetail(@RequestParam("reportId") long reportId, Model model) {
+        model.addAttribute("report", adminService.getReportDetail(reportId));
+        return "admin/complaint_detail";
+    }
+
+    @PostMapping("/complaint/memberAction")
+    @ResponseBody
+    public Map<String, Object> memberAction(@RequestParam("userNo") int userNo,
+                                             @RequestParam("action") String action) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            switch (action) {
+                case "suspend":   adminService.suspendMember(userNo);      break;
+                case "ban":       adminService.permanentBanMember(userNo); break;
+                case "unsuspend": adminService.unsuspendMember(userNo);    break;
+            }
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        return result;
+    }
+
+    @PostMapping("/complaint/notify")
+    @ResponseBody
+    public Map<String, Object> sendComplaintNotification(@RequestParam("email") String email,
+                                                          @RequestParam("title") String title,
+                                                          @RequestParam("message") String message) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.sendAdminNotification(email, title, message);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+        }
+        return result;
+    }
+
+    @PostMapping("/api/sendMessage")
+    @ResponseBody
+    public Map<String, Object> sendMessage(@org.springframework.web.bind.annotation.RequestBody Map<String, Object> body) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.sendAdminNotification(
+                (String) body.get("targetEmail"),
+                (String) body.get("title"),
+                (String) body.get("message")
+            );
+            result.put("success", true);
+            result.put("message", "메시지가 성공적으로 전송되었습니다.");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "전송 실패: " + e.getMessage());
+        }
+        return result;
     }
 
     @PostMapping("/complaint/process")
@@ -459,6 +543,9 @@ public class AdminController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", data.get("totalPages"));
         model.addAttribute("selectedStatus", status);
+        model.addAttribute("pendingCount", adminService.countPendingInquiries());
+        model.addAttribute("answeredCount", adminService.countAnsweredInquiries());
+        model.addAttribute("faqKeywords", adminService.getFaqKeywords());
         return "admin/inquiry";
     }
 

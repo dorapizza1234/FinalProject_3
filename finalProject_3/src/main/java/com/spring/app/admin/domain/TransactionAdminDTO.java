@@ -6,9 +6,13 @@ import java.util.Date;
 @Data
 public class TransactionAdminDTO {
     private long transactionId;
+    private long productNo;
     private String productName;
+    private long productPrice;
     private String buyerNickname;
+    private String buyerEmail;
     private String sellerNickname;
+    private String sellerEmail;
     private long amount;
     private String tradeStatus;
     private Date tradeDate;

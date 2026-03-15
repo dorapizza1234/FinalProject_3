@@ -13,4 +13,10 @@ public class ReportAdminDTO {
     private String reportDetail;
     private Date reportDate;
     private String reportStatus;
+    private int reporterUserNo;
+    private String reporterName;
+    private int targetUserNo;
+    private String targetName;
+    private int targetSuspended;
+    private int targetStatus;
 }

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>신고 상세</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/admin/sideBar.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: #f4f6fb; }
+
+        .detail-header {
+            background: linear-gradient(135deg, #1a1f36 0%, #2e3750 100%);
+            border-radius: 18px; padding: 30px 36px; color: #fff;
+            margin-bottom: 28px; display: flex; align-items: center; gap: 22px;
+            box-shadow: 0 8px 32px rgba(30,40,80,.18);
+        }
+        .report-icon {
+            width: 60px; height: 60px; background: rgba(255,255,255,.13);
+            border-radius: 16px; display: flex; align-items: center;
+            justify-content: center; font-size: 1.7rem; flex-shrink: 0;
+        }
+        .report-id   { font-size: 0.82rem; opacity: .55; margin-bottom: 4px; }
+        .report-type { font-size: 1.25rem; font-weight: 700; margin-bottom: 6px; }
+        .report-meta { font-size: 0.8rem; opacity: .65; }
+        .header-badge { padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
+        .hb-pending  { background: rgba(231,74,59,.25);  color: #ffadaa; border: 1px solid rgba(231,74,59,.4); }
+        .hb-done     { background: rgba(28,200,138,.25); color: #6fffd4; border: 1px solid rgba(28,200,138,.4); }
+        .hb-rejected { background: rgba(180,180,200,.2); color: #c0c4d6; border: 1px solid rgba(180,180,200,.3); }
+
+        .info-card {
+            background: #fff; border-radius: 16px; padding: 22px 24px;
+            box-shadow: 0 2px 16px rgba(58,59,69,.06); margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 0.73rem; font-weight: 800; text-transform: uppercase;
+            color: #9799b0; letter-spacing: .08em;
+            margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #f0f1f8;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .detail-box {
+            background: #f7f8fd; border-radius: 10px; padding: 16px;
+            font-size: 0.88rem; color: #444; line-height: 1.85; min-height: 80px;
+            border: 1px solid #eef0f8;
+        }
+
+        /* 유저 패널 */
+        .user-panel {
+            background: #f7f8fd; border-radius: 14px; padding: 18px 16px;
+            border: 1px solid #eef0f8; transition: box-shadow .2s;
+        }
+        .role-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.68rem; font-weight: 800; padding: 3px 10px;
+            border-radius: 10px; margin-bottom: 8px;
+        }
+        .role-reporter { background: #e8f0fe; color: #4e73df; }
+        .role-target   { background: #fde8e8; color: #e74a3b; }
+        .u-name  { font-size: 1rem; font-weight: 700; color: #1e2340; margin-bottom: 2px; }
+        .u-email { font-size: 0.8rem; color: #888; margin-bottom: 12px; word-break: break-all; }
+        .action-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+        .action-row .btn { font-size: 0.76rem; padding: 4px 10px; border-radius: 8px; }
+
+        /* 상태 칩 */
+        .member-chip { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; margin-bottom: 10px; }
+        .chip-normal  { background: #e6f9f2; color: #1cc88a; }
+        .chip-suspend { background: #fff3cd; color: #856404; }
+        .chip-ban     { background: #fde8e8; color: #e74a3b; }
+
+        /* 인라인 알림 박스 (패널 내부) */
+        .inline-notify {
+            background: #fff; border: 1px solid #e0e4f0; border-radius: 10px;
+            padding: 12px 14px; margin-top: 4px;
+        }
+        .inline-notify.highlight { border-color: #4e73df; background: #f0f4ff; }
+        .inline-notify .form-control { font-size: 0.82rem; border-radius: 8px; border-color: #dde2f0; }
+        .inline-notify .form-control-sm { padding: 5px 10px; }
+        .btn-send-primary { background: #4e73df; color: #fff; border: none; border-radius: 8px; font-size: 0.78rem; font-weight: 600; padding: 4px 14px; }
+        .btn-send-primary:hover { background: #3a5bc7; color: #fff; }
+        .btn-send-danger  { background: #e74a3b; color: #fff; border: none; border-radius: 8px; font-size: 0.78rem; font-weight: 600; padding: 4px 14px; }
+        .btn-send-danger:hover  { background: #c73a2d; color: #fff; }
+        .btn-sent { background: #1cc88a !important; border: none !important; color: #fff !important; }
+
+        /* 인정 배너 */
+        .accepted-banner {
+            background: linear-gradient(135deg, #e8fff5, #d0faea);
+            border: 1.5px solid #1cc88a; border-radius: 12px;
+            padding: 14px 18px; display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+        }
+        .accepted-banner .ab-icon {
+            width: 36px; height: 36px; background: #1cc88a; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; flex-shrink: 0;
+        }
+        .accepted-banner .ab-title { font-weight: 700; color: #0a6640; font-size: 0.88rem; }
+        .accepted-banner .ab-sub   { font-size: 0.76rem; color: #2a7a50; }
+
+        /* 저장 버튼 */
+        .btn-save {
+            background: linear-gradient(135deg, #2e3750, #4e73df);
+            color: #fff; border: none; border-radius: 10px;
+            font-weight: 700; letter-spacing: .03em; transition: opacity .2s;
+        }
+        .btn-save:hover { opacity: .88; color: #fff; }
+    </style>
+</head>
+<body class="d-flex">
+    <aside th:replace="~{admin/admin_sidebar :: adminSidebar}"></aside>
+    <main class="main-content">
+        <div class="container-fluid">
+
+            <nav class="mb-3">
+                <a th:href="@{/admin/complaint}" class="text-decoration-none text-muted small">
+                    <i class="bi bi-chevron-left me-1"></i>신고 목록으로
+                </a>
+            </nav>
+
+            <!-- 다크 헤더 -->
+            <div class="detail-header">
+                <div class="report-icon"><i class="bi bi-flag-fill"></i></div>
+                <div class="flex-grow-1">
+                    <div class="report-id">신고 #<span th:text="${report.reportId}"></span></div>
+                    <div class="report-type">
+                        <span th:text="${report.mainCategory}"></span>
+                        <span class="mx-2" style="opacity:.4;">›</span>
+                        <span th:text="${report.typeName}"></span>
+                    </div>
+                    <div class="report-meta">
+                        <i class="bi bi-clock me-1"></i>
+                        <span th:text="${#dates.format(report.reportDate, 'yyyy-MM-dd HH:mm')}"></span>
+                        <span class="ms-3"><i class="bi bi-person me-1"></i><span th:text="${report.reporterName}"></span></span>
+                    </div>
+                </div>
+                <span class="header-badge"
+                      th:classappend="${report.reportStatus == '처리완료'} ? 'hb-done' : (${report.reportStatus == '기각'} ? 'hb-rejected' : 'hb-pending')"
+                      th:text="${report.reportStatus}"></span>
+            </div>
+
+            <!-- 신고 인정 배너 -->
+            <div class="accepted-banner" th:if="${report.reportStatus == '처리완료'}">
+                <div class="ab-icon"><i class="bi bi-check2"></i></div>
+                <div>
+                    <div class="ab-title">신고가 인정되었습니다</div>
+                    <div class="ab-sub">신고자에게 처리 결과를 안내해 주세요.</div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- 왼쪽: 신고내용 + 처리상태 -->
+                <div class="col-lg-5">
+                    <div class="info-card">
+                        <div class="section-title"><i class="bi bi-chat-left-text"></i>신고 내용</div>
+                        <div class="detail-box" th:text="${report.reportDetail}"></div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="section-title"><i class="bi bi-check2-circle"></i>처리 상태 변경</div>
+                        <select id="statusSelect" class="form-select mb-3" style="border-radius:10px; font-weight:600;"
+                                onchange="onStatusChange(this.value)">
+                            <option value="처리대기"  th:selected="${report.reportStatus == '처리대기'}">처리대기</option>
+                            <option value="처리완료" th:selected="${report.reportStatus == '처리완료'}">처리완료 — 신고 인정</option>
+                            <option value="기각"     th:selected="${report.reportStatus == '기각'}">기각 — 신고 반려</option>
+                        </select>
+                        <button class="btn btn-save w-100 py-2" onclick="processReport()">
+                            <i class="bi bi-save me-1"></i>상태 저장 및 알림 자동 작성
+                        </button>
+                        <div id="processResult" class="mt-2 small d-none"></div>
+                    </div>
+                </div>
+
+                <!-- 오른쪽: 신고자 + 피신고자 (제재 + 메시지 묶음) -->
+                <div class="col-lg-7">
+
+                    <!-- 신고자 패널 -->
+                    <div class="info-card">
+                        <div class="section-title"><i class="bi bi-person"></i>신고자 — 제재 및 알림</div>
+                        <div class="user-panel mb-3">
+                            <div class="role-badge role-reporter"><i class="bi bi-person"></i>신고자</div>
+                            <div class="u-name" th:text="${report.reporterName != null ? report.reporterName : '-'}"></div>
+                            <div class="u-email" th:text="${report.reporterEmail}"></div>
+                            <div class="action-row">
+                                <button class="btn btn-warning btn-sm" onclick="scheduleAction('reporter','suspend')">
+                                    <i class="bi bi-pause-circle me-1"></i>예약정지
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="scheduleAction('reporter','ban')">
+                                    <i class="bi bi-x-circle me-1"></i>예약차단
+                                </button>
+                            </div>
+                            <div id="reporterResult" class="mb-2 small d-none"></div>
+
+                            <!-- 신고자 알림 (바로 아래 붙임) -->
+                            <div class="inline-notify" id="notifyReporterBox">
+                                <div style="font-size:0.72rem; font-weight:800; color:#4e73df; margin-bottom:8px;">
+                                    <i class="bi bi-envelope me-1"></i>신고자에게 알림 전송
+                                </div>
+                                <input type="text" id="r1Title" class="form-control form-control-sm mb-2" placeholder="제목" value="신고 접수 안내">
+                                <textarea id="r1Msg" class="form-control form-control-sm mb-2" rows="3" placeholder="신고자에게 보낼 내용"></textarea>
+                                <button class="btn btn-send-primary" id="btnR1"
+                                        th:attr="data-email=${report.reporterEmail}"
+                                        onclick="sendNotify('r1')">
+                                    <i class="bi bi-send me-1"></i>전송
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 피신고자 패널 -->
+                    <div class="info-card">
+                        <div class="section-title"><i class="bi bi-person-x"></i>피신고자 — 제재 및 알림</div>
+                        <div class="user-panel">
+                            <div class="role-badge role-target"><i class="bi bi-person-x"></i>피신고자</div>
+                            <div class="u-name" th:text="${report.targetName != null ? report.targetName : '-'}"></div>
+                            <div class="u-email" th:text="${report.targetEmail}"></div>
+                            <div class="mb-2">
+                                <span th:if="${report.targetStatus == 0}" class="member-chip chip-ban">영구정지</span>
+                                <span th:if="${report.targetStatus != 0 and report.targetSuspended == 1}" class="member-chip chip-suspend">일시정지 중</span>
+                                <span th:if="${report.targetStatus != 0 and report.targetSuspended == 0}" class="member-chip chip-normal">정상</span>
+                            </div>
+                            <div class="action-row">
+                                <button class="btn btn-warning btn-sm"
+                                        th:disabled="${report.targetStatus == 0 or report.targetSuspended == 1}"
+                                        onclick="scheduleAction('target','suspend')">
+                                    <i class="bi bi-pause-circle me-1"></i>예약정지
+                                </button>
+                                <button class="btn btn-danger btn-sm"
+                                        th:disabled="${report.targetStatus == 0}"
+                                        onclick="scheduleAction('target','ban')">
+                                    <i class="bi bi-x-circle me-1"></i>예약차단
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm"
+                                        th:disabled="${report.targetSuspended == 0}"
+                                        onclick="immediateAction(TARGET_USERNO,'unsuspend','targetResult')">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>해제
+                                </button>
+                            </div>
+                            <div id="targetResult" class="mb-2 small d-none"></div>
+
+                            <!-- 피신고자 알림 (바로 아래 붙임) -->
+                            <div class="inline-notify">
+                                <div style="font-size:0.72rem; font-weight:800; color:#e74a3b; margin-bottom:8px;">
+                                    <i class="bi bi-envelope me-1"></i>피신고자에게 알림 전송
+                                </div>
+                                <input type="text" id="r2Title" class="form-control form-control-sm mb-2" placeholder="제목" value="신고 처리 안내">
+                                <textarea id="r2Msg" class="form-control form-control-sm mb-2" rows="3" placeholder="피신고자에게 보낼 내용"></textarea>
+                                <button class="btn btn-send-danger" id="btnR2"
+                                        th:attr="data-email=${report.targetEmail}"
+                                        onclick="sendNotify('r2')">
+                                    <i class="bi bi-send me-1"></i>전송
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const _ctx          = /*[[@{/}]]*/ '/';
+        const BASE          = _ctx.replace(/\/$/, '');
+        const REPORT_ID     = /*[[${report.reportId}]]*/ 0;
+        const TARGET_USERNO  = /*[[${report.targetUserNo}]]*/ 0;
+        const REPORTER_USERNO= /*[[${report.reporterUserNo}]]*/ 0;
+        const TARGET_EMAIL  = /*[[${report.targetEmail}]]*/ '';
+        const REPORTER_EMAIL= /*[[${report.reporterEmail}]]*/ '';
+        const REPORTER_NAME = /*[[${report.reporterName}]]*/ '';
+        const TARGET_NAME   = /*[[${report.targetName}]]*/ '';
+        const REPORT_TYPE   = /*[[${report.typeName}]]*/ '';
+        /*]]>*/
+
+        function onStatusChange(status) {
+            const box = document.getElementById('notifyReporterBox');
+            if (status === '처리완료') {
+                box.classList.add('highlight');
+                document.getElementById('r1Title').value = '[처리완료] 신고 인정 안내';
+                document.getElementById('r1Msg').value =
+                    REPORTER_NAME + '님 안녕하세요.\n\n' +
+                    '접수하신 신고(' + REPORT_TYPE + ')가 검토 결과 인정되었습니다.\n' +
+                    '관련 조치가 처리되었으며, 더 안전한 서비스를 위해 최선을 다하겠습니다.\n\n' +
+                    '감사합니다.\n관리자 드림';
+                document.getElementById('r2Title').value = '[처리완료] 신고 처리 결과 안내';
+                document.getElementById('r2Msg').value =
+                    TARGET_NAME + '님 안녕하세요.\n\n' +
+                    '귀하에 대한 신고(' + REPORT_TYPE + ')가 접수되어 검토한 결과,\n' +
+                    '해당 신고 내용이 인정되어 조치가 이루어졌음을 안내드립니다.\n' +
+                    '이의가 있으시면 고객센터로 문의해 주세요.\n\n관리자 드림';
+            } else if (status === '기각') {
+                box.classList.remove('highlight');
+                document.getElementById('r1Title').value = '[처리결과] 신고 검토 결과 안내';
+                document.getElementById('r1Msg').value =
+                    REPORTER_NAME + '님 안녕하세요.\n\n' +
+                    '접수하신 신고(' + REPORT_TYPE + ')를 검토한 결과,\n' +
+                    '충분한 근거가 확인되지 않아 이번 신고는 기각 처리되었습니다.\n' +
+                    '추가 문의사항이 있으시면 고객센터를 이용해 주세요.\n\n관리자 드림';
+                document.getElementById('r2Title').value = '신고 처리 안내';
+                document.getElementById('r2Msg').value = '';
+            } else {
+                box.classList.remove('highlight');
+                document.getElementById('r1Title').value = '신고 접수 안내';
+                document.getElementById('r1Msg').value = '';
+                document.getElementById('r2Title').value = '신고 처리 안내';
+                document.getElementById('r2Msg').value = '';
+            }
+        }
+
+        function processReport() {
+            const status = document.getElementById('statusSelect').value;
+            fetch(BASE + '/admin/complaint/process', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'reportId=' + REPORT_ID + '&status=' + encodeURIComponent(status)
+            })
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById('processResult');
+                el.classList.remove('d-none');
+                if (data.success) {
+                    el.className = 'mt-2 small text-success';
+                    el.textContent = '✓ 상태가 저장되었습니다. 아래 알림을 전송해 주세요.';
+                    onStatusChange(status);
+                } else {
+                    el.className = 'mt-2 small text-danger';
+                    el.textContent = '✗ 저장 실패.';
+                }
+            });
+        }
+
+        function scheduleAction(who, type) {
+            const userNo   = who === 'reporter' ? REPORTER_USERNO : TARGET_USERNO;
+            const email    = who === 'reporter' ? REPORTER_EMAIL  : TARGET_EMAIL;
+            const label    = type === 'suspend' ? '일시정지 예약' : '영구차단 예약';
+            const resultId = who + 'Result';
+            if (!confirm('[' + label + '] 3일 후 처리됩니다. 계속하시겠습니까?')) return;
+            fetch(BASE + (type === 'suspend' ? '/admin/member/suspend' : '/admin/member/ban'), {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'userNo=' + userNo + '&email=' + encodeURIComponent(email)
+            })
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById(resultId);
+                el.classList.remove('d-none');
+                el.className = 'mb-2 small ' + (data.success ? 'text-success' : 'text-danger');
+                el.textContent = data.success
+                    ? '✓ ' + label + ' 완료. 3일 후 적용됩니다.'
+                    : '✗ 실패: ' + (data.message || '오류');
+            });
+        }
+
+        function immediateAction(userNo, action, resultId) {
+            if (!confirm('정지를 즉시 해제하시겠습니까?')) return;
+            fetch(BASE + '/admin/complaint/memberAction', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'userNo=' + userNo + '&action=' + action
+            })
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById(resultId);
+                el.classList.remove('d-none');
+                el.className = 'mb-2 small ' + (data.success ? 'text-success' : 'text-danger');
+                el.textContent = data.success ? '✓ 정지가 해제되었습니다.' : '✗ 실패: ' + (data.error || '오류');
+            });
+        }
+
+        function sendNotify(key) {
+            const btn     = document.getElementById('btn' + key.toUpperCase());
+            const email   = btn.dataset.email;
+            const title   = document.getElementById(key + 'Title').value.trim();
+            const message = document.getElementById(key + 'Msg').value.trim();
+            if (!title)   { alert('제목을 입력하세요.'); return; }
+            if (!message) { alert('내용을 입력하세요.'); return; }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>전송 중...';
+            fetch(BASE + '/admin/complaint/notify', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'email=' + encodeURIComponent(email)
+                    + '&title=' + encodeURIComponent(title)
+                    + '&message=' + encodeURIComponent(message)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    btn.className = 'btn btn-sent';
+                    btn.innerHTML = '<i class="bi bi-check2 me-1"></i>전송완료';
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-send me-1"></i>전송';
+                    alert('전송 실패: ' + (data.message || '오류'));
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send me-1"></i>전송';
+                alert('네트워크 오류');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -21,6 +21,7 @@
                     <li><a href="#" id="nav-review" onclick="switchSection('review'); return false;">후기관리</a></li>
                     <li><a href="#" id="nav-wish" onclick="switchSection('wish'); return false;">찜내역</a></li>
                     <li><a href="#" id="nav-report" onclick="switchSection('report'); return false;">신고관리</a></li>
+                    <li><a th:href="@{/noti/list}" id="nav-noti">메시지함</a></li>
                 </ul>
             </nav>
             <div class="mp-exit-wrap">
@@ -176,6 +177,20 @@
                     </div>
                 </div>
             </div><!-- /mp-report-section -->
+
+            <!-- 메시지함 섹션 -->
+            <div id="mp-noti-section" style="display:none;">
+                <div class="mp-section-title">메시지함</div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="text-muted small">미읽음: <strong id="notiUnreadCount">-</strong>건</span>
+                    <a href="/noti/list" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-envelope me-1"></i>메시지 보기
+                    </a>
+                </div>
+                <div id="notiPreviewList">
+                    <div class="text-muted small">로딩 중...</div>
+                </div>
+            </div><!-- /mp-noti-section -->
         </section>
     </div>
 
@@ -511,7 +526,7 @@
     }
 
     // ===== 섹션 전환 =====
-    const sectionIds = ['info', 'account', 'purchase', 'review', 'wish', 'report'];
+    const sectionIds = ['info', 'account', 'purchase', 'review', 'wish', 'report', 'noti'];
 
     window.switchSection = function(section) {
         sectionIds.forEach(id => {
@@ -525,6 +540,7 @@
 
         if (section === 'account') { loadAccounts(); loadDeliveries(); }
         if (section === 'wish') { loadWishlist(); }
+        if (section === 'noti') { loadNotiPreview(); }
         if (section === 'info') { loadMyProducts(); }
     }
 
@@ -960,6 +976,37 @@
     document.addEventListener('DOMContentLoaded', function() {
         loadMyProducts();
     });
+
+    window.loadNotiPreview = function() {
+        const base = ctxPath.replace(/\/$/, '');
+        fetch(base + '/noti/count').then(r => r.json()).then(data => {
+            const el = document.getElementById('notiUnreadCount');
+            if (el) el.textContent = data.count || 0;
+        });
+        fetch(base + '/noti/preview').then(r => r.json()).then(list => {
+            const previewEl = document.getElementById('notiPreviewList');
+            if (!previewEl) return;
+            if (!list || list.length === 0) {
+                previewEl.innerHTML = '<div class="text-muted small py-3 text-center">메시지가 없습니다.</div>';
+                return;
+            }
+            let html = '<ul class="list-group list-group-flush">';
+            list.slice(0, 5).forEach(n => {
+                const bold = n.readStatus === 0 ? 'fw-bold' : '';
+                html += `<li class="list-group-item px-0 py-2">
+                    <div class="small ${bold}">${n.title || ''}</div>
+                    <div class="text-muted" style="font-size:.82rem;">${n.message || ''}</div>
+                    <div class="text-muted" style="font-size:.75rem;">${n.regDate || ''}</div>
+                </li>`;
+            });
+            html += '</ul>';
+            html += `<div class="text-center mt-2"><a href="${base}/noti/list" class="btn btn-outline-primary btn-sm"><i class="bi bi-envelope me-1"></i>전체 보기</a></div>`;
+            previewEl.innerHTML = html;
+        }).catch(() => {
+            const previewEl = document.getElementById('notiPreviewList');
+            if (previewEl) previewEl.innerHTML = '<div class="text-muted small py-3 text-center">메시지를 불러올 수 없습니다.</div>';
+        });
+    };
 
     })();
     /*]]>*/

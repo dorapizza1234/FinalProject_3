@@ -7,73 +7,307 @@
     <link rel="stylesheet" th:href="@{/css/admin/sideBar.css}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
+        :root { --primary:#4e73df; --success:#1cc88a; --warning:#f6c23e; --danger:#e74a3b; }
+
+        .stat-card {
+            background:#fff; border-radius:14px; padding:20px 22px;
+            border-left:5px solid; box-shadow:0 2px 12px rgba(0,0,0,.07);
+            transition:transform .2s;
+        }
+        .stat-card:hover { transform:translateY(-3px); }
+        .stat-card.blue   { border-color:var(--primary); }
+        .stat-card.green  { border-color:var(--success); }
+        .stat-card.yellow { border-color:var(--warning); }
+        .stat-label { font-size:11px; font-weight:700; text-transform:uppercase; color:#858796; letter-spacing:.06em; }
+        .stat-value { font-size:2rem; font-weight:800; color:#2e3750; line-height:1.1; }
+
+        .section-card { background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.07); overflow:hidden; }
+        .section-header { padding:16px 22px; border-bottom:1px solid #f1f4f8; display:flex; align-items:center; justify-content:space-between; }
+        .section-header h6 { margin:0; font-weight:700; color:#2e3750; }
+
+        /* 상태 필터 탭 */
+        .status-tabs { display:flex; gap:8px; }
+        .status-tab {
+            padding:6px 16px; border-radius:20px; font-size:.82rem; font-weight:600;
+            border:1.5px solid #dee2e6; background:#fff; color:#666; cursor:pointer;
+            text-decoration:none; transition:all .15s;
+        }
+        .status-tab:hover { border-color:#4e73df; color:#4e73df; }
+        .status-tab.active-all    { background:#4e73df; color:#fff; border-color:#4e73df; }
+        .status-tab.active-trade  { background:#1cc88a; color:#fff; border-color:#1cc88a; }
+        .status-tab.active-done   { background:#858796; color:#fff; border-color:#858796; }
+
+        /* 테이블 */
+        .trade-table th { font-size:11px; text-transform:uppercase; color:#858796; letter-spacing:.05em; font-weight:700; padding:12px 16px; }
+        .trade-table td { padding:14px 16px; vertical-align:middle; font-size:.88rem; }
+        .product-name { font-weight:700; color:#2e3750; max-width:200px; }
+        .amount-cell  { font-weight:700; color:var(--primary); }
+
+        .badge-trading { background:#fff9e6; color:#d4a200; padding:4px 10px; border-radius:20px; font-size:.78rem; font-weight:700; }
+        .badge-done    { background:#f1f3f5; color:#868e96; padding:4px 10px; border-radius:20px; font-size:.78rem; font-weight:700; }
+        .badge-cancel  { background:#fff2f1; color:#e74a3b; padding:4px 10px; border-radius:20px; font-size:.78rem; font-weight:700; }
+
+        .detail-btn {
+            font-size:.78rem; padding:5px 14px; border-radius:20px;
+            border:1.5px solid #dee2e6; background:#fff; color:#444;
+            font-weight:600; transition:all .15s; cursor:pointer;
+        }
+        .detail-btn:hover { background:#2e3750; color:#fff; border-color:#2e3750; }
+
+        /* 남은 시간 바 */
+        .time-bar-wrap { min-width:80px; }
+        .time-bar { height:6px; border-radius:3px; background:#f1f4f8; overflow:hidden; }
+        .time-bar-inner { height:100%; border-radius:3px; transition:width .3s; }
+
+        /* 모달 */
+        .modal-info-row { display:flex; gap:8px; padding:10px 14px; border-radius:8px; background:#f8f9fc; margin-bottom:8px; }
+        .modal-info-label { min-width:90px; font-size:.78rem; color:#888; font-weight:600; text-transform:uppercase; flex-shrink:0; }
+        .modal-info-value { font-size:.9rem; color:#2e3750; font-weight:500; }
     </style>
 </head>
 <body class="d-flex">
-    <aside th:replace="~{admin/admin_sidebar :: adminSidebar}"></aside>
-    <main class="main-content">
-        <div class="container-fluid">
-            <h4 class="fw-bold mb-4">거래 프로세스 관리</h4>
+<aside th:replace="~{admin/admin_sidebar :: adminSidebar}"></aside>
 
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="dashboard-card border-start border-primary border-4">
-                        <div class="small text-muted fw-bold">전체 거래 수</div>
-                        <div class="h3 fw-bold mb-0" th:text="${totalCount + '건'}">0건</div>
-                    </div>
-                </div>
-            </div>
+<main class="main-content">
+<div class="container-fluid py-2">
 
-            <div class="dashboard-card">
-                <h5 class="fw-bold mb-4">거래 내역 목록</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>거래번호</th>
-                                <th>상품명</th>
-                                <th>구매자</th>
-                                <th>판매자</th>
-                                <th>거래 금액</th>
-                                <th>거래일시</th>
-                                <th>상태</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:if="${#lists.isEmpty(tradeList)}">
-                                <td colspan="7" class="text-center text-muted">거래 내역이 없습니다.</td>
-                            </tr>
-                            <tr th:each="trade : ${tradeList}">
-                                <td th:text="${trade.transactionId}"></td>
-                                <td th:text="${trade.productName}"></td>
-                                <td th:text="${trade.buyerNickname != null ? trade.buyerNickname : '-'}"></td>
-                                <td th:text="${trade.sellerNickname != null ? trade.sellerNickname : '-'}"></td>
-                                <td th:text="${#numbers.formatInteger(trade.amount, 0, 'COMMA') + '원'}"></td>
-                                <td th:text="${#dates.format(trade.tradeDate, 'yyyy-MM-dd HH:mm')}"></td>
-                                <td th:text="${trade.tradeStatus}"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+    <div class="mb-4">
+        <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-arrow-left-right text-primary me-2"></i>거래 내역 관리</h4>
+        <small class="text-muted">상품 기준 거래 현황 및 상세 내역</small>
+    </div>
 
-                <!-- 페이징 -->
-                <nav th:if="${totalPages > 1}" aria-label="Page navigation">
-                    <ul class="pagination justify-content-center mt-3">
-                        <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
-                            <a class="page-link" th:href="@{/admin/transaction(page=${currentPage-1})}">이전</a>
-                        </li>
-                        <li class="page-item" th:each="p : ${#numbers.sequence(1, totalPages)}"
-                            th:classappend="${p == currentPage} ? 'active'">
-                            <a class="page-link" th:href="@{/admin/transaction(page=${p})}" th:text="${p}"></a>
-                        </li>
-                        <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
-                            <a class="page-link" th:href="@{/admin/transaction(page=${currentPage+1})}">다음</a>
-                        </li>
-                    </ul>
-                </nav>
+    <!-- 통계 카드 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card blue">
+                <div class="stat-label mb-1">전체 거래</div>
+                <div class="stat-value" th:text="${totalCount != null ? totalCount : 0}">0</div>
             </div>
         </div>
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <div class="col-md-4">
+            <div class="stat-card yellow">
+                <div class="stat-label mb-1">거래중</div>
+                <div class="stat-value"
+                     th:text="${statusStats != null and statusStats['거래중'] != null ? statusStats['거래중'] : 0}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card green">
+                <div class="stat-label mb-1">거래완료</div>
+                <div class="stat-value"
+                     th:text="${statusStats != null and statusStats['거래완료'] != null ? statusStats['거래완료'] : 0}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 거래 목록 -->
+    <div class="section-card">
+        <div class="section-header">
+            <h6><i class="bi bi-list-ul me-2 text-primary"></i>거래 내역
+                <span class="badge bg-light text-dark border ms-1" th:text="${totalCount} + '건'"></span>
+            </h6>
+            <!-- 상태 필터 탭 -->
+            <div class="status-tabs">
+                <a th:href="@{/admin/transaction(status='ALL', page=1)}"
+                   th:classappend="${selectedStatus == 'ALL'} ? 'status-tab active-all' : 'status-tab'">전체</a>
+                <a th:href="@{/admin/transaction(status='거래중', page=1)}"
+                   th:classappend="${selectedStatus == '거래중'} ? 'status-tab active-trade' : 'status-tab'">거래중</a>
+                <a th:href="@{/admin/transaction(status='거래완료', page=1)}"
+                   th:classappend="${selectedStatus == '거래완료'} ? 'status-tab active-done' : 'status-tab'">거래완료</a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 trade-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>거래번호</th>
+                        <th>상품명</th>
+                        <th>판매자</th>
+                        <th>구매자</th>
+                        <th>거래금액</th>
+                        <th>거래일시</th>
+                        <th>상태</th>
+                        <th>남은시간</th>
+                        <th>상세보기</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(tradeList)}">
+                        <td colspan="9" class="text-center text-muted py-5">거래 내역이 없습니다.</td>
+                    </tr>
+                    <tr th:each="trade : ${tradeList}">
+                        <td class="text-muted small">#<span th:text="${trade.transactionId}"></span></td>
+                        <td>
+                            <div class="product-name text-truncate" th:text="${trade.productName}"></div>
+                        </td>
+                        <td class="text-muted small" th:text="${trade.sellerNickname != null ? trade.sellerNickname : '-'}"></td>
+                        <td class="text-muted small" th:text="${trade.buyerNickname != null ? trade.buyerNickname : '-'}"></td>
+                        <td class="amount-cell" th:text="${#numbers.formatInteger(trade.amount, 0, 'COMMA')} + '원'"></td>
+                        <td class="text-muted small" th:text="${#dates.format(trade.tradeDate, 'yyyy-MM-dd HH:mm')}"></td>
+                        <td>
+                            <span th:if="${trade.tradeStatus == '거래중'}"   class="badge-trading">거래중</span>
+                            <span th:if="${trade.tradeStatus == '거래완료'}" class="badge-done">완료</span>
+                            <span th:if="${trade.tradeStatus != '거래중' and trade.tradeStatus != '거래완료'}"
+                                  class="badge-cancel" th:text="${trade.tradeStatus}"></span>
+                        </td>
+                        <td>
+                            <div th:if="${trade.tradeStatus == '거래중'}" class="time-bar-wrap">
+                                <div class="small fw-bold mb-1"
+                                     th:text="${trade.hoursLeft} + 'h'"
+                                     th:style="${trade.hoursLeft < 12} ? 'color:#e74a3b' : 'color:#2e3750'"></div>
+                                <div class="time-bar">
+                                    <div class="time-bar-inner"
+                                         th:style="'width:' + (${trade.hoursLeft} * 100 / 72) + '%;' +
+                                                   (${trade.hoursLeft} < 12 ? 'background:#e74a3b;' :
+                                                   (${trade.hoursLeft} < 24 ? 'background:#f6c23e;' : 'background:#1cc88a;'))"></div>
+                                </div>
+                            </div>
+                            <span th:if="${trade.tradeStatus != '거래중'}" class="text-muted small">-</span>
+                        </td>
+                        <td>
+                            <button class="detail-btn"
+                                    th:attr="data-id=${trade.transactionId},
+                                             data-product=${trade.productName},
+                                             data-seller=${trade.sellerNickname},
+                                             data-seller-email=${trade.sellerEmail},
+                                             data-buyer=${trade.buyerNickname},
+                                             data-buyer-email=${trade.buyerEmail},
+                                             data-amount=${trade.amount},
+                                             data-status=${trade.tradeStatus},
+                                             data-date=${#dates.format(trade.tradeDate, 'yyyy-MM-dd HH:mm')},
+                                             data-hours-left=${trade.hoursLeft}"
+                                    onclick="openDetail(this)">
+                                <i class="bi bi-search me-1"></i>상세보기
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 페이징 -->
+        <div class="p-3">
+            <nav th:if="${totalPages > 1}">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/transaction(page=${currentPage-1}, status=${selectedStatus})}">이전</a>
+                    </li>
+                    <li class="page-item" th:each="p : ${#numbers.sequence(1, totalPages)}"
+                        th:classappend="${p == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/transaction(page=${p}, status=${selectedStatus})}" th:text="${p}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/transaction(page=${currentPage+1}, status=${selectedStatus})}">다음</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+</div>
+</main>
+
+<!-- 상세보기 모달 -->
+<div class="modal fade" id="tradeDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 pt-4 pb-2"
+                 style="background:linear-gradient(135deg,#1a1a2e,#16213e);">
+                <div>
+                    <h5 class="modal-title fw-bold text-white mb-1">
+                        <i class="bi bi-arrow-left-right me-2 text-warning"></i>거래 상세
+                    </h5>
+                    <span id="modalStatusBadge" class="badge fs-6 px-3 py-1"></span>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="modal-info-row">
+                    <span class="modal-info-label">거래번호</span>
+                    <span class="modal-info-value" id="mId"></span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">상품명</span>
+                    <span class="modal-info-value fw-bold" id="mProduct"></span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">판매자</span>
+                    <span class="modal-info-value" id="mSeller"></span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">구매자</span>
+                    <span class="modal-info-value" id="mBuyer"></span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">거래금액</span>
+                    <span class="modal-info-value fw-bold text-primary" id="mAmount"></span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">거래일시</span>
+                    <span class="modal-info-value" id="mDate"></span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">거래상태</span>
+                    <span class="modal-info-value" id="mStatus"></span>
+                </div>
+                <!-- 거래중 남은 시간 -->
+                <div id="mTimeSection" class="mt-3 p-3 rounded-3 border">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small fw-bold text-muted">구매 확정까지 남은 시간</span>
+                        <span class="fw-bold" id="mHoursLeft"></span>
+                    </div>
+                    <div class="time-bar" style="height:10px;">
+                        <div class="time-bar-inner" id="mTimeBar" style="height:100%;"></div>
+                    </div>
+                    <div class="text-muted small mt-1">72시간 이내 미확정 시 자동 완료</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function openDetail(btn) {
+        const d = btn.dataset;
+        document.getElementById('mId').textContent      = '#' + d.id;
+        document.getElementById('mProduct').textContent = d.product || '-';
+        document.getElementById('mSeller').textContent  = (d.seller || '-') + (d.sellerEmail ? ' (' + d.sellerEmail + ')' : '');
+        document.getElementById('mBuyer').textContent   = (d.buyer  || '-') + (d.buyerEmail  ? ' (' + d.buyerEmail  + ')' : '');
+        document.getElementById('mAmount').textContent  = Number(d.amount).toLocaleString() + '원';
+        document.getElementById('mDate').textContent    = d.date   || '-';
+        document.getElementById('mStatus').textContent  = d.status || '-';
+
+        const badge = document.getElementById('modalStatusBadge');
+        if (d.status === '거래중') {
+            badge.className = 'badge bg-warning text-dark fs-6 px-3 py-1';
+            badge.textContent = '⏳ 거래중';
+        } else if (d.status === '거래완료') {
+            badge.className = 'badge bg-success fs-6 px-3 py-1';
+            badge.textContent = '✓ 거래완료';
+        } else {
+            badge.className = 'badge bg-secondary fs-6 px-3 py-1';
+            badge.textContent = d.status;
+        }
+
+        const timeSection = document.getElementById('mTimeSection');
+        if (d.status === '거래중') {
+            const hoursLeft = parseInt(d.hoursLeft) || 0;
+            const pct = Math.min(100, (hoursLeft / 72) * 100);
+            const color = hoursLeft < 12 ? '#e74a3b' : hoursLeft < 24 ? '#f6c23e' : '#1cc88a';
+            document.getElementById('mHoursLeft').textContent = hoursLeft + '시간 남음';
+            document.getElementById('mHoursLeft').style.color = color;
+            const bar = document.getElementById('mTimeBar');
+            bar.style.width = pct + '%';
+            bar.style.background = color;
+            timeSection.style.display = '';
+        } else {
+            timeSection.style.display = 'none';
+        }
+
+        new bootstrap.Modal(document.getElementById('tradeDetailModal')).show();
+    }
+</script>
 </body>
 </html>

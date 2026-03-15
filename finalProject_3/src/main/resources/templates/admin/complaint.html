@@ -94,12 +94,10 @@
                                           th:text="${report.reportStatus}"></span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-dark"
-                                            th:attr="data-id=${report.reportId},
-                                                     data-category=${report.mainCategory},
-                                                     data-detail=${report.reportDetail},
-                                                     data-status=${report.reportStatus}"
-                                            onclick="openReportModal(this)">처리</button>
+                                    <a th:href="@{/admin/complaint/detail(reportId=${report.reportId})}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-search me-1"></i>상세보기
+                                    </a>
                                 </td>
                             </tr>
                         </tbody>
@@ -125,58 +123,6 @@
         </div>
     </main>
 
-    <!-- 처리 모달 -->
-    <div class="modal fade" id="reportModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">신고 처리</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>유형:</strong> <span id="modalCategory"></span></p>
-                    <p><strong>사유:</strong></p>
-                    <div id="modalDetail" class="p-3 bg-light rounded mb-3"></div>
-                    <label class="form-label fw-bold">처리 상태</label>
-                    <select id="modalStatus" class="form-select mb-2">
-                        <option value="처리대기">처리대기</option>
-                        <option value="처리완료">처리완료</option>
-                        <option value="기각">기각</option>
-                    </select>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-danger" onclick="processReport()">처리 완료</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        let currentReportId = null;
-
-        function openReportModal(btn) {
-            currentReportId = btn.dataset.id;
-            document.getElementById('modalCategory').innerText = btn.dataset.category;
-            document.getElementById('modalDetail').innerText = btn.dataset.detail;
-            document.getElementById('modalStatus').value = btn.dataset.status || '처리대기';
-            new bootstrap.Modal(document.getElementById('reportModal')).show();
-        }
-
-        function processReport() {
-            const status = document.getElementById('modalStatus').value;
-            fetch('/admin/complaint/process', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'reportId=' + currentReportId + '&status=' + encodeURIComponent(status)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) { alert('처리되었습니다.'); location.reload(); }
-                else alert('처리 실패');
-            });
-        }
-    </script>
 </body>
 </html>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="noti">
+
+    <!-- 전체 알림 목록 -->
+    <select id="getNotifications" parameterType="String" resultType="com.spring.app.noti.domain.NotiDTO">
+        SELECT n.NOTI_NO    AS notiNo,
+               n.USER_NO    AS userNo,
+               n.NOTI_TYPE  AS notiType,
+               n.TITLE      AS title,
+               n.MESSAGE    AS message,
+               TO_CHAR(n.REG_DATE, 'YYYY-MM-DD HH24:MI') AS regDate,
+               n.READ_STATUS AS readStatus
+        FROM WEB_NOTIFICATION n
+        JOIN MEMBER m ON n.USER_NO = m.USER_NO
+        WHERE m.EMAIL = #{email}
+        ORDER BY n.REG_DATE DESC
+    </select>
+
+    <!-- 미읽음 개수 -->
+    <select id="getUnreadCount" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM WEB_NOTIFICATION n
+        JOIN MEMBER m ON n.USER_NO = m.USER_NO
+        WHERE m.EMAIL = #{email} AND n.READ_STATUS = 0
+    </select>
+
+    <!-- 단건 읽음 처리 -->
+    <update id="markAsRead" parameterType="int">
+        UPDATE WEB_NOTIFICATION SET READ_STATUS = 1 WHERE NOTI_NO = #{notiNo}
+    </update>
+
+    <!-- 전체 읽음 처리 -->
+    <update id="markAllAsRead" parameterType="String">
+        UPDATE WEB_NOTIFICATION
+        SET READ_STATUS = 1
+        WHERE USER_NO = (SELECT USER_NO FROM MEMBER WHERE EMAIL = #{email})
+          AND READ_STATUS = 0
+    </update>
+
+</mapper>
