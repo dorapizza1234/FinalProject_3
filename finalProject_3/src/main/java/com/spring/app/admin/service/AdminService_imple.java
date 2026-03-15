@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,7 +34,8 @@ import lombok.RequiredArgsConstructor;
 public class AdminService_imple implements AdminService {
 	
 	private final AdminDAO dao;
-	
+	private final SimpMessagingTemplate messagingTemplate;
+
 	//광고 페이지 회원정보 가져오기
 		@Override
 		public MemberDTO getMemberById(String loginId) {
@@ -119,15 +121,35 @@ public class AdminService_imple implements AdminService {
 		//====================================================================================//
 		//상품 리스트 가져오기
 		@Override
-		public List<ProductDTO> getProductList(int page, int size) {
+		public List<ProductDTO> getProductList(int page, int size, String status, String filter) {
 			int offset = (page - 1) * size;
-			return dao.selectProductList(offset,size);
+			Map<String, Object> params = new HashMap<>();
+			params.put("offset", offset);
+			params.put("size", size);
+			params.put("status", status != null ? status : "");
+			params.put("filter", filter != null ? filter : "");
+			return dao.selectProductList(params);
 		}
 
-		//총 상품 개수 
+		@Override
+		public int getProductCount(String status, String filter) {
+			Map<String, Object> params = new HashMap<>();
+			params.put("status", status != null ? status : "");
+			params.put("filter", filter != null ? filter : "");
+			params.put("offset", 0);
+			params.put("size", 0);
+			return dao.selectProductCount(params);
+		}
+
+		//총 상품 개수
 		@Override
 		public int getTotalProductsCount() {
-			return dao.selectProductCount();
+			Map<String, Object> params = new HashMap<>();
+			params.put("status", "");
+			params.put("filter", "");
+			params.put("offset", 0);
+			params.put("size", 0);
+			return dao.selectProductCount(params);
 		}
 		//판매중인 상품만 가져오기
 		@Override
@@ -210,22 +232,31 @@ public class AdminService_imple implements AdminService {
 
 	    @Override
 	    public Map<String, Object> getDailyProductStats() {
-	        // DB에서 최근 7일간의 [{REG_DATE: "03-05", CNT: 10}, ...] 형태의 리스트를 가져옵니다.
 	        List<Map<String, Object>> rawData = dao.getDailyProductStats();
-	        
 	        List<String> labels = new ArrayList<>();
 	        List<Long> data = new ArrayList<>();
-	        
-	        // 차트용 데이터 가공
 	        for (Map<String, Object> row : rawData) {
-	            labels.add(String.valueOf(row.get("REG_DATE"))); // 날짜 (X축)
-	            data.add(((Number) row.get("CNT")).longValue());  // 등록수 (Y축)
+	            labels.add(String.valueOf(row.get("REG_DATE")));
+	            data.add(((Number) row.get("CNT")).longValue());
 	        }
-	        
 	        Map<String, Object> resultMap = new HashMap<>();
 	        resultMap.put("labels", labels);
 	        resultMap.put("data", data);
-	        
+	        return resultMap;
+	    }
+
+	    @Override
+	    public Map<String, Object> getAdMonthlyStats() {
+	        List<Map<String, Object>> rawData = dao.getAdMonthlyStats();
+	        List<String> labels = new ArrayList<>();
+	        List<Long> data = new ArrayList<>();
+	        for (Map<String, Object> row : rawData) {
+	            labels.add(String.valueOf(row.get("MONTH_LABEL")));
+	            data.add(((Number) row.get("CNT")).longValue());
+	        }
+	        Map<String, Object> resultMap = new HashMap<>();
+	        resultMap.put("labels", labels);
+	        resultMap.put("data", data);
 	        return resultMap;
 	    }
 
@@ -277,11 +308,12 @@ public class AdminService_imple implements AdminService {
 	}
 
 	@Override
-	public Map<String, Object> getTransactionListPaged(int page, int size) {
+	public Map<String, Object> getTransactionListPaged(int page, int size, String status) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("start", (page - 1) * size);
 		params.put("end", page * size);
-		int total = dao.countTransactions();
+		params.put("status", status);
+		int total = dao.countTransactions(params);
 		int totalPages = (int) Math.ceil((double) total / size);
 		if (totalPages == 0) totalPages = 1;
 		Map<String, Object> result = new HashMap<>();
@@ -289,6 +321,18 @@ public class AdminService_imple implements AdminService {
 		result.put("total", total);
 		result.put("totalPages", totalPages);
 		return result;
+	}
+
+	@Override
+	public Map<String, Object> getTransactionStatusStats() {
+		List<Map<String, Object>> rows = dao.countTransactionsByStatus();
+		Map<String, Object> stats = new HashMap<>();
+		for (Map<String, Object> row : rows) {
+			String st = String.valueOf(row.get("TRADE_STATUS"));
+			long cnt = ((Number) row.get("CNT")).longValue();
+			stats.put(st, cnt);
+		}
+		return stats;
 	}
 
 	@Override
@@ -323,6 +367,33 @@ public class AdminService_imple implements AdminService {
 		stats.put("pendingReportCount", dao.getPendingReportCount());
 		return stats;
 	}
+
+	@Override
+	public void sendAdminNotification(String email, String title, String message) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("email", email);
+		params.put("title", title);
+		params.put("message", message);
+		dao.insertAdminNotification(params);
+		Map<String, Object> payload = new HashMap<>();
+		payload.put("title", title);
+		payload.put("message", message);
+		messagingTemplate.convertAndSend("/topic/noti/" + email, payload);
+	}
+
+	@Override
+	public com.spring.app.admin.domain.ReportAdminDTO getReportDetail(long reportId) {
+		return dao.getReportDetail(reportId);
+	}
+
+	@Override
+	public int countPendingInquiries() { return dao.countPendingInquiries(); }
+
+	@Override
+	public int countAnsweredInquiries() { return dao.countAnsweredInquiries(); }
+
+	@Override
+	public List<String> getFaqKeywords() { return dao.getFaqKeywords(); }
 
 	@Override
 	public Map<String, Object> getAdminInquiryListPaged(int page, int size, String status) {
@@ -386,65 +457,104 @@ public class AdminService_imple implements AdminService {
 
 
 	@Override
-	public void suspendMember(int userNo) {
-		// TODO Auto-generated method stub
-		
-	}
-
+	public void suspendMember(int userNo) { dao.suspendMember(userNo); }
 
 	@Override
-	public void unsuspendMember(int userNo) {
-		// TODO Auto-generated method stub
-		
-	}
-
+	public void unsuspendMember(int userNo) { dao.unsuspendMember(userNo); }
 
 	@Override
-	public void permanentBanMember(int userNo) {
-		// TODO Auto-generated method stub
-		
+	public void permanentBanMember(int userNo) { dao.permanentBanMember(userNo); }
+
+	@Override
+	public void scheduleSuspend(int userNo, String email) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("userNo", userNo);
+		params.put("suspendType", "SUSPEND");
+		dao.insertSuspendSchedule(params);
+		// 알림 전송
+		sendAdminNotification(email,
+			"[관리자] 계정 일시정지 예정 안내",
+			"회원님의 계정이 관리자 검토에 의해 3일 후 일시정지 처리될 예정입니다.\n" +
+			"이의가 있으시면 고객센터로 문의해주세요.");
 	}
 
+	@Override
+	public void scheduleBan(int userNo, String email) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("userNo", userNo);
+		params.put("suspendType", "BAN");
+		dao.insertSuspendSchedule(params);
+		// 알림 전송
+		sendAdminNotification(email,
+			"[관리자] 계정 영구정지 예정 안내",
+			"회원님의 계정이 관리자 검토에 의해 3일 후 영구정지 처리될 예정입니다.\n" +
+			"이의가 있으시면 고객센터로 문의해주세요.");
+	}
+
+	@Override
+	public void processScheduledSuspensions() {
+		List<Map<String, Object>> list = dao.getDueSuspensions();
+		for (Map<String, Object> row : list) {
+			int scheduleId = ((Number) row.get("scheduleId")).intValue();
+			int userNo     = ((Number) row.get("userNo")).intValue();
+			String type    = (String) row.get("suspendType");
+			try {
+				if ("BAN".equals(type)) {
+					dao.permanentBanMember(userNo);
+				} else {
+					dao.suspendMember(userNo);
+				}
+			} finally {
+				dao.deleteSuspendSchedule(scheduleId);
+			}
+		}
+	}
+
+	@Override
+	public int hasPendingSuspension(int userNo) {
+		return dao.hasPendingSuspension(userNo);
+	}
 
 	@Override
 	public List<ProductDTO> getMemberActiveProducts(int userNo) {
-		// TODO Auto-generated method stub
-		return null;
+		return dao.getMemberActiveProducts(userNo);
 	}
 
 
 	@Override
 	public int countPendingReportsAndInquiries() {
-		// TODO Auto-generated method stub
-		return 0;
+		return dao.countPendingReportsAndInquiries();
 	}
-
 
 	@Override
 	public int countPendingAds() {
-		// TODO Auto-generated method stub
-		return 0;
+		return dao.countPendingAds();
 	}
-
 
 	@Override
 	public int countTodayProducts() {
-		// TODO Auto-generated method stub
-		return 0;
+		return dao.countTodayProducts();
 	}
-
 
 	@Override
 	public long getDailyTradeAmount() {
-		// TODO Auto-generated method stub
-		return 0;
+		return dao.getDailyTradeAmount();
 	}
 
 
 	@Override
 	public Map<String, Object> getWithdrawReasonStats() {
-		// TODO Auto-generated method stub
-		return null;
+		List<Map<String, Object>> rows = dao.getWithdrawReasonStats();
+		List<String> labels = new ArrayList<>();
+		List<Long> data = new ArrayList<>();
+		for (Map<String, Object> row : rows) {
+			labels.add(String.valueOf(row.get("REASON")));
+			data.add(((Number) row.get("CNT")).longValue());
+		}
+		Map<String, Object> result = new HashMap<>();
+		result.put("labels", labels);
+		result.put("data", data);
+		return result;
 	}
 
 	@Override

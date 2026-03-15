@@ -44,12 +44,18 @@ public interface AdminDAO {
 
     void permanentBanMember(int userNo);
 
+    // 정지 예약
+    void insertSuspendSchedule(Map<String, Object> params);
+    List<Map<String, Object>> getDueSuspensions();
+    void deleteSuspendSchedule(int scheduleId);
+    int hasPendingSuspension(int userNo);
+
     List<ProductDTO> getMemberActiveProducts(int userNo);
 
     //-------------------------------------------------------------------------
-    List<ProductDTO> selectProductList(int offset, int size); //상품리스트 보기
+    List<ProductDTO> selectProductList(Map<String, Object> params); //상품리스트 보기
 
-    int selectProductCount ();//상품 카운트
+    int selectProductCount(Map<String, Object> params);//상품 카운트
 
 	List<AdDTO> selectAdList();//상품리스트 가져오기
 	
@@ -77,6 +83,7 @@ public interface AdminDAO {
 	List<Map<String, Object>> getCategoryProdusctStats();
 	MemberDTO getMemberById(String loginId);
 
+	List<Map<String, Object>> getAdMonthlyStats();
 	int countPendingReportsAndInquiries();
 	int countPendingAds();
 	int countTodayProducts();
@@ -90,12 +97,15 @@ public interface AdminDAO {
 
 	// 거래 관리
 	List<TransactionAdminDTO> getTransactionList(Map<String, Object> params);
-	int countTransactions();
+	int countTransactions(Map<String, Object> params);
+	List<Map<String, Object>> countTransactionsByStatus();
 
 	// 신고 관리
 	List<ReportAdminDTO> getReportList(Map<String, Object> params);
 	int countReports(Map<String, Object> params);
 	void updateReportStatus(Map<String, Object> params);
+	void insertAdminNotification(Map<String, Object> params);
+	ReportAdminDTO getReportDetail(long reportId);
 
 	// 신고 유형별 통계
 	int getProductReportCount();
@@ -106,6 +116,9 @@ public interface AdminDAO {
 	List<InquiryDTO> getAdminInquiryList(Map<String, Object> params);
 	int countAdminInquiries(Map<String, Object> params);
 	void saveInquiryAnswer(Map<String, Object> params);
+	int countPendingInquiries();
+	int countAnsweredInquiries();
+	List<String> getFaqKeywords();
 
 	// 상품 상세
 	ProductDetailDTO getProductDetail(int productNo);

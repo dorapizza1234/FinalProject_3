@@ -21,6 +21,15 @@
             <a th:href="@{/admin/accounting}" class="nav-menu-item">회계관리</a>
             <a th:href="@{/admin/contents}" class="nav-menu-item">콘텐츠 및 운영</a>
         </nav>
+        <div style="padding: 16px 12px; margin-top: auto; border-top: 1px solid rgba(255,255,255,.1);">
+            <a th:href="@{/}" style="display:flex; align-items:center; gap:8px; color:rgba(255,255,255,.6);
+               font-size:0.82rem; text-decoration:none; padding:8px 12px; border-radius:8px;
+               transition:all .2s;"
+               onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.color='#fff'"
+               onmouseout="this.style.background='';this.style.color='rgba(255,255,255,.6)'">
+                <i class="bi bi-box-arrow-left"></i> 메인 사이트로
+            </a>
+        </div>
     </aside>
 
 </body>

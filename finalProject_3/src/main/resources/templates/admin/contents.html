@@ -3,102 +3,200 @@
 <head>
 <meta charset="UTF-8">
 <title>콘텐츠 관리</title>
-
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" th:href="@{/css/admin/sideBar.css}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
-    body { color: #4a4a4a; }
-    .dashboard-card { border: 1px solid #edf2f7; }
-    
-    /* 캘린더 스타일 */
-    .calendar-table { width:100%; border-collapse:collapse; table-layout:fixed; }
-    .calendar-table th { text-align:center; padding:10px; font-size:12px; font-weight:700; background:#f8f9fc; color: #858796; text-transform: uppercase; }
-    .calendar-table td { border:1px solid #f1f4f8; height:100px; vertical-align:top; padding:8px; background:#fff; transition: background 0.2s; }
-    .calendar-table td:hover { background: #fdfdfd; }
-    .calendar-table th:nth-child(6), .calendar-table th:nth-child(7) { color:#e74a3b; opacity: 0.7; }
-    .day-num { font-size:12px; font-weight:800; margin-bottom:6px; color:#b7b9cc; }
-    
-    /* [수정] 광고 태그 스타일 - 쨍함 제거, 파스텔톤 대응 */
-    .ad-tag { 
-        font-size: 11px; 
-        padding: 4px 8px; 
-        border-radius: 6px; 
-        margin-top: 4px; 
-        display: block; 
-        white-space: nowrap; 
-        overflow: hidden; 
-        text-overflow: ellipsis; 
-        cursor: pointer; 
-        transition: all 0.2s ease; 
-        font-weight: 700;
-        border: 1px solid transparent;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    :root { --primary:#4e73df; --success:#1cc88a; --warning:#f6c23e; --danger:#e74a3b; }
+
+    .stat-card {
+        background:#fff; border-radius:16px; padding:22px 24px;
+        border-left:5px solid; box-shadow:0 2px 12px rgba(0,0,0,.07);
+        transition:transform .2s;
     }
-    .ad-tag:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    
-    /* 상태 색상 */
-    .status-confirm { color:#1cc88a; font-weight:700; background: #e8faf4; padding: 2px 8px; border-radius: 4px; }
-    .status-wait { color:#f6c23e; font-weight:700; background: #fff9e6; padding: 2px 8px; border-radius: 4px; }
-    .status-reject { color:#e74a3b; font-weight:700; background: #fff2f1; padding: 2px 8px; border-radius: 4px; }
-    
-    .brand-name { font-weight:700; font-size:14px; color: #2e3750; }
-    .amount { font-weight:700; color:#4e73df; }
-    
-    /* 진행중 리스트 커스텀 */
-    .running-item { border: none !important; margin-bottom: 8px; border-radius: 8px !important; transition: transform 0.2s; }
-    .running-item:hover { transform: translateX(5px); }
+    .stat-card:hover { transform:translateY(-3px); }
+    .stat-card.blue   { border-color:var(--primary); }
+    .stat-card.green  { border-color:var(--success); }
+    .stat-card.yellow { border-color:var(--warning); }
+    .stat-card.red    { border-color:var(--danger);  }
+    .stat-label { font-size:11px; font-weight:700; text-transform:uppercase; color:#858796; letter-spacing:.06em; }
+    .stat-value { font-size:2rem; font-weight:800; color:#2e3750; line-height:1.1; }
+    .stat-icon  { font-size:2rem; opacity:.15; }
+
+    .section-card {
+        background:#fff; border-radius:16px;
+        box-shadow:0 2px 12px rgba(0,0,0,.07); overflow:hidden;
+    }
+    .section-header {
+        padding:18px 22px; border-bottom:1px solid #f1f4f8;
+        display:flex; align-items:center; justify-content:space-between;
+    }
+    .section-header h6 { margin:0; font-weight:700; color:#2e3750; font-size:.95rem; }
+    .section-body { padding:20px 22px; }
+
+    /* 캘린더 */
+    .calendar-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+    .calendar-table th {
+        text-align:center; padding:10px 4px; font-size:11px;
+        font-weight:700; background:#f8f9fc; color:#858796; text-transform:uppercase;
+    }
+    .calendar-table td {
+        border:1px solid #f1f4f8; height:90px; vertical-align:top;
+        padding:6px; background:#fff; transition:background .15s;
+    }
+    .calendar-table td:hover { background:#fafbff; }
+    .calendar-table th:nth-child(6),
+    .calendar-table th:nth-child(7) { color:#e74a3b; }
+    .day-num { font-size:11px; font-weight:800; color:#c5c7d0; margin-bottom:4px; }
+
+    .ad-tag {
+        font-size:10px; padding:3px 7px; border-radius:6px;
+        margin-top:3px; display:block; white-space:nowrap;
+        overflow:hidden; text-overflow:ellipsis; cursor:pointer;
+        font-weight:700; border:1px solid transparent;
+        transition:transform .15s, box-shadow .15s;
+    }
+    .ad-tag:hover { transform:translateY(-1px); box-shadow:0 3px 8px rgba(0,0,0,.12); }
+
+    /* 상태 뱃지 */
+    .badge-confirm { background:#e8faf4; color:#1cc88a; padding:3px 10px; border-radius:6px; font-weight:700; font-size:.78rem; }
+    .badge-wait    { background:#fff9e6; color:#d4a200; padding:3px 10px; border-radius:6px; font-weight:700; font-size:.78rem; }
+    .badge-reject  { background:#fff2f1; color:#e74a3b; padding:3px 10px; border-radius:6px; font-weight:700; font-size:.78rem; }
+
+    /* 테이블 */
+    .ad-table th  { font-size:11px; text-transform:uppercase; color:#858796; letter-spacing:.05em; font-weight:700; }
+    .ad-table td  { vertical-align:middle; font-size:.88rem; }
+    .brand-cell   { font-weight:700; color:#2e3750; }
+    .amount-cell  { font-weight:700; color:var(--primary); }
+    .detail-btn   {
+        font-size:.78rem; padding:5px 14px; border-radius:20px;
+        border:1.5px solid #dee2e6; background:#fff; color:#444;
+        font-weight:600; transition:all .15s; cursor:pointer;
+    }
+    .detail-btn:hover { background:#2e3750; color:#fff; border-color:#2e3750; }
+
+    /* 진행중 리스트 */
+    .running-item {
+        border:none !important; border-radius:10px !important;
+        margin-bottom:8px; transition:transform .2s;
+    }
+    .running-item:hover { transform:translateX(4px); }
+
+    .month-nav-btn {
+        width:32px; height:32px; border-radius:50%; border:1.5px solid #e0e0e0;
+        background:#fff; display:flex; align-items:center; justify-content:center;
+        cursor:pointer; transition:all .15s;
+    }
+    .month-nav-btn:hover { background:#2e3750; color:#fff; border-color:#2e3750; }
 </style>
 </head>
 
 <body class="d-flex">
-
 <aside th:replace="~{admin/admin_sidebar :: adminSidebar}"></aside>
 
 <main class="main-content">
-    <div class="container-fluid">
-        <h4 class="fw-bold mb-4 text-dark"><i class="bi bi-grid-1x2-fill me-2"></i>광고 콘텐츠 관리</h4>
+<div class="container-fluid py-2">
 
-        <div class="row">
-            <div class="col-lg-7">
-                <div class="dashboard-card">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <b id="waitingText" class="text-secondary">대기중 광고 로딩중...</b>
-                        <select id="chartType" class="form-select form-select-sm w-auto border-0 bg-light">
-                            <option>매출 통계</option>
-                            <option>문의 통계</option>
-                        </select>
+    <div class="d-flex align-items-center mb-4 gap-3">
+        <div>
+            <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-megaphone-fill text-warning me-2"></i>광고 콘텐츠 관리</h4>
+            <small class="text-muted">광고 신청 검토 및 일정 관리</small>
+        </div>
+    </div>
+
+    <!-- 요약 통계 카드 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card blue">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">전체 신청</div>
+                        <div class="stat-value" id="statTotal">-</div>
                     </div>
-                    <div style="height:250px">
-                        <canvas id="mainChart"></canvas>
-                    </div>
+                    <i class="bi bi-collection stat-icon text-primary"></i>
                 </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card yellow">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">대기중</div>
+                        <div class="stat-value" id="statWait">-</div>
+                    </div>
+                    <i class="bi bi-hourglass-split stat-icon text-warning"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card green">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">확정</div>
+                        <div class="stat-value" id="statConfirm">-</div>
+                    </div>
+                    <i class="bi bi-check-circle stat-icon text-success"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card red">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">반려</div>
+                        <div class="stat-value" id="statReject">-</div>
+                    </div>
+                    <i class="bi bi-x-circle stat-icon text-danger"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="dashboard-card border-0 shadow-sm">
-                    <h6 class="fw-bold mb-3 text-dark">진행중 광고 현황</h6>
+    <div class="row g-3 mb-4">
+        <!-- 차트 -->
+        <div class="col-lg-8">
+            <div class="section-card h-100">
+                <div class="section-header">
+                    <h6><i class="bi bi-bar-chart-line me-2 text-primary"></i>월별 광고 신청 건수 (최근 6개월)</h6>
+                </div>
+                <div class="section-body" style="height:260px;">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 진행중 광고 -->
+        <div class="col-lg-4">
+            <div class="section-card h-100">
+                <div class="section-header">
+                    <h6><i class="bi bi-play-circle me-2 text-success"></i>진행중 광고</h6>
+                    <span class="badge bg-success rounded-pill" id="confirmCount">0</span>
+                </div>
+                <div class="section-body p-3">
                     <ul class="list-group list-group-flush" id="runningList"></ul>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="col-lg-5">
-                <div class="dashboard-card">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <button class="btn btn-sm btn-light rounded-circle" onclick="moveMonth(-1)">
-                            <i class="bi bi-chevron-left"></i>
-                        </button>
-                        <h5 class="m-0 fw-bold text-dark" th:text="${year} + '년 ' + ${month} + '월'"></h5>
-                        <button class="btn btn-sm btn-light rounded-circle" onclick="moveMonth(1)">
-                            <i class="bi bi-chevron-right"></i>
-                        </button>
-                    </div>
-
+    <div class="row g-3 mb-4">
+        <!-- 캘린더 -->
+        <div class="col-lg-5">
+            <div class="section-card">
+                <div class="section-header">
+                    <button class="month-nav-btn" onclick="moveMonth(-1)">
+                        <i class="bi bi-chevron-left" style="font-size:.75rem;"></i>
+                    </button>
+                    <h6 class="m-0" th:text="${year} + '년 ' + ${month} + '월'"></h6>
+                    <button class="month-nav-btn" onclick="moveMonth(1)">
+                        <i class="bi bi-chevron-right" style="font-size:.75rem;"></i>
+                    </button>
+                </div>
+                <div class="section-body p-2">
                     <table class="calendar-table">
                         <thead>
-                            <tr>
-                                <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th>
-                            </tr>
+                            <tr><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th></tr>
                         </thead>
                         <tbody>
                             <tr th:each="week : ${calendarWeeks}">
@@ -106,10 +204,10 @@
                                     <div class="day-num" th:if="${day != null}" th:text="${#temporals.day(day)}"></div>
                                     <div th:each="ad : ${adList}"
                                          th:if="${day != null and ad.status == 'CONFIRM' and day >= ad.startDate and day <= ad.endDate}">
-                                        <span class="ad-tag" 
-                                              th:text="${ad.brandName}" 
+                                        <span class="ad-tag"
+                                              th:text="${ad.brandName}"
                                               th:attr="data-brand=${ad.brandName}, data-adid=${ad.adId}"
-                                              data-bs-toggle="modal" 
+                                              data-bs-toggle="modal"
                                               data-bs-target="#adDetailModal"></span>
                                     </div>
                                 </td>
@@ -120,203 +218,302 @@
             </div>
         </div>
 
-        <div class="dashboard-card">
-            <h5 class="fw-bold mb-4 text-dark">광고 신청 내역</h5>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle" style="border-top: 1px solid #eee;">
-                    <thead class="bg-light">
-                        <tr class="small text-uppercase text-muted">
-                            <th class="py-3">브랜드</th><th>담당자</th><th>이메일</th><th>금액</th><th>상태</th><th>관리</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="ad : ${adList}">
-                            <td class="brand-name py-3" th:text="${ad.brandName}"></td>
-                            <td th:text="${ad.managerName}"></td>
-                            <td class="text-muted" th:text="${ad.companyEmail}"></td>
-                            <td class="amount" th:text="${#numbers.formatInteger(ad.amount, 3, 'COMMA')} + '원'"></td>
-                            <td>
-                                <span th:class="${ad.status == 'CONFIRM' ? 'status-confirm' : (ad.status == 'WAIT' ? 'status-wait' : 'status-reject')}" 
-                                      th:text="${ad.status}"></span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-dark px-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#adDetailModal" th:attr="data-adid=${ad.adId}">
-                                    상세보기
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- 신청 내역 테이블 -->
+        <div class="col-lg-7">
+            <div class="section-card">
+                <div class="section-header">
+                    <h6><i class="bi bi-list-ul me-2 text-primary"></i>광고 신청 내역</h6>
+                </div>
+                <div class="section-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 ad-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4 py-3">브랜드</th>
+                                    <th>담당자</th>
+                                    <th>금액</th>
+                                    <th>상태</th>
+                                    <th class="pe-4">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="ad : ${adList}">
+                                    <td class="brand-cell ps-4 py-3" th:text="${ad.brandName}"></td>
+                                    <td class="text-muted" th:text="${ad.managerName}"></td>
+                                    <td class="amount-cell" th:text="${#numbers.formatInteger(ad.amount, 3, 'COMMA')} + '원'"></td>
+                                    <td>
+                                        <span th:class="${ad.status == 'CONFIRM' ? 'badge-confirm' :
+                                                          (ad.status == 'WAIT'    ? 'badge-wait'    : 'badge-reject')}"
+                                              th:text="${ad.status == 'CONFIRM' ? '확정' :
+                                                         (ad.status == 'WAIT'    ? '대기' : '반려')}"></span>
+                                    </td>
+                                    <td class="pe-4">
+                                        <button class="detail-btn"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#adDetailModal"
+                                                th:attr="data-adid=${ad.adId}">
+                                            <i class="bi bi-search me-1"></i>상세보기
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(adList)}">
+                                    <td colspan="5" class="text-center text-muted py-5">신청 내역이 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+</div>
 </main>
 
 <div th:replace="~{admin/fragments/ad_modal :: adModal}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
-    const ctx = /*[[@{/}]]*/ "";
+    /*<![CDATA[*/
+    const ctx = /*[[@{/}]]*/ '/';
+    const base = ctx.replace(/\/$/, '');
     let ads = /*[[${adList}]]*/ [];
-    let year = /*[[${year}]]*/ 0;
+    let year  = /*[[${year}]]*/ 0;
     let month = /*[[${month}]]*/ 0;
     let selectedAdId = null;
     const chartLabels = /*[[${chartLabels}]]*/ [];
-    const chartData = /*[[${chartData}]]*/ [];
+    const chartData   = /*[[${chartData}]]*/  [];
 
-    // [중요] 세련된 파스텔톤 색상 계산기
     function getBrandColor(str) {
         let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
+        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
         const h = Math.abs(hash) % 360;
-        // HSL: 색상은 유지하되, 채도(S)를 낮추고 밝기(L)를 높여 부드럽게 처리
         return {
-            bg: `hsl(${h}, 45%, 94%)`,      // 아주 연한 배경
-            border: `hsl(${h}, 40%, 85%)`,  // 살짝 진한 테두리
-            text: `hsl(${h}, 50%, 35%)`     // 가독성을 위해 진한 글자색
+            bg:     `hsl(${h},45%,94%)`,
+            border: `hsl(${h},40%,85%)`,
+            text:   `hsl(${h},50%,35%)`
         };
     }
 
-    function moveMonth(diff){
+    function moveMonth(diff) {
         month += diff;
-        if(month < 1){ month = 12; year--; }
-        if(month > 12){ month = 1; year++; }
-        location.href = ctx + "admin/contents?year=" + year + "&month=" + month;
+        if (month < 1)  { month = 12; year--; }
+        if (month > 12) { month = 1;  year++; }
+        location.href = base + '/admin/contents?year=' + year + '&month=' + month;
     }
 
     function loadAdDetail(adId) {
         selectedAdId = adId;
-        fetch(ctx + "admin/ad/detail?adId=" + selectedAdId)
-        .then(res => res.json())
-        .then(data => {
-            if(!data.ad) return;
-            const ad = data.ad;
-            
-            // 모달 데이터 채우기 (디자인 파일의 ID와 매칭 확인 필요)
-            document.getElementById("brandName").innerText = ad.brandName;
-            document.getElementById("managerName").innerText = ad.managerName;
-            document.getElementById("phone").innerText = ad.phone;
-            document.getElementById("companyEmail").innerText = ad.companyEmail;
-            document.getElementById("targetEmail").value = ad.companyEmail;
-            document.getElementById("content").innerText = ad.content;
-            document.getElementById("period").innerText = ad.startDate + " ~ " + ad.endDate;
-            document.getElementById("amount").innerText = Number(ad.amount).toLocaleString();
-            document.getElementById("durationWeeks").innerText = ad.durationWeeks;
+        fetch(base + '/admin/ad/detail?adId=' + selectedAdId)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.ad) return;
+                const ad = data.ad;
 
-            const adImage = document.getElementById("adImage");
-            const downloadBtn = document.getElementById("downloadBtn");
+                // 기본 정보
+                document.getElementById('brandName').innerText    = ad.brandName    || '';
+                document.getElementById('managerName').innerText  = ad.managerName  || '';
+                document.getElementById('phone').innerText        = ad.phone        || '';
+                document.getElementById('companyEmail').innerText = ad.companyEmail || '';
+                document.getElementById('targetEmail').value      = ad.companyEmail || '';
+                document.getElementById('content').innerText      = ad.content      || '';
+                document.getElementById('period').innerText       = (ad.startDate || '') + ' ~ ' + (ad.endDate || '');
+                document.getElementById('durationWeeks').innerText = ad.durationWeeks || '';
+                document.getElementById('amount').innerText       = Number(ad.amount).toLocaleString();
 
-            if(ad.filePath) {
-                adImage.src = ctx + "upload/" + ad.filePath;
-                adImage.style.display = "block";
-                downloadBtn.href = ctx + "admin/ad/download?adId=" + selectedAdId;
-            } else {
-                adImage.src = "";
-                adImage.style.display = "none";
-            }
+                // 이미지
+                const adImage   = document.getElementById('adImage');
+                const noImgText = document.getElementById('noImageText');
+                const dlBtn     = document.getElementById('downloadBtn');
+                if (ad.filePath) {
+                    adImage.src          = base + ad.filePath;
+                    adImage.style.display = 'block';
+                    noImgText.style.display = 'none';
+                    dlBtn.href           = base + '/admin/ad/download?adId=' + selectedAdId;
+                    dlBtn.style.display  = '';
+                } else {
+                    adImage.style.display   = 'none';
+                    noImgText.style.display = '';
+                    dlBtn.style.display     = 'none';
+                }
 
-            let conflictBox = document.getElementById("conflictMessage");
-            if(data.conflictAds && data.conflictAds.length > 0){
-                let names = data.conflictAds.map(a => a.brandName).join(", ");
-                conflictBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i> 현재 <b>${names}</b> 광고와 일정이 겹칩니다.`;
-                conflictBox.classList.remove("d-none");
-            } else {
-                conflictBox.classList.add("d-none");
-            }
-        });
+                // 상태 배지 (헤더)
+                const badge = document.getElementById('adStatusBadge');
+                if (ad.status === 'CONFIRM') {
+                    badge.className   = 'badge bg-success fs-6 px-3 py-1';
+                    badge.textContent = '✓ 확정';
+                } else if (ad.status === 'WAIT') {
+                    badge.className   = 'badge bg-warning text-dark fs-6 px-3 py-1';
+                    badge.textContent = '⏳ 대기중';
+                } else {
+                    badge.className   = 'badge bg-danger fs-6 px-3 py-1';
+                    badge.textContent = '✗ 반려';
+                }
+
+                // 확정/반려 시 액션 잠금
+                const actionArea      = document.getElementById('actionArea');
+                const statusCompleted = document.getElementById('statusCompleted');
+                const statusIcon      = document.getElementById('statusIcon');
+                const statusText      = document.getElementById('statusText');
+                const processedAtText = document.getElementById('processedAtText');
+
+                const rejectReasonBox  = document.getElementById('rejectReasonBox');
+                const rejectReasonText = document.getElementById('rejectReasonText');
+
+                if (ad.status === 'CONFIRM') {
+                    actionArea.classList.add('d-none');
+                    rejectReasonBox.classList.add('d-none');
+                    statusCompleted.classList.remove('d-none');
+                    statusCompleted.style.background = '#e8faf4';
+                    statusIcon.textContent  = '✅';
+                    statusText.textContent  = '광고 확정 완료';
+                    statusText.style.color  = '#1cc88a';
+                    processedAtText.textContent = ad.approvedAt ? '승인일시: ' + ad.approvedAt : '';
+                } else if (ad.status === 'REJECT') {
+                    actionArea.classList.add('d-none');
+                    statusCompleted.classList.remove('d-none');
+                    statusCompleted.style.background = '#fff2f1';
+                    statusIcon.textContent  = '❌';
+                    statusText.textContent  = '반려됨';
+                    statusText.style.color  = '#e74a3b';
+                    processedAtText.textContent = '';
+                    if (ad.rejectedReason) {
+                        rejectReasonBox.classList.remove('d-none');
+                        rejectReasonText.textContent = ad.rejectedReason;
+                    } else {
+                        rejectReasonBox.classList.add('d-none');
+                    }
+                } else {
+                    actionArea.classList.remove('d-none');
+                    statusCompleted.classList.add('d-none');
+                    rejectReasonBox.classList.add('d-none');
+                    document.getElementById('mailTitle').value   = '';
+                    document.getElementById('mailContent').value = '';
+                }
+
+                // 겹침 알림
+                const conflictBox = document.getElementById('conflictMessage');
+                if (data.conflictAds && data.conflictAds.length > 0) {
+                    const names = data.conflictAds.map(a => a.brandName).join(', ');
+                    conflictBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> <b>${names}</b> 광고와 일정이 겹칩니다.`;
+                    conflictBox.classList.remove('d-none');
+                } else {
+                    conflictBox.classList.add('d-none');
+                }
+            });
     }
 
-    document.addEventListener("DOMContentLoaded", function(){
-        // 1. 대기 건수
-        let waiting = ads.filter(a => a.status === 'WAIT').length;
-        document.getElementById("waitingText").innerHTML = `<span class="badge bg-warning text-dark me-2">${waiting}</span> 대기 중인 신청이 있습니다.`;
+    document.addEventListener('DOMContentLoaded', function () {
+        // 통계 카드
+        const total   = ads.length;
+        const waiting = ads.filter(a => a.status === 'WAIT').length;
+        const confirm = ads.filter(a => a.status === 'CONFIRM').length;
+        const reject  = ads.filter(a => a.status === 'REJECT').length;
+        document.getElementById('statTotal').textContent   = total;
+        document.getElementById('statWait').textContent    = waiting;
+        document.getElementById('statConfirm').textContent = confirm;
+        document.getElementById('statReject').textContent  = reject;
+        document.getElementById('confirmCount').textContent = confirm;
 
-        // 2. 진행중 리스트 (파스텔 스타일 적용)
-        const runningList = document.getElementById("runningList");
-        const confirmAds = ads.filter(a => a.status === 'CONFIRM');
+        // 진행중 리스트
+        const runningList = document.getElementById('runningList');
+        const confirmAds  = ads.filter(a => a.status === 'CONFIRM');
         if (confirmAds.length === 0) {
-            runningList.innerHTML = `<li class="list-group-item text-center text-muted py-4"><i class="bi bi-info-circle me-2"></i>진행중인 광고가 없습니다.</li>`;
+            runningList.innerHTML = `<li class="list-group-item text-center text-muted py-4 border-0">
+                <i class="bi bi-info-circle me-1"></i>진행중인 광고가 없습니다.</li>`;
         } else {
             runningList.innerHTML = confirmAds.map(ad => {
-                const colors = getBrandColor(ad.brandName);
-                return `
-                    <li class="list-group-item running-item p-3 mb-2 shadow-sm border-start" style="border-left: 6px solid ${colors.border} !important; background-color: ${colors.bg};">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <b style="color: ${colors.text}">${ad.brandName}</b>
-                            <span class="badge rounded-pill bg-white text-dark small border shadow-sm">진행중</span>
-                        </div>
-                        <small class="text-muted d-block mt-1"><i class="bi bi-calendar3 me-1"></i>${ad.startDate} ~ ${ad.endDate}</small>
-                    </li>
-                `;
-            }).join("");
+                const c = getBrandColor(ad.brandName);
+                return `<li class="list-group-item running-item p-3 shadow-sm"
+                            style="border-left:5px solid ${c.border}!important; background:${c.bg}; border-radius:10px;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <b style="color:${c.text}">${ad.brandName}</b>
+                        <span class="badge bg-white text-dark border small">진행중</span>
+                    </div>
+                    <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>${ad.startDate} ~ ${ad.endDate}</small>
+                </li>`;
+            }).join('');
         }
 
-        // 3. 달력 태그 색상 적용
+        // 달력 태그 색상
         document.querySelectorAll('.ad-tag').forEach(tag => {
-            const brandName = tag.getAttribute('data-brand');
-            if(brandName) {
-                const colors = getBrandColor(brandName);
-                tag.style.backgroundColor = colors.bg;
-                tag.style.color = colors.text;
-                tag.style.borderColor = colors.border;
+            const bn = tag.getAttribute('data-brand');
+            if (bn) {
+                const c = getBrandColor(bn);
+                tag.style.backgroundColor = c.bg;
+                tag.style.color           = c.text;
+                tag.style.borderColor     = c.border;
             }
         });
 
-        // 4. 모달 트리거
-        document.addEventListener("click", function(e) {
-            const target = e.target.closest("[data-adid]");
+        // 모달 트리거
+        document.addEventListener('click', function (e) {
+            const target = e.target.closest('[data-adid]');
             if (target) loadAdDetail(target.dataset.adid);
         });
 
-        // 5. 차트 (실제 데이터)
-        const chartCtx = document.getElementById("mainChart");
-        new Chart(chartCtx, {
-            type:'line',
-            data:{
+        // 차트
+        new Chart(document.getElementById('mainChart'), {
+            type: 'line',
+            data: {
                 labels: chartLabels.length > 0 ? chartLabels : ['데이터 없음'],
-                datasets:[{
-                    label: '일별 상품 등록 수',
+                datasets: [{
+                    label: '광고 신청 건수',
                     data: chartData.length > 0 ? chartData : [0],
-                    borderColor:'#4e73df',
-                    backgroundColor:'rgba(78,115,223,0.05)',
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78,115,223,0.08)',
                     pointBackgroundColor: '#fff',
                     pointBorderColor: '#4e73df',
-                    fill:true,
-                    tension:0.35
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.35
                 }]
             },
-            options:{ 
-                maintainAspectRatio:false,
+            options: {
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { grid: { color: '#f1f1f1' } }, x: { grid: { display: false } } }
+                scales: {
+                    y: { grid: { color: '#f1f1f1' }, ticks: { font: { size: 11 } } },
+                    x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                }
             }
         });
     });
 
-    // 승인/반려 로직 (기존 유지)
-    function approveAd(){
-        if(!selectedAdId) return alert("광고를 선택해주세요.");
-        if(!confirm("광고를 승인하고 게시 확정하시겠습니까?")) return;
-        fetch(ctx + "admin/ad/approve", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "adId=" + selectedAdId
-        }).then(() => { location.reload(); });
+    function approveAd() {
+        if (!selectedAdId) return alert('광고를 선택해주세요.');
+        if (!confirm('광고를 승인하고 게시 확정하시겠습니까?')) return;
+        fetch(base + '/admin/ad/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'adId=' + selectedAdId
+        }).then(() => location.reload());
     }
 
-    function rejectAd(){
-        if(!selectedAdId) return alert("광고를 선택해주세요.");
-        let reason = document.getElementById("mailContent").value;
-        if(!reason) return alert("반려 사유를 메일 내용에 입력해주세요.");
-        if(!confirm("반려 처리하시겠습니까?")) return;
-        fetch(ctx + "admin/ad/reject", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "adId=" + selectedAdId + "&reason=" + encodeURIComponent(reason)
-        }).then(() => { location.reload(); });
+    function rejectAd() {
+        if (!selectedAdId) return alert('광고를 선택해주세요.');
+        const reason = document.getElementById('mailContent').value;
+        if (!reason) return alert('반려 사유를 메일 내용에 입력해주세요.');
+        if (!confirm('반려 처리하시겠습니까?')) return;
+        fetch(base + '/admin/ad/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'adId=' + selectedAdId + '&reason=' + encodeURIComponent(reason)
+        }).then(() => location.reload());
     }
+
+    function setApproveTemplate() {
+        const brand = document.getElementById('brandName').innerText;
+        document.getElementById('mailTitle').value   = `[광고 승인 안내] ${brand} 광고 신청이 승인되었습니다.`;
+        document.getElementById('mailContent').value = `안녕하세요, ${brand} 담당자님.\n\n신청하신 광고가 검토 후 최종 승인되었습니다.\n광고는 신청하신 기간에 게시될 예정입니다.\n\n감사합니다.`;
+    }
+
+    function setRejectTemplate() {
+        const brand = document.getElementById('brandName').innerText;
+        document.getElementById('mailTitle').value   = `[광고 반려 안내] ${brand} 광고 신청이 반려되었습니다.`;
+        document.getElementById('mailContent').value = `안녕하세요, ${brand} 담당자님.\n\n신청하신 광고를 검토한 결과 아래 사유로 반려되었습니다.\n\n반려 사유: \n\n수정 후 재신청 부탁드립니다. 감사합니다.`;
+    }
+    /*]]>*/
 </script>
 </body>
 </html>

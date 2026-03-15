@@ -36,15 +36,24 @@ public interface AdminService {
 
 	 int getMemberCount(String status, String keyword); //검색 조건 포함 회원 수
 
-	 void suspendMember(int userNo); //일시정지
+	 void suspendMember(int userNo); //일시정지 (즉시)
 
 	 void unsuspendMember(int userNo); //정지 해제
 
-	 void permanentBanMember(int userNo); //영구정지
+	 void permanentBanMember(int userNo); //영구정지 (즉시)
+
+	 void scheduleSuspend(int userNo, String email); // 3일 후 일시정지 예약 + 알림
+
+	 void scheduleBan(int userNo, String email); // 3일 후 영구정지 예약 + 알림
+
+	 void processScheduledSuspensions(); // 스케줄러 호출용
+
+	 int hasPendingSuspension(int userNo); // 예약 중 여부
 
 	 List<ProductDTO> getMemberActiveProducts(int userNo); //회원의 거래중인 상품
 
-	 List<ProductDTO> getProductList(int page, int size); //상품 리스트 보여주기
+	 List<ProductDTO> getProductList(int page, int size, String status, String filter); //상품 리스트 보여주기
+	 int getProductCount(String status, String filter); //필터 포함 상품 수
 	//--------------------------------------------------------------------------------
 	 int getTotalProductsCount(); //총상품개수 
 
@@ -77,6 +86,7 @@ public interface AdminService {
 
 	 List<InquiryDTO> getAllInquiries(); //문의 모든 리스트
 
+	 Map<String, Object> getAdMonthlyStats();
 	 int countPendingReportsAndInquiries();
 	 int countPendingAds();
 	 int countTodayProducts();
@@ -99,16 +109,22 @@ public interface AdminService {
 	 void deleteReview(int reviewNo);
 
 	 // 거래 관리
-	 Map<String, Object> getTransactionListPaged(int page, int size);
+	 Map<String, Object> getTransactionListPaged(int page, int size, String status);
+	 Map<String, Object> getTransactionStatusStats();
 
 	 // 신고 관리
 	 Map<String, Object> getReportListPaged(int page, int size, String type);
 	 void updateReportStatus(int reportId, String status);
+	 void sendAdminNotification(String email, String title, String message);
+	 com.spring.app.admin.domain.ReportAdminDTO getReportDetail(long reportId);
 	 Map<String, Object> getReportStats();
 
 	 // 문의 관리
 	 Map<String, Object> getAdminInquiryListPaged(int page, int size, String status);
 	 void saveInquiryAnswer(int inquiryId, String adminAnswer);
+	 int countPendingInquiries();
+	 int countAnsweredInquiries();
+	 List<String> getFaqKeywords();
 
 	 // 상품 상세
 	 ProductDetailDTO getProductDetail(int productNo);

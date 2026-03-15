@@ -97,6 +97,26 @@ public class AdminDAO_imple implements AdminDAO {
 	}
 
 	@Override
+	public void insertSuspendSchedule(Map<String, Object> params) {
+		sqlsession.insert(admin + ".insertSuspendSchedule", params);
+	}
+
+	@Override
+	public List<Map<String, Object>> getDueSuspensions() {
+		return sqlsession.selectList(admin + ".getDueSuspensions");
+	}
+
+	@Override
+	public void deleteSuspendSchedule(int scheduleId) {
+		sqlsession.delete(admin + ".deleteSuspendSchedule", scheduleId);
+	}
+
+	@Override
+	public int hasPendingSuspension(int userNo) {
+		return sqlsession.selectOne(admin + ".hasPendingSuspension", userNo);
+	}
+
+	@Override
 	public List<ProductDTO> getMemberActiveProducts(int userNo) {
 		return sqlsession.selectList(admin + ".getMemberActiveProducts", userNo);
 	}
@@ -104,21 +124,14 @@ public class AdminDAO_imple implements AdminDAO {
 	
 	//상품 리스트 보여주기
 	@Override
-	public List<ProductDTO> selectProductList(int page, int size) {
-		
-		int offset=(page-1)*size;
-		
-		Map<String,Object>params =new HashMap<>();
-		params.put("offset", offset);
-		params.put("size", size);
-		
-		return sqlsession.selectList(admin+".selectProduct",params);
+	public List<ProductDTO> selectProductList(Map<String, Object> params) {
+		return sqlsession.selectList(admin+".selectProduct", params);
 	}
-	
+
 	//상품카운트
 	@Override
-	public int selectProductCount() {
-		return sqlsession.selectOne(admin+".selectCount");
+	public int selectProductCount(Map<String, Object> params) {
+		return sqlsession.selectOne(admin+".selectCount", params);
 	}
 	
 	@Override
@@ -193,9 +206,12 @@ public class AdminDAO_imple implements AdminDAO {
 
     @Override
     public List<Map<String, Object>> getDailyProductStats() {
-        // 최근 7일간의 날짜별 등록수를 List<Map> 형태로 가져옵니다.
-        // 결과 예시: [{REG_DATE: '03-08', CNT: 5}, {REG_DATE: '03-09', CNT: 12}]
         return sqlsession.selectList("admin.getDailyProductStats");
+    }
+
+    @Override
+    public List<Map<String, Object>> getAdMonthlyStats() {
+        return sqlsession.selectList("admin.getAdMonthlyStats");
     }
 
     @Override
@@ -261,8 +277,13 @@ public class AdminDAO_imple implements AdminDAO {
 	}
 
 	@Override
-	public int countTransactions() {
-		return sqlsession.selectOne(admin + ".countTransactions");
+	public int countTransactions(Map<String, Object> params) {
+		return sqlsession.selectOne(admin + ".countTransactions", params);
+	}
+
+	@Override
+	public List<Map<String, Object>> countTransactionsByStatus() {
+		return sqlsession.selectList(admin + ".countTransactionsByStatus");
 	}
 
 	@Override
@@ -278,6 +299,16 @@ public class AdminDAO_imple implements AdminDAO {
 	@Override
 	public void updateReportStatus(Map<String, Object> params) {
 		sqlsession.update(admin + ".updateReportStatus", params);
+	}
+
+	@Override
+	public void insertAdminNotification(Map<String, Object> params) {
+		sqlsession.insert(admin + ".insertAdminNotification", params);
+	}
+
+	@Override
+	public ReportAdminDTO getReportDetail(long reportId) {
+		return sqlsession.selectOne(admin + ".getReportDetail", reportId);
 	}
 
 	@Override
@@ -354,6 +385,21 @@ public class AdminDAO_imple implements AdminDAO {
 	@Override
 	public int getPendingReportCount() {
 		return sqlsession.selectOne(admin + ".getPendingReportCount");
+	}
+
+	@Override
+	public int countPendingInquiries() {
+		return sqlsession.selectOne(admin + ".countPendingInquiries");
+	}
+
+	@Override
+	public int countAnsweredInquiries() {
+		return sqlsession.selectOne(admin + ".countAnsweredInquiries");
+	}
+
+	@Override
+	public List<String> getFaqKeywords() {
+		return sqlsession.selectList(admin + ".getFaqKeywords");
 	}
 
 }
