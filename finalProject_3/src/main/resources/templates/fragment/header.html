@@ -95,22 +95,22 @@
               </button>
 
               <!-- 패널 -->
-              <section class="category-panel" id="categoryPanel" role="menu">
-                <div class="category-wrap">
-                  <aside class="category-left">
-                    <ul class="category-left-list" id="mainMenu">
-                      <li class="is-active"><button type="button">패션(수입명품 / 패션의류 / 패션잡화)</button></li>
-                      <li><button type="button">육아(출산 / 유아동)</button></li>
-                      <li><button type="button">디지털·전자기기(모바일 / 태블릿 / 노트북 / PC / 카메라 / 캠코더)</button></li>
-                      <li><button type="button">가전(가전제품)</button></li>
-                      <li><button type="button">홈·인테리어(가구 / 인테리어 / 리빙 / 생활)</button></li>
-                      <li><button type="button">취미(게임, 반려동물, 독서)</button></li>
-                      <li><button type="button">여행(등산, 캠핑 등등)</button></li>
-                      <li><button type="button">공구/산업용품</button></li>
-                    </ul>
-                  </aside>
-                </div>
-              </section>
+             <section class="category-panel" id="categoryPanel" role="menu">
+  <div class="category-wrap">
+    <aside class="category-left">
+      <ul class="category-left-list" id="mainMenu">
+        <li><a th:href="@{/product/product_list(categoryNo=1)}">패션</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=2)}">육아</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=3)}">가전</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=4)}">홈·인테리어</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=5)}">취미</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=6)}">여행</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=7)}">공구/산업용품</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=8)}">디지털·전자기기</a></li>
+      </ul>
+    </aside>
+  </div>
+</section>
             </div>
           </div>
 

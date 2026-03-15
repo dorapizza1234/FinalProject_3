@@ -340,7 +340,7 @@
                                 <li th:each="opt : ${product.shippingOptionList}">
                                     <span class="pd-fee-name" th:text="${opt.parcelType}">일반택배</span>
                                     <span class="pd-fee-amount"
-                                          th:text="${#numbers.formatInteger(opt.shippingFee, 3, 'COMMA')} + '원'">4,000원</span>
+                                          th:text="${#numbers.formatInteger(opt.shippingFee, 1, 'COMMA')} + '원'">4,000원</span>
                                 </li>
                             </ul>
 
@@ -674,7 +674,7 @@
                                             <div class="loc-name" th:text="${similarProduct.productName}">상품이름</div>
 
                                             <div class="loc-price"
-                                                 th:text="${#numbers.formatInteger(similarProduct.productPrice, 3, 'COMMA')} + '원'">
+                                                 th:text="${#numbers.formatInteger(similarProduct.productPrice, 1, 'COMMA')} + '원'">
                                                 60,000원
                                             </div>
 
