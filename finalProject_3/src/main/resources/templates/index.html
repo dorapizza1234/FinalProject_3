@@ -100,96 +100,123 @@
     </section>
 
     <!-- new+best -->
-    <section class="nb-wrap">
-      <img class="nb-float top1" src="./images/top.png" alt="">
-      <img class="nb-float top2" src="./images/top2.png" alt="">
+   <section class="nb-wrap">
+  <img class="nb-float top1" th:src="@{/images/top.png}" alt="">
+  <img class="nb-float top2" th:src="@{/images/top2.png}" alt="">
 
-      <header class="nb-head">
-        <h2>NEW & BEST</h2>
-        <p>고객님을 위해 새로 등록된 거래 품목과 추천 거래 상품을 모았습니다.</p>
-      </header>
+  <header class="nb-head">
+    <h2>NEW & BEST</h2>
+    <p>고객님을 위해 새로 등록된 거래 품목과 추천 거래 상품을 모았습니다.</p>
+  </header>
 
-      <section class="nb-top">
-        <!-- 설명 -->
-        <div class="nb-copy">
-          <div class="desc">방금 올라온 상품과<br> 추천 거래 상품을 함께 확인하고,<br> 좋은 거래를 놓치지마세요.</div>
+  <section class="nb-top">
+    <div class="nb-copy">
+      <div class="desc">
+        방금 올라온 상품과<br>
+        추천 거래 상품을 함께 확인하고,<br>
+        좋은 거래를 놓치지마세요.
+      </div>
 
-          <a class="cta" href="#">
-            <span>제품보러가기</span>
-            <span class="arrow"></span>
-          </a>
+      <a class="cta" th:href="@{/product/product_list}">
+        <span>제품보러가기</span>
+        <span class="arrow"></span>
+      </a>
+    </div>
+
+    <!-- 최신순 1 -->
+    <a th:if="${latestList != null and latestList.size() > 0}"
+       th:href="@{|/product/product_detail/${latestList[0].productNo}|}">
+      <article class="nb-card"
+               th:attr="data-trade-status=${latestList[0].tradeStatus},
+                        data-can-access=${latestList[0].canAccessDetail}">
+        <img class="nb-badge nb-badge-left" th:src="@{/images/new.png}" alt="NEW">
+
+        <div class="nb-thumb-arch">
+          <img th:src="@{${latestList[0].imgUrl}}" alt="상품 이미지">
         </div>
 
-        <!-- 카드1 (NEW) -->
-         <a href="#">
-        <article class="nb-card">
-          <img class="nb-badge nb-badge-left" src="./images/new.png" alt="NEW">
-          <div class="nb-thumb-arch">
-            <img src="./images/" alt="상품 이미지">
-          </div>
-          <div class="nb-meta">
-            <span>제품 제목</span>
-            <span>1,000원</span>
-          </div>
-        </article>
-        </a>
+        <div class="nb-meta">
+          <span th:text="${latestList[0].productName}">제품 제목</span>
+          <span th:text="${latestList[0].saleType == '나눔' or latestList[0].productPrice == 0 ? '무료나눔'
+                           : (latestList[0].productPrice != null ? #numbers.formatInteger(latestList[0].productPrice, 1, 'COMMA') + '원' : '가격없음')}">1,000원</span>
+        </div>
+      </article>
+    </a>
 
-         <a href="#">
-        <!-- 카드2 -->
-        <article class="nb-card">
-          <div class="nb-thumb-arch">
-            <img src="./images/" alt="상품 이미지">
-          </div>
-          <div class="nb-meta">
-            <span>제품 제목</span>
-            <span>1,000원</span>
-          </div>
-        </article>
-      </section>
-      </a>
+    <!-- 최신순 2 -->
+    <a th:if="${latestList != null and latestList.size() > 1}"
+       th:href="@{|/product/product_detail/${latestList[1].productNo}|}">
+      <article class="nb-card"
+               th:attr="data-trade-status=${latestList[1].tradeStatus},
+                        data-can-access=${latestList[1].canAccessDetail}">
+        <div class="nb-thumb-arch">
+          <img th:src="@{${latestList[1].imgUrl}}" alt="상품 이미지">
+        </div>
 
-       <a href="#">
-      <!-- 하단 3개 -->
-      <section class="nb-bottom">
-        <article class="nb-card">
-          <div class="nb-thumb-round">
-            <img src="./images/" alt="상품 이미지">
-          </div>
-          <div class="nb-meta">
-            <span>제품 제목</span>
-            <span>1,000원</span>
-          </div>
-        </article>
-        </a>
+        <div class="nb-meta">
+          <span th:text="${latestList[1].productName}">제품 제목</span>
+          <span th:text="${latestList[1].saleType == '나눔' or latestList[1].productPrice == 0 ? '무료나눔'
+                           : (latestList[1].productPrice != null ? #numbers.formatInteger(latestList[1].productPrice, 1, 'COMMA') + '원' : '가격없음')}">1,000원</span>
+        </div>
+      </article>
+    </a>
+  </section>
 
-         <a href="#">
-        <article class="nb-card">
-          <div class="nb-thumb-round">
-            <img src="./images/" alt="상품 이미지">
-          </div>
-          <div class="nb-meta">
-            <span>제품 제목</span>
-            <span>1,000원</span>
-          </div>
-        </article>
-        </a>
+  <section class="nb-bottom">
+    <!-- 최신순 3 -->
+    <a th:if="${latestList != null and latestList.size() > 2}"
+       th:href="@{|/product/product_detail/${latestList[2].productNo}|}">
+      <article class="nb-card"
+               th:attr="data-trade-status=${latestList[2].tradeStatus},
+                        data-can-access=${latestList[2].canAccessDetail}">
+        <div class="nb-thumb-round">
+          <img th:src="@{${latestList[2].imgUrl}}" alt="상품 이미지">
+        </div>
+        <div class="nb-meta">
+          <span th:text="${latestList[2].productName}">제품 제목</span>
+          <span th:text="${latestList[2].saleType == '나눔' or latestList[2].productPrice == 0 ? '무료나눔'
+                           : (latestList[2].productPrice != null ? #numbers.formatInteger(latestList[2].productPrice, 1, 'COMMA') + '원' : '가격없음')}">1,000원</span>
+        </div>
+      </article>
+    </a>
 
-        
-        <!-- 카드5 (BEST) -->
-          <a href="#">
-        <article class="nb-card">
-          <img class="nb-badge nb-badge-right" src="./images/best.png" alt="BEST">
-          <div class="nb-thumb-round">
-            <img src="./images/" alt="상품 이미지">
-          </div>
-          <div class="nb-meta">
-            <span>제품 제목</span>
-            <span>1,000원</span>
-          </div>
-        </article>
-        </a>
-      </section>
-    </section>
+    <!-- 추천순 1 -->
+    <a th:if="${recommendList != null and recommendList.size() > 0}"
+       th:href="@{|/product/product_detail/${recommendList[0].productNo}|}">
+      <article class="nb-card"
+               th:attr="data-trade-status=${recommendList[0].tradeStatus},
+                        data-can-access=${recommendList[0].canAccessDetail}">
+        <div class="nb-thumb-round">
+          <img th:src="@{${recommendList[0].imgUrl}}" alt="상품 이미지">
+        </div>
+        <div class="nb-meta">
+          <span th:text="${recommendList[0].productName}">제품 제목</span>
+          <span th:text="${recommendList[0].saleType == '나눔' or recommendList[0].productPrice == 0 ? '무료나눔'
+                           : (recommendList[0].productPrice != null ? #numbers.formatInteger(recommendList[0].productPrice, 1, 'COMMA') + '원' : '가격없음')}">1,000원</span>
+        </div>
+      </article>
+    </a>
+
+    <!-- 추천순 2 -->
+    <a th:if="${recommendList != null and recommendList.size() > 1}"
+       th:href="@{|/product/product_detail/${recommendList[1].productNo}|}">
+      <article class="nb-card"
+               th:attr="data-trade-status=${recommendList[1].tradeStatus},
+                        data-can-access=${recommendList[1].canAccessDetail}">
+        <img class="nb-badge nb-badge-right" th:src="@{/images/best.png}" alt="BEST">
+        <div class="nb-thumb-round">
+          <img th:src="@{${recommendList[1].imgUrl}}" alt="상품 이미지">
+        </div>
+        <div class="nb-meta">
+          <span th:text="${recommendList[1].productName}">제품 제목</span>
+          <span th:text="${recommendList[1].saleType == '나눔' or recommendList[1].productPrice == 0 ? '무료나눔'
+                           : (recommendList[1].productPrice != null ? #numbers.formatInteger(recommendList[1].productPrice, 1, 'COMMA') + '원' : '가격없음')}">1,000원</span>
+        </div>
+      </article>
+    </a>
+  </section>
+</section>
+
 
     <!-- 동네거래 시작하기 -->
     <section class="startdeal-section">
@@ -208,9 +235,9 @@
             채팅으로 바로 약속까지 잡아보세요.
           </p>
 
-          <a href="#" class="startdeal-btn">
-            동네거래 시작하기 →
-          </a>
+          <a th:href="@{/product/sell}" class="startdeal-btn">
+			  동네거래 시작하기 →
+			</a>
 
           <div class="startdeal-pills">
             <span class="startdeal-pill"><i class="fa-solid fa-location-dot"></i> 근처 상품 자동 추천</span>
@@ -222,152 +249,102 @@
       </div>
     </section>
 
+  
     <!-- 무료나눔 -->
-    <section class="free-deal-slider" th:style="|background:url('@{/images/free.png}') center/cover no-repeat;|">
-      <div class="free-deal-slider__wrap">
+<!-- 무료나눔 -->
+<section class="free-deal-slider"
+         th:style="|background:url('@{/images/free.png}') center/cover no-repeat;|">
+  <div class="free-deal-slider__wrap">
 
-        <div class="free-deal-slider__head">
-          <h2 class="free-deal-slider__title"></h2>
-          <a class="free-deal-slider__more" href="#">
-            전체보기 <i class="fa-solid fa-angle-right"></i>
+    <div class="free-deal-slider__head">
+      <h2 class="free-deal-slider__title"></h2>
+      <a class="free-deal-slider__more" th:href="@{/product/product_list(freeOnly='Y')}">
+        전체보기 <i class="fa-solid fa-angle-right"></i>
+      </a>
+    </div>
+
+    <button class="free-deal-slider__nav free-deal-slider__nav--prev"
+            type="button"
+            aria-label="이전"
+            th:if="${freeList != null and freeList.size() > 0}">
+      <i class="fa-solid fa-angle-left"></i>
+    </button>
+
+    <div class="free-deal-slider__viewport">
+      <ul class="free-deal-slider__track" id="freeDealTrack"
+          th:if="${freeList != null and !#lists.isEmpty(freeList)}">
+
+        <li class="free-deal-slider__item"
+            th:each="p : ${freeList}">
+          <a class="free-deal-card free-deal-link"
+             th:href="@{|/product/product_detail/${p.productNo}|}"
+             th:attr="data-trade-status=${p.tradeStatus},
+                      data-can-access=${p.canAccessDetail}">
+
+            <span class="sps-badge"
+                  th:classappend="${p.tradeStatus == '판매중'} ? ' selling' :
+                                  (${p.tradeStatus == '예약중'} ? ' reserved' : ' soldout')"
+                  th:text="${p.tradeStatus}">
+              판매중
+            </span>
+
+            <div class="free-deal-card__thumb">
+              <img th:src="@{${p.imgUrl}}" alt="상품 이미지">
+            </div>
+
+            <div class="free-deal-card__body">
+              <h3 class="free-deal-card__title" th:text="${p.productName}">상품명</h3>
+              <p class="free-deal-card__price"
+                 th:text="${p.saleType == '나눔' or p.productPrice == 0 ? '무료나눔'
+                          : (p.productPrice != null ? #numbers.formatInteger(p.productPrice, 1, 'COMMA') + '원' : '가격없음')}">
+                무료나눔
+              </p>
+            </div>
           </a>
-        </div>
+        </li>
 
-        <button class="free-deal-slider__nav free-deal-slider__nav--prev" type="button" aria-label="이전">
-          <i class="fa-solid fa-angle-left"></i>
-        </button>
+      </ul>
 
-        <div class="free-deal-slider__viewport">
-          <ul class="free-deal-slider__track" id="freeDealTrack">
-
-            <li class="free-deal-slider__item">
-              <a class="free-deal-card" href="#">
-                <span class="free-deal-card__badge">무료나눔</span>
-                <div class="free-deal-card__thumb">
-                  <img src="./images/" alt="상품 이미지">
-                </div>
-                <div class="free-deal-card__body">
-                  <h3 class="free-deal-card__title">상품명이 아주 길어지면 이렇게 한 줄에서 ... 처리됩니다 테스트용</h3>
-                  <p class="free-deal-card__price">29,000원</p>
-                </div>
-              </a>
-            </li>
-
-            <li class="free-deal-slider__item">
-              <a class="free-deal-card" href="#">
-                <span class="free-deal-card__badge">무료나눔</span>
-                <div class="free-deal-card__thumb">
-                  <img src="./images/" alt="상품 이미지">
-                </div>
-                <div class="free-deal-card__body">
-                  <h3 class="free-deal-card__title">상품명이 아주 길어지면 이렇게 한 줄에서 ... 처리됩니다 테스트용</h3>
-                  <p class="free-deal-card__price">29,000원</p>
-                </div>
-              </a>
-            </li>
-
-            <li class="free-deal-slider__item">
-              <a class="free-deal-card" href="#">
-                <span class="free-deal-card__badge">무료나눔</span>
-                <div class="free-deal-card__thumb">
-                  <img src="./images/" alt="상품 이미지">
-                </div>
-                <div class="free-deal-card__body">
-                  <h3 class="free-deal-card__title">상품명이 아주 길어지면 이렇게 한 줄에서 ... 처리됩니다 테스트용</h3>
-                  <p class="free-deal-card__price">29,000원</p>
-                </div>
-              </a>
-            </li>
-
-            <li class="free-deal-slider__item">
-              <a class="free-deal-card" href="#">
-                <span class="free-deal-card__badge">무료나눔</span>
-                <div class="free-deal-card__thumb">
-                  <img src="./images/" alt="상품 이미지">
-                </div>
-                <div class="free-deal-card__body">
-                  <h3 class="free-deal-card__title">상품명이 아주 길어지면 이렇게 한 줄에서 ... 처리됩니다 테스트용</h3>
-                  <p class="free-deal-card__price">29,000원</p>
-                </div>
-              </a>
-            </li>
-
-            <li class="free-deal-slider__item">
-              <a class="free-deal-card" href="#">
-                <span class="free-deal-card__badge">무료나눔</span>
-                <div class="free-deal-card__thumb">
-                  <img src="./images/" alt="상품 이미지">
-                </div>
-                <div class="free-deal-card__body">
-                  <h3 class="free-deal-card__title">상품명이 아주 길어지면 이렇게 한 줄에서 ... 처리됩니다 테스트용</h3>
-                  <p class="free-deal-card__price">29,000원</p>
-                </div>
-              </a>
-            </li>
-
-            <li class="free-deal-slider__item">
-              <a class="free-deal-card" href="#">
-                <span class="free-deal-card__badge">무료나눔</span>
-                <div class="free-deal-card__thumb">
-                  <img src="./images/" alt="상품 이미지">
-                </div>
-                <div class="free-deal-card__body">
-                  <h3 class="free-deal-card__title">상품명이 아주 길어지면 이렇게 한 줄에서 ... 처리됩니다 테스트용</h3>
-                  <p class="free-deal-card__price">29,000원</p>
-                </div>
-              </a>
-            </li>
-
-            <li class="free-deal-slider__item">
-              <a class="free-deal-card" href="#">
-                <span class="free-deal-card__badge">무료나눔</span>
-                <div class="free-deal-card__thumb">
-                  <img src="./images/" alt="상품 이미지">
-                </div>
-                <div class="free-deal-card__body">
-                  <h3 class="free-deal-card__title">상품명이 아주 길어지면 이렇게 한 줄에서 ... 처리됩니다 테스트용</h3>
-                  <p class="free-deal-card__price">29,000원</p>
-                </div>
-              </a>
-            </li>
-
-            <li class="free-deal-slider__item">
-              <a class="free-deal-card" href="#">
-                <span class="free-deal-card__badge">무료나눔</span>
-                <div class="free-deal-card__thumb">
-                  <img src="./images/" alt="상품 이미지">
-                </div>
-                <div class="free-deal-card__body">
-                  <h3 class="free-deal-card__title">상품명이 아주 길어지면 이렇게 한 줄에서 ... 처리됩니다 테스트용</h3>
-                  <p class="free-deal-card__price">29,000원</p>
-                </div>
-              </a>
-            </li>
-
-            <li class="free-deal-slider__item">
-              <a class="free-deal-card" href="#">
-                <span class="free-deal-card__badge">무료나눔</span>
-                <div class="free-deal-card__thumb">
-                  <img src="./images/" alt="상품 이미지">
-                </div>
-                <div class="free-deal-card__body">
-                  <h3 class="free-deal-card__title">상품명이 아주 길어지면 이렇게 한 줄에서 ... 처리됩니다 테스트용</h3>
-                  <p class="free-deal-card__price">29,000원</p>
-                </div>
-              </a>
-            </li>
-
-          </ul>
-        </div>
-
-        <button class="free-deal-slider__nav free-deal-slider__nav--next" type="button" aria-label="다음">
-          <i class="fa-solid fa-angle-right"></i>
-        </button>
-
-        <div class="free-deal-slider__dots" id="freeDealDots"></div>
+      <div class="free-deal-slider__empty"
+           th:if="${freeList == null or #lists.isEmpty(freeList)}">
+        현재 등록된 무료나눔 상품이 없습니다.
       </div>
-    </section>
-</main>
+    </div>
 
+    <button class="free-deal-slider__nav free-deal-slider__nav--next"
+            type="button"
+            aria-label="다음"
+            th:if="${freeList != null and freeList.size() > 0}">
+      <i class="fa-solid fa-angle-right"></i>
+    </button>
+
+    <div class="free-deal-slider__dots"
+         id="freeDealDots"
+         th:if="${freeList != null and freeList.size() > 0}"></div>
+  </div>
+</section>
+</main>
+<section>
+$(function() {
+
+  $(document).on("click", ".nb-card", function(e) {
+    const $link = $(this).closest("a");
+    const tradeStatus = String($link.data("trade-status") || "").trim();
+    const canAccessDetail = Number($link.data("can-access")) === 1;
+
+    if ((tradeStatus === "예약중" || tradeStatus === "판매완료") && !canAccessDetail) {
+      e.preventDefault();
+
+      if (tradeStatus === "예약중") {
+        alert("예약중인 상품입니다.");
+      } 
+      else {
+        alert("판매완료된 상품입니다.");
+      }
+    }
+  });
+
+});
+</section>
 </body>
 </html>

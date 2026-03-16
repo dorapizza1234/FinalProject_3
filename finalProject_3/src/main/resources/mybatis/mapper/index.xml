@@ -1,12 +1,245 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- ==== mapper 기본설정 ==== -->
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.app.index.model.IndexDAO">
 
-<!-- ==== 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) ==== -->
-<mapper namespace="index">
-	
-	
-	
+    <resultMap id="mainProductMap" type="com.spring.app.product.domain.ProductDTO">
+        <result property="productNo" column="PRODUCT_NO"/>
+        <result property="productName" column="PRODUCT_NAME"/>
+        <result property="productPrice" column="PRODUCT_PRICE"/>
+        <result property="saleType" column="SALE_TYPE"/>
+        <result property="tradeStatus" column="TRADE_STATUS"/>
+        <result property="regDate" column="REG_DATE"/>
+        <result property="viewCount" column="VIEW_COUNT"/>
+        <result property="imgUrl" column="IMG_URL"/>
+        <result property="placeName" column="PLACE_NAME"/>
+        <result property="wished" column="WISHED"/>
+        <result property="canAccessDetail" column="CAN_ACCESS_DETAIL"/>
+    </resultMap>
+
+    <!-- 최신순 -->
+    <select id="getMainLatestList" parameterType="string" resultMap="mainProductMap">
+        SELECT *
+        FROM
+        (
+            SELECT T.*, ROWNUM AS RNO
+            FROM
+            (
+                SELECT
+                    PRODUCTS.PRODUCT_NO,
+                    PRODUCTS.PRODUCT_NAME,
+                    PRODUCTS.PRODUCT_PRICE,
+                    PRODUCTS.SALE_TYPE,
+                    PRODUCTS.TRADE_STATUS,
+                    PRODUCTS.REG_DATE,
+                    PRODUCTS.VIEW_COUNT,
+
+                    NVL
+                    (
+                        (
+                            SELECT PRODUCT_IMAGE.IMG_URL
+                            FROM PRODUCT_IMAGE
+                            WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                              AND PRODUCT_IMAGE.IS_MAIN = 'Y'
+                              AND ROWNUM = 1
+                        ),
+                        '/images/no_image.png'
+                    ) AS IMG_URL,
+
+                    NVL
+                    (
+                        (
+                            SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
+                            FROM PRODUCT_MEET_LOCATION
+                            WHERE PRODUCT_MEET_LOCATION.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                              AND ROWNUM = 1
+                        ),
+                        '택배'
+                    ) AS PLACE_NAME,
+
+                    <choose>
+                        <when test="loginUserEmail != null and loginUserEmail != ''">
+                            NVL
+                            (
+                                (
+                                    SELECT 1
+                                    FROM WISHLIST
+                                    WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                                      AND WISHLIST.MEM_ID = #{loginUserEmail}
+                                ),
+                                0
+                            ) AS WISHED,
+                            CASE
+                                WHEN PRODUCTS.SELLER_EMAIL = #{loginUserEmail} THEN 1
+                                ELSE 0
+                            END AS CAN_ACCESS_DETAIL
+                        </when>
+                        <otherwise>
+                            0 AS WISHED,
+                            0 AS CAN_ACCESS_DETAIL
+                        </otherwise>
+                    </choose>
+
+                FROM PRODUCTS
+                WHERE PRODUCTS.TRADE_STATUS IN ('판매중', '예약중', '판매완료')
+                ORDER BY PRODUCTS.REG_DATE DESC
+            ) T
+            WHERE ROWNUM <![CDATA[ <= ]]> 5
+        )
+    </select>
+
+    <!-- 추천순 -->
+    <select id="getMainRecommendList" parameterType="string" resultMap="mainProductMap">
+        SELECT *
+        FROM
+        (
+            SELECT T.*, ROWNUM AS RNO
+            FROM
+            (
+                SELECT
+                    PRODUCTS.PRODUCT_NO,
+                    PRODUCTS.PRODUCT_NAME,
+                    PRODUCTS.PRODUCT_PRICE,
+                    PRODUCTS.SALE_TYPE,
+                    PRODUCTS.TRADE_STATUS,
+                    PRODUCTS.REG_DATE,
+                    PRODUCTS.VIEW_COUNT,
+
+                    NVL
+                    (
+                        (
+                            SELECT PRODUCT_IMAGE.IMG_URL
+                            FROM PRODUCT_IMAGE
+                            WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                              AND PRODUCT_IMAGE.IS_MAIN = 'Y'
+                              AND ROWNUM = 1
+                        ),
+                        '/images/no_image.png'
+                    ) AS IMG_URL,
+
+                    NVL
+                    (
+                        (
+                            SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
+                            FROM PRODUCT_MEET_LOCATION
+                            WHERE PRODUCT_MEET_LOCATION.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                              AND ROWNUM = 1
+                        ),
+                        '택배'
+                    ) AS PLACE_NAME,
+
+                    NVL
+                    (
+                        (
+                            SELECT COUNT(*)
+                            FROM WISHLIST
+                            WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                        ),
+                        0
+                    ) AS WISH_COUNT,
+
+                    <choose>
+                        <when test="loginUserEmail != null and loginUserEmail != ''">
+                            NVL
+                            (
+                                (
+                                    SELECT 1
+                                    FROM WISHLIST
+                                    WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                                      AND WISHLIST.MEM_ID = #{loginUserEmail}
+                                ),
+                                0
+                            ) AS WISHED,
+                            CASE
+                                WHEN PRODUCTS.SELLER_EMAIL = #{loginUserEmail} THEN 1
+                                ELSE 0
+                            END AS CAN_ACCESS_DETAIL
+                        </when>
+                        <otherwise>
+                            0 AS WISHED,
+                            0 AS CAN_ACCESS_DETAIL
+                        </otherwise>
+                    </choose>
+
+                FROM PRODUCTS
+                WHERE PRODUCTS.TRADE_STATUS IN ('판매중', '예약중', '판매완료')
+                ORDER BY WISH_COUNT DESC, PRODUCTS.VIEW_COUNT DESC, PRODUCTS.REG_DATE DESC
+            ) T
+            WHERE ROWNUM <![CDATA[ <= ]]> 5
+        )
+    </select>
+
+    <!-- 무료나눔 -->
+    <select id="getMainFreeList" parameterType="string" resultMap="mainProductMap">
+        SELECT *
+        FROM
+        (
+            SELECT T.*, ROWNUM AS RNO
+            FROM
+            (
+                SELECT
+                    PRODUCTS.PRODUCT_NO,
+                    PRODUCTS.PRODUCT_NAME,
+                    PRODUCTS.PRODUCT_PRICE,
+                    PRODUCTS.SALE_TYPE,
+                    PRODUCTS.TRADE_STATUS,
+                    PRODUCTS.REG_DATE,
+                    PRODUCTS.VIEW_COUNT,
+
+                    NVL
+                    (
+                        (
+                            SELECT PRODUCT_IMAGE.IMG_URL
+                            FROM PRODUCT_IMAGE
+                            WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                              AND PRODUCT_IMAGE.IS_MAIN = 'Y'
+                              AND ROWNUM = 1
+                        ),
+                        '/images/no_image.png'
+                    ) AS IMG_URL,
+
+                    NVL
+                    (
+                        (
+                            SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
+                            FROM PRODUCT_MEET_LOCATION
+                            WHERE PRODUCT_MEET_LOCATION.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                              AND ROWNUM = 1
+                        ),
+                        '택배'
+                    ) AS PLACE_NAME,
+
+                    <choose>
+                        <when test="loginUserEmail != null and loginUserEmail != ''">
+                            NVL
+                            (
+                                (
+                                    SELECT 1
+                                    FROM WISHLIST
+                                    WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                                      AND WISHLIST.MEM_ID = #{loginUserEmail}
+                                ),
+                                0
+                            ) AS WISHED,
+                            CASE
+                                WHEN PRODUCTS.SELLER_EMAIL = #{loginUserEmail} THEN 1
+                                ELSE 0
+                            END AS CAN_ACCESS_DETAIL
+                        </when>
+                        <otherwise>
+                            0 AS WISHED,
+                            0 AS CAN_ACCESS_DETAIL
+                        </otherwise>
+                    </choose>
+
+                FROM PRODUCTS
+                WHERE PRODUCTS.SALE_TYPE = '나눔'
+                  AND PRODUCTS.TRADE_STATUS IN ('판매중', '예약중', '판매완료')
+                ORDER BY PRODUCTS.REG_DATE DESC
+            ) T
+            WHERE ROWNUM <![CDATA[ <= ]]> 10
+        )
+    </select>
 
 </mapper>

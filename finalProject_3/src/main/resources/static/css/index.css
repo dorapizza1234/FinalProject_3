@@ -716,3 +716,42 @@
       width:22px;
       background:#111;
     }
+    
+    .free-deal-slider__empty{
+  min-height: 240px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-size:16px;
+  font-weight:600;
+  color:#666;
+  background:rgba(255,255,255,0.72);
+  border-radius:20px;
+}
+
+
+.free-deal-card{
+	position: relative;
+}
+
+.sps-badge {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 64px;
+	height: 30px;
+	padding: 0 12px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #fff;
+}
+
+.sps-badge.selling { background: #16a34a; }
+.sps-badge.reserved { background: #f59e0b; }
+.sps-badge.soldout { background: #6b7280; }
