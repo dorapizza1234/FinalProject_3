@@ -35,8 +35,7 @@
                     PRODUCTS.REG_DATE,
                     PRODUCTS.VIEW_COUNT,
 
-                    NVL
-                    (
+                    NVL(
                         (
                             SELECT PRODUCT_IMAGE.IMG_URL
                             FROM PRODUCT_IMAGE
@@ -47,8 +46,7 @@
                         '/images/no_image.png'
                     ) AS IMG_URL,
 
-                    NVL
-                    (
+                    NVL(
                         (
                             SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
                             FROM PRODUCT_MEET_LOCATION
@@ -60,13 +58,12 @@
 
                     <choose>
                         <when test="loginUserEmail != null and loginUserEmail != ''">
-                            NVL
-                            (
+                            NVL(
                                 (
                                     SELECT 1
                                     FROM WISHLIST
                                     WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-                                      AND WISHLIST.MEM_ID = #{loginUserEmail}
+                                      AND WISHLIST.MEMBER_EMAIL = #{loginUserEmail}
                                 ),
                                 0
                             ) AS WISHED,
@@ -106,8 +103,7 @@
                     PRODUCTS.REG_DATE,
                     PRODUCTS.VIEW_COUNT,
 
-                    NVL
-                    (
+                    NVL(
                         (
                             SELECT PRODUCT_IMAGE.IMG_URL
                             FROM PRODUCT_IMAGE
@@ -118,8 +114,7 @@
                         '/images/no_image.png'
                     ) AS IMG_URL,
 
-                    NVL
-                    (
+                    NVL(
                         (
                             SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
                             FROM PRODUCT_MEET_LOCATION
@@ -129,8 +124,7 @@
                         '택배'
                     ) AS PLACE_NAME,
 
-                    NVL
-                    (
+                    NVL(
                         (
                             SELECT COUNT(*)
                             FROM WISHLIST
@@ -141,13 +135,12 @@
 
                     <choose>
                         <when test="loginUserEmail != null and loginUserEmail != ''">
-                            NVL
-                            (
+                            NVL(
                                 (
                                     SELECT 1
                                     FROM WISHLIST
                                     WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-                                      AND WISHLIST.MEM_ID = #{loginUserEmail}
+                                      AND WISHLIST.MEMBER_EMAIL = #{loginUserEmail}
                                 ),
                                 0
                             ) AS WISHED,
@@ -187,8 +180,7 @@
                     PRODUCTS.REG_DATE,
                     PRODUCTS.VIEW_COUNT,
 
-                    NVL
-                    (
+                    NVL(
                         (
                             SELECT PRODUCT_IMAGE.IMG_URL
                             FROM PRODUCT_IMAGE
@@ -199,8 +191,7 @@
                         '/images/no_image.png'
                     ) AS IMG_URL,
 
-                    NVL
-                    (
+                    NVL(
                         (
                             SELECT PRODUCT_MEET_LOCATION.PLACE_NAME
                             FROM PRODUCT_MEET_LOCATION
@@ -212,13 +203,12 @@
 
                     <choose>
                         <when test="loginUserEmail != null and loginUserEmail != ''">
-                            NVL
-                            (
+                            NVL(
                                 (
                                     SELECT 1
                                     FROM WISHLIST
                                     WHERE WISHLIST.PRODUCT_NO = PRODUCTS.PRODUCT_NO
-                                      AND WISHLIST.MEM_ID = #{loginUserEmail}
+                                      AND WISHLIST.MEMBER_EMAIL = #{loginUserEmail}
                                 ),
                                 0
                             ) AS WISHED,
