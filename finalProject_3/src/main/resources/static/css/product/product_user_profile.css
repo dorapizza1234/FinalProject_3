@@ -470,28 +470,7 @@ img {
 	color: #9a9a9a;
 }
 
-/* ===== 더보기 버튼 ===== */
-.load-more-wrap {
-	display: flex;
-	justify-content: center;
-	margin-top: 24px;
-}
 
-.btn-load-more {
-	min-width: 200px;
-	height: 44px;
-	border-radius: 999px;
-	border: 1px solid #e5e7eb;
-	background: #fff;
-	cursor: pointer;
-	transition: .15s;
-}
-
-.btn-load-more:hover {
-	background: #111;
-	color: #fff;
-	border-color: #111;
-}
 
 .sps-rvSummary {
 	display: flex;
@@ -828,4 +807,115 @@ img {
 
 .sps-rvProductImgs::-webkit-scrollbar-track{
     background:transparent;
+}
+
+
+
+/* ===============================
+   더보기 버튼 영역
+================================ */
+
+.load-more-wrap{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin-top:32px;
+    width:100%;
+}
+
+/* 버튼 */
+.btn-load-more{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+
+    min-width:200px;
+    height:44px;
+    padding:0 22px;
+
+    border:1px solid #e5e7eb;
+    border-radius:999px;
+
+    background:#fff;
+    color:#111;
+
+    font-size:14px;
+    font-weight:600;
+    line-height:1;
+    font-family:inherit;
+
+    cursor:pointer;
+
+    appearance:none;
+    -webkit-appearance:none;
+
+    transition:
+        background .15s ease,
+        color .15s ease,
+        border-color .15s ease,
+        transform .12s ease,
+        box-shadow .12s ease;
+}
+
+/* 아이콘 */
+.btn-load-more i{
+    font-size:13px;
+    line-height:1;
+    transform:translateY(1px);
+    transition:transform .15s ease;
+}
+
+/* hover */
+.btn-load-more:hover{
+    background:#111;
+    color:#fff;
+    border-color:#111;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* hover 아이콘 */
+.btn-load-more:hover i{
+    transform:translateY(3px);
+}
+
+/* 클릭 */
+.btn-load-more:active{
+    transform:translateY(1px);
+    box-shadow:none;
+}
+
+/* 포커스 접근성 */
+.btn-load-more:focus-visible{
+    outline:2px solid #111;
+    outline-offset:2px;
+}
+
+/* disabled */
+.btn-load-more:disabled{
+    opacity:.45;
+    cursor:default;
+    background:#f5f5f5;
+    color:#777;
+    border-color:#e5e5e5;
+    box-shadow:none;
+}
+
+/* ===============================
+   반응형
+================================ */
+
+@media (max-width:768px){
+
+    .load-more-wrap{
+        margin-top:24px;
+    }
+
+    .btn-load-more{
+        width:100%;
+        max-width:260px;
+        height:42px;
+        font-size:13px;
+    }
+
 }
