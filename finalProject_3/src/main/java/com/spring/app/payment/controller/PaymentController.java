@@ -101,17 +101,15 @@ public class PaymentController {
 
         int productNo = ((Number) params.get("productNo")).intValue();
         String paymentType = (String) params.getOrDefault("paymentType", "카드결제");
+        int requestAmount = params.get("amount") != null ? ((Number) params.get("amount")).intValue() : 0;
 
         try {
-            TransactionDTO txn = paymentService.createTransaction(productNo, buyerEmail, paymentType);
-
-            // 🌟 수정된 부분: 무료나눔일 경우 DB의 tossOrderId가 null이므로, 확실한 PK인 transactionId로 조회합니다!
-            TransactionDTO fullTxn = paymentService.getTransactionById(txn.getTransactionId());
+            TransactionDTO txn = paymentService.createTransaction(productNo, buyerEmail, paymentType, requestAmount);
 
             result.put("success", true);
             result.put("orderId", txn.getTossOrderId());
             result.put("transactionId", txn.getTransactionId());
-            result.put("amount", fullTxn != null ? fullTxn.getAmount() : 0);
+            result.put("amount", txn.getAmount());
 
         } catch (Exception e) {
             log.error("결제 준비 실패", e);

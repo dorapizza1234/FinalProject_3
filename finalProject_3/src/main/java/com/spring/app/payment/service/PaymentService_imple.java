@@ -47,7 +47,7 @@ public class PaymentService_imple implements PaymentService {
      */
     @Override
     @Transactional
-    public TransactionDTO createTransaction(int productNo, String buyerEmail, String paymentType) {
+    public TransactionDTO createTransaction(int productNo, String buyerEmail, String paymentType, int amount) {
 
         String orderId = "ORDER_" + UUID.randomUUID().toString().replace("-", "").substring(0, 20);
 
@@ -55,6 +55,7 @@ public class PaymentService_imple implements PaymentService {
         dto.setProductNo(productNo);
         dto.setBuyerEmail(buyerEmail);
         dto.setPayStatus("READY");
+        dto.setAmount(amount);  // JS에서 계산한 총 결제금액 사용
 
         // 무료나눔: 토스 결제 없이 처리 (DB 제약조건에 맞게 '캐시결제' + NULL toss keys)
         if ("무료나눔".equals(paymentType)) {

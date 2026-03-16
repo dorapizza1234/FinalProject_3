@@ -782,6 +782,15 @@
 
 </main>
 
+<!-- 안전결제 이동 (독립 스크립트 — 다른 JS 에러에 영향받지 않음) -->
+<script th:inline="javascript">
+    function goToPayment(btn) {
+        const ctx = /*[[@{/}]]*/ "";
+        const productNo = btn.getAttribute("data-product-no");
+        location.href = ctx + "payment/checkout?productNo=" + encodeURIComponent(productNo);
+    }
+</script>
+
 <script th:inline="javascript">
     /* =========================================
        상태 변수 / 기본값
@@ -1026,14 +1035,6 @@
             console.error("방 생성 에러:", error);
             alert("채팅방 생성 중 오류가 발생했습니다.");
         });
-    }
-
-    /* =========================================
-       안전결제 이동
-       ========================================= */
-    function goToPayment(btn) {
-        const productNo = btn.getAttribute("data-product-no");
-        location.href = ctxPath + "payment/checkout?productNo=" + encodeURIComponent(productNo);
     }
 
     /* =========================================

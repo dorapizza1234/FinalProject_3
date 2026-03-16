@@ -21,11 +21,7 @@
             P.SELLER_EMAIL,
             #{buyerEmail},
             #{paymentType},
-            NVL(P.PRODUCT_PRICE, 0) + NVL(
-                (SELECT MIN(SO.SHIPPING_FEE)
-                 FROM PRODUCT_SHIPPING_OPTION SO
-                 WHERE SO.PRODUCT_NO = P.PRODUCT_NO), 0
-            ),
+            #{amount},
             '거래중',
             SYSTIMESTAMP,
             #{tossPayKey, jdbcType=VARCHAR},
