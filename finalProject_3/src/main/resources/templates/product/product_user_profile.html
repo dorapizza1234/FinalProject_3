@@ -3,9 +3,7 @@
 	th:replace="~{layout/layout_main :: layout(~{::head}, ~{::main}, ~{::script})}"
 	xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-<link rel="stylesheet"
-	th:href="@{/css/product/product_user_profile.css}">
-
+<link rel="stylesheet" th:href="@{/css/product/product_user_profile.css}">
 </head>
 
 <body>
@@ -20,7 +18,6 @@
 							aria-hidden="true" alt="판매자 프로필 이미지">
 						<div>
 							<div class="spx-sellerName">판매자 이름</div>
-						
 						</div>
 					</div>
 
@@ -39,17 +36,17 @@
 						<div class="spx-statsRow">
 							<div class="spx-stat">
 								<div class="k">안심결제</div>
-								<div class="v">9</div>
+								<div class="v">0</div>
 							</div>
 							<div class="spx-statsDiv" aria-hidden="true"></div>
 							<div class="spx-stat">
 								<div class="k">거래후기</div>
-								<div class="v">10</div>
+								<div class="v">0</div>
 							</div>
 							<div class="spx-statsDiv" aria-hidden="true"></div>
 							<div class="spx-stat">
 								<div class="k">거래횟수</div>
-								<div class="v">10</div>
+								<div class="v">0</div>
 							</div>
 						</div>
 					</div>
@@ -62,56 +59,14 @@
 					</div>
 
 					<div class="spx-chips" aria-label="후기 키워드">
-						<p class="spx-chip">
-							친절해요 <span>18</span>
-						</p>
-						<p class="spx-chip">
-							시간 약속 잘 지켜요 <span>14</span>
-						</p>
-						<p class="spx-chip">
-							설명대로예요 <span>22</span>
-						</p>
-						<p class="spx-chip">
-							꼼꼼해요 <span>9</span>
-						</p>
+						<p class="spx-chip">친절해요 <span>0</span></p>
+						<p class="spx-chip">시간 약속 잘 지켜요 <span>0</span></p>
+						<p class="spx-chip">설명대로예요 <span>0</span></p>
+						<p class="spx-chip">꼼꼼해요 <span>0</span></p>
 					</div>
 
-					<div class="spx-revList">
-						<article class="spx-review">
-							<div class="spx-reviewLeft">
-								<div class="spx-reviewWho">사용자 아이디</div>
-								<div class="spx-reviewTxt">설명 그대로 상태 좋아요. 응답도 빠릅니다!</div>
-							</div>
-							<div class="spx-stars" aria-label="별점 5점">
-								<i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-									class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-									class="fa-solid fa-star"></i>
-							</div>
-						</article>
-
-						<article class="spx-review">
-							<div class="spx-reviewLeft">
-								<div class="spx-reviewWho">사용자 아이디</div>
-								<div class="spx-reviewTxt">친절하고 거래 매너가 좋아요.</div>
-							</div>
-							<div class="spx-stars" aria-label="별점 5점">
-								<i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-									class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-									class="fa-solid fa-star"></i>
-							</div>
-						</article>
-
-						<article class="spx-review">
-							<div class="spx-reviewLeft">
-								<div class="spx-reviewWho">사용자 아이디</div>
-								<div class="spx-reviewTxt">포장 꼼꼼하고 제품 상태 만족합니다.</div>
-							</div>
-							<div class="spx-stars" aria-label="별점 5점">
-								<i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-									class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-									class="fa-solid fa-star"></i>
-							</div>
-						</article>
+					<div class="spx-revList" id="spxRevList">
+						<div class="sps-empty">등록된 후기가 없습니다.</div>
 					</div>
 				</div>
 
@@ -132,7 +87,6 @@
 			<!-- 판매상품 패널 -->
 			<div class="sps-panel is-show" id="sps-panel-sell" role="tabpanel">
 
-
 				<div class="sps-sellTop" aria-label="상품 정렬">
 					<div class="sps-sort" role="tablist" aria-label="정렬 옵션">
 						<button class="sps-sortBtn is-active" type="button" role="tab"
@@ -150,35 +104,11 @@
 				</div>
 
 				<div class="sps-grid" id="sps-grid">
-
-
-					  <article class="sps-card" data-price="450000" data-time="1699990000" data-pop="8">
-          <a class="sps-thumb" href="#">
-            <span class="sps-badge chip-sale-ing">판매중</span>
-            <button class="sps-like" type="button" aria-label="찜" aria-pressed="false">
-              <i class="fa-regular fa-heart"></i>
-            </button>
-            <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1200&auto=format&fit=crop"
-              alt="">
-          </a>
-          <div class="sps-body">
-            <a class="sps-title" href="#">맥북 프로 13인치 (M1) 상태좋음</a>
-            <div class="sps-price">450,000원</div>
-            <div class="sps-meta">
-              <span><i class="fa-solid fa-location-dot"></i> 강남구</span>
-              <span><i class="fa-regular fa-clock"></i> 1시간 전</span>
-              <span><i class="fa-solid fa-eye"></i> 10</span>
-              <span><i class="fa-solid fa-heart"></i> 10</span>
-            </div>
-          </div>
-        </article> 
-
-
+					<div class="sps-empty">판매상품을 불러오는 중입니다.</div>
 				</div>
 
-				<!--  더보기 버튼 -->
 				<div class="load-more-wrap">
-					<button class="btn-load-more">
+					<button class="btn-load-more" id="sellLoadMoreBtn" type="button">
 						더보기 <i class="fa-solid fa-angle-down"></i>
 					</button>
 				</div>
@@ -187,39 +117,30 @@
 			<!-- 거래후기 패널 -->
 			<div class="sps-panel" id="sps-panel-review" role="tabpanel" hidden>
 
-				<div class="sps-rvSummary">
+				<div class="sps-rvSummary" id="spsReviewSummary">
 					<div class="sps-rvScore">
 						<div class="sps-rvScoreBig">
-							<strong>4.9</strong> <span>/ 5</span>
+							<strong>0.0</strong> <span>/ 5</span>
 						</div>
-						<div class="sps-rvStars" aria-label="평균 별점 4.9점">
-							<i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"></i>
-							<i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"></i>
-							<i class="fa-solid fa-star"></i> <em class="sps-rvCount">후기
-								32</em>
+						<div class="sps-rvStars" aria-label="평균 별점 0점">
+							<i class="fa-regular fa-star"></i>
+							<i class="fa-regular fa-star"></i>
+							<i class="fa-regular fa-star"></i>
+							<i class="fa-regular fa-star"></i>
+							<i class="fa-regular fa-star"></i>
+							<em class="sps-rvCount">후기 0</em>
 						</div>
-						<div class="sps-rvHint">최근 3개월 후기 기준</div>
+						<div class="sps-rvHint">전체 거래후기 기준</div>
 					</div>
 
 					<div class="sps-rvBadges" aria-label="후기 키워드 요약">
-						<button class="sps-rvChip is-active" type="button">
-							전체 <span>32</span>
-						</button>
-						<button class="sps-rvChip" type="button">
-							친절해요 <span>18</span>
-						</button>
-						<button class="sps-rvChip" type="button">
-							시간 약속 <span>14</span>
-						</button>
-						<button class="sps-rvChip" type="button">
-							설명대로예요 <span>22</span>
-						</button>
-						<button class="sps-rvChip" type="button">
-							꼼꼼해요 <span>9</span>
-						</button>
+						<button class="sps-rvChip is-active" type="button">전체 <span>0</span></button>
+						<button class="sps-rvChip" type="button">친절해요 <span>0</span></button>
+						<button class="sps-rvChip" type="button">시간 약속 <span>0</span></button>
+						<button class="sps-rvChip" type="button">설명대로예요 <span>0</span></button>
+						<button class="sps-rvChip" type="button">꼼꼼해요 <span>0</span></button>
 					</div>
 				</div>
-
 
 				<div class="sps-rvSortBar" aria-label="후기 정렬">
 					<div class="sps-rvSort" role="tablist" aria-label="후기 정렬 옵션">
@@ -234,69 +155,12 @@
 					</div>
 				</div>
 
-				<div class="sps-rvList">
-					<article class="sps-rvCard">
-						<div class="sps-rvTop">
-							<div class="sps-rvWho">
-								<span class="sps-rvUser"> <span class="sps-rvAvatar"
-									aria-hidden="true"></span> <strong>닉네임</strong>
-								</span> <span class="sps-rvMeta"> <span class="sps-rvStarsSm"
-									aria-label="별점 5점"> <i class="fa-solid fa-star"></i><i
-										class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-										class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-								</span> <span class="sps-rvDate"><i class="fa-regular fa-clock"></i>
-										2026.02.10</span>
-								</span>
-							</div>
-							<div class="sps-rvTag">친절해요</div>
-						</div>
-
-						<div class="sps-rvProduct">
-							<i class="fa-solid fa-box"></i> 거래상품: <span
-								class="rv-product-name"> 맥북 프로 13인치 (M1)</span>
-						</div>
-
-						<p class="sps-rvText">설명 그대로 상태 좋아요. 응답 빠르고 약속 시간도 잘 지켜주셔서 편하게
-							거래했습니다!</p>
-
-						<div class="sps-rvPhotos" aria-label="후기 사진">
-							<a class="sps-rvPhoto" href="#" aria-label="후기 사진 1"><img
-								src="https://images.unsplash.com/photo-1527430253228-e93688616381?q=80&w=600&auto=format&fit=crop"
-								alt=""></a> <a class="sps-rvPhoto" href="#"
-								aria-label="후기 사진 2"><img
-								src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=600&auto=format&fit=crop"
-								alt=""></a>
-						</div>
-					</article>
-
-					<article class="sps-rvCard">
-						<div class="sps-rvTop">
-							<div class="sps-rvWho">
-								<span class="sps-rvUser"> <span class="sps-rvAvatar"
-									aria-hidden="true"></span> <strong>닉네임</strong>
-								</span> <span class="sps-rvMeta"> <span class="sps-rvStarsSm"
-									aria-label="별점 4점"> <i class="fa-solid fa-star"></i><i
-										class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-										class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i>
-								</span> <span class="sps-rvDate"><i class="fa-regular fa-clock"></i>
-										2026.01.28</span>
-								</span>
-							</div>
-							<div class="sps-rvTag is-gray">설명대로예요</div>
-						</div>
-
-						<div class="sps-rvProduct">
-							<i class="fa-solid fa-box"></i> 거래상품: <span>기계식 키보드</span>
-						</div>
-
-						<p class="sps-rvText">제품 상태는 설명대로였고 포장도 괜찮았어요. 다만 약속 시간이 조금
-							늦어졌습니다.</p>
-					</article>
+				<div class="sps-rvList" id="spsReviewList">
+					<div class="sps-empty">등록된 후기가 없습니다.</div>
 				</div>
 
-				<!--  더보기 버튼 -->
 				<div class="load-more-wrap">
-					<button class="btn-load-more">
+					<button class="btn-load-more" id="reviewLoadMoreBtn" type="button">
 						더보기 <i class="fa-solid fa-angle-down"></i>
 					</button>
 				</div>
@@ -304,35 +168,48 @@
 
 		</section>
 	</main>
+
 	<script th:src="@{/js/product/product_user_profile.js}"></script>
-	<script type="text/javascript">
+
+	<script th:inline="javascript">
 document.addEventListener("DOMContentLoaded", function () {
 
-    const ctxPath = "/finalProject_3";
+    const ctxPath = /*[[@{/}]]*/ "";
+    const ctxBase = ctxPath.replace(/\/$/, "");
     const main = document.querySelector("main");
     const productNo = main ? main.getAttribute("data-product-no") : "";
     const isLogin = main ? String(main.getAttribute("data-login")) === "true" : false;
-    
+
     const sellerNameEl = document.querySelector(".spx-sellerName");
-    const sellerSubEl = document.querySelector(".spx-sellerSub");
     const avatarEl = document.querySelector(".spx-avatar");
     const tempStrongEl = document.querySelector(".spx-tempValue strong");
     const tempBarEl = document.querySelector(".spx-bar i");
-
     const statEls = document.querySelectorAll(".spx-stat .v");
 
     const sellGrid = document.getElementById("sps-grid");
     const sortBtns = document.querySelectorAll(".sps-sortBtn");
-    const loadMoreBtn = document.querySelector(".btn-load-more");
+    const sellLoadMoreBtn = document.getElementById("sellLoadMoreBtn");
 
     const tabs = document.querySelectorAll(".sps-tab");
     const sellPanel = document.getElementById("sps-panel-sell");
     const reviewPanel = document.getElementById("sps-panel-review");
 
+    const topReviewListEl = document.getElementById("spxRevList");
+    const reviewSummaryEl = document.getElementById("spsReviewSummary");
+    const reviewListEl = document.getElementById("spsReviewList");
+    const reviewSortBtns = document.querySelectorAll(".sps-rvSortBtn");
+    const reviewLoadMoreBtn = document.getElementById("reviewLoadMoreBtn");
+
     let currentSort = "latest";
     let currentPage = 1;
     let isLoading = false;
     let hasMore = true;
+
+    let reviewSortType = "latest";
+    let reviewPage = 1;
+    let reviewLoading = false;
+    let reviewHasMore = true;
+    let currentReviewCategory = "";
 
     if (!productNo) {
         alert("잘못된 접근입니다.");
@@ -341,13 +218,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     loadSellerProfile();
     loadSellerProducts(true);
+    loadSellerReviewSummary();
+    loadSellerReviews(true);
+
     initTabs();
     initSortButtons();
     initLoadMore();
+    initReviewSortButtons();
+    initReviewLoadMore();
+    initReviewCategoryButtons();
     initWishlistButtons();
 
     function loadSellerProfile() {
-        fetch(ctxPath + "/product/seller/profile?productNo=" + encodeURIComponent(productNo), {
+        fetch(ctxBase + "/product/seller/profile?productNo=" + encodeURIComponent(productNo), {
             method: "GET",
             headers: {
                 "Accept": "application/json"
@@ -370,7 +253,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const sellerName = seller.sellerName || "판매자";
             const sellerProfileImg = buildImageUrl(
                 seller.sellerProfileImg,
-                ctxPath + "/images/default_profile.png"
+                ctxBase + "/images/default_profile.png"
             );
             const mannerTemp = seller.mannerTemp != null ? seller.mannerTemp : 36.5;
             const safePayCount = seller.safePayCount != null ? seller.safePayCount : 0;
@@ -378,7 +261,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const tradeCount = seller.tradeCount != null ? seller.tradeCount : 0;
 
             sellerNameEl.textContent = sellerName;
-            
             avatarEl.src = sellerProfileImg;
             tempStrongEl.textContent = Number(mannerTemp).toFixed(1) + "°C";
 
@@ -386,35 +268,6 @@ document.addEventListener("DOMContentLoaded", function () {
             tempBarEl.style.width = tempInfo.percent + "%";
             tempBarEl.style.backgroundColor = tempInfo.color;
             tempStrongEl.style.color = tempInfo.color;
-            
-            function calcTempStyle(temp) {
-                let value = parseFloat(temp);
-
-                if (isNaN(value)) value = 0;
-                if (value < 0) value = 0;
-                if (value > 100) value = 100;
-
-                let color = "#9ca3af";
-
-                if (value <= 12.5) {
-                    color = "#9ca3af";
-                } else if (value <= 30) {
-                    color = "#60a5fa";
-                } else if (value <= 36.5) {
-                    color = "#2563eb";
-                } else if (value <= 50.5) {
-                    color = "#22c55e";
-                } else if (value <= 65.5) {
-                    color = "#eab308";
-                } else {
-                    color = "#ef4444";
-                }
-
-                return {
-                    percent: value,
-                    color: color
-                };
-            }
 
             if (statEls.length >= 3) {
                 statEls[0].textContent = safePayCount;
@@ -426,6 +279,35 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error(error);
             alert("판매자 정보를 불러오는 중 오류가 발생했습니다.");
         });
+    }
+
+    function calcTempStyle(temp) {
+        let value = parseFloat(temp);
+
+        if (isNaN(value)) value = 0;
+        if (value < 0) value = 0;
+        if (value > 100) value = 100;
+
+        let color = "#9ca3af";
+
+        if (value <= 12.5) {
+            color = "#9ca3af";
+        } else if (value <= 30) {
+            color = "#60a5fa";
+        } else if (value <= 36.5) {
+            color = "#2563eb";
+        } else if (value <= 50.5) {
+            color = "#22c55e";
+        } else if (value <= 65.5) {
+            color = "#eab308";
+        } else {
+            color = "#ef4444";
+        }
+
+        return {
+            percent: value,
+            color: color
+        };
     }
 
     function loadSellerProducts(reset) {
@@ -440,7 +322,7 @@ document.addEventListener("DOMContentLoaded", function () {
             sellGrid.innerHTML = "";
         }
 
-        const url = ctxPath + "/product/seller/products"
+        const url = ctxBase + "/product/seller/products"
             + "?productNo=" + encodeURIComponent(productNo)
             + "&sortType=" + encodeURIComponent(currentSort)
             + "&page=" + encodeURIComponent(currentPage)
@@ -488,7 +370,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function makeProductCard(product) {
-        const productNo = product.productNo;
+        const targetProductNo = product.productNo;
         const productName = escapeHtml(product.productName || "상품명");
         const productPrice = formatProductPrice(product.saleType, product.productPrice);
         const tradeStatus = escapeHtml(product.tradeStatus || "판매중");
@@ -496,30 +378,28 @@ document.addEventListener("DOMContentLoaded", function () {
         const placeName = escapeHtml(product.placeName || "위치정보 없음");
         const imgUrl = buildImageUrl(
             product.imgUrl,
-            ctxPath + "/images/no_image.png"
+            ctxBase + "/images/no_image.png"
         );
         const timeAgo = formatTimeAgo(product.regDate);
         const viewCount = product.viewCount != null ? product.viewCount : 0;
         const wished = Number(product.wished) === 1;
-        
-        
 
         return `
             <article class="sps-card">
-                <a class="sps-thumb" href="${ctxPath}/product/product_detail/${productNo}">
-                <span class="sps-badge ${badgeClass}">${tradeStatus}</span>
-                    <button class="sps-like ${wished ? "is-active" : ""}" 
-                    type="button" 
-                    aria-label="찜" 
-                    aria-pressed="${wished}"
-                    data-product-no="${productNo}"
-                    data-login="${isLogin}">
-                <i class="${wished ? "fa-solid" : "fa-regular"} fa-heart"></i>
-            </button>
+                <a class="sps-thumb" href="${ctxBase}/product/product_detail/${targetProductNo}">
+                    <span class="sps-badge ${badgeClass}">${tradeStatus}</span>
+                    <button class="sps-like ${wished ? "is-active" : ""}"
+                            type="button"
+                            aria-label="찜"
+                            aria-pressed="${wished}"
+                            data-product-no="${targetProductNo}"
+                            data-login="${isLogin}">
+                        <i class="${wished ? "fa-solid" : "fa-regular"} fa-heart"></i>
+                    </button>
                     <img src="${imgUrl}" alt="${productName}">
                 </a>
                 <div class="sps-body">
-                    <a class="sps-title" href="${ctxPath}/product/product_detail/${productNo}">${productName}</a>
+                    <a class="sps-title" href="${ctxBase}/product/product_detail/${targetProductNo}">${productName}</a>
                     <div class="sps-price">${productPrice}</div>
                     <div class="sps-meta">
                         <span><i class="fa-solid fa-location-dot"></i> ${placeName}</span>
@@ -530,7 +410,7 @@ document.addEventListener("DOMContentLoaded", function () {
             </article>
         `;
     }
-    
+
     function formatProductPrice(saleType, price) {
         const num = Number(price || 0);
 
@@ -544,7 +424,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         return num.toLocaleString("ko-KR") + "원";
     }
-    
+
     function getTradeStatusClass(tradeStatus) {
         if (tradeStatus === "판매중") return "chip-sale-ing";
         if (tradeStatus === "예약중") return "chip-sale-reserved";
@@ -563,19 +443,19 @@ document.addEventListener("DOMContentLoaded", function () {
             return path;
         }
 
-        if (path.startsWith(ctxPath + "/")) {
+        if (path.startsWith(ctxBase + "/")) {
             return path;
         }
 
         if (path.startsWith("/images/") || path.startsWith("/upload/")) {
-            return ctxPath + path;
+            return ctxBase + path;
         }
 
         if (path.startsWith("images/") || path.startsWith("upload/")) {
-            return ctxPath + "/" + path;
+            return ctxBase + "/" + path;
         }
 
-        return ctxPath + "/images/" + path;
+        return ctxBase + "/images/" + path;
     }
 
     function initSortButtons() {
@@ -596,16 +476,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function initLoadMore() {
-        if (!loadMoreBtn) return;
+        if (!sellLoadMoreBtn) return;
 
-        loadMoreBtn.addEventListener("click", function () {
+        sellLoadMoreBtn.addEventListener("click", function () {
             loadSellerProducts(false);
         });
     }
 
     function toggleLoadMoreButton() {
-        if (!loadMoreBtn) return;
-        loadMoreBtn.style.display = hasMore ? "inline-flex" : "none";
+        if (!sellLoadMoreBtn) return;
+        sellLoadMoreBtn.style.display = hasMore ? "inline-flex" : "none";
     }
 
     function initTabs() {
@@ -636,11 +516,374 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    
+    function loadSellerReviewSummary() {
+        fetch(ctxBase + "/product/seller/reviews/summary?productNo=" + encodeURIComponent(productNo), {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("후기 요약 정보를 불러오지 못했습니다.");
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                alert(data.message || "후기 요약 정보를 불러오지 못했습니다.");
+                return;
+            }
 
-    function formatPrice(price) {
-        const num = Number(price || 0);
-        return num.toLocaleString("ko-KR") + "원";
+            renderReviewSummary(data.summary || {});
+        })
+        .catch(error => {
+            console.error(error);
+            alert("후기 요약 정보를 불러오는 중 오류가 발생했습니다.");
+        });
+    }
+
+    function loadSellerReviews(reset) {
+        if (reviewLoading) return;
+        if (!reviewHasMore && !reset) return;
+
+        reviewLoading = true;
+
+        if (reset) {
+            reviewPage = 1;
+            reviewHasMore = true;
+
+            if (topReviewListEl) topReviewListEl.innerHTML = "";
+            if (reviewListEl) reviewListEl.innerHTML = "";
+        }
+
+        let url = ctxBase + "/product/seller/reviews"
+            + "?productNo=" + encodeURIComponent(productNo)
+            + "&sortType=" + encodeURIComponent(reviewSortType)
+            + "&page=" + encodeURIComponent(reviewPage)
+            + "&size=5";
+
+        if (currentReviewCategory !== "") {
+            url += "&reviewCategory=" + encodeURIComponent(currentReviewCategory);
+        }
+
+        fetch(url, {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("후기 목록을 불러오지 못했습니다.");
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                alert(data.message || "후기 목록을 불러오지 못했습니다.");
+                return;
+            }
+
+            const reviewList = data.reviewList || [];
+            reviewHasMore = !!data.hasMore;
+
+            if (reset) {
+                renderTopReviews(reviewList.slice(0, 3));
+                renderReviewList(reviewList);
+            } else {
+                appendReviewList(reviewList);
+            }
+
+            toggleReviewLoadMoreButton();
+        })
+        .catch(error => {
+            console.error(error);
+            alert("후기 목록을 불러오는 중 오류가 발생했습니다.");
+        })
+        .finally(() => {
+            reviewLoading = false;
+            reviewPage++;
+        });
+    }
+
+    function renderTopReviews(reviewList) {
+        if (!topReviewListEl) return;
+
+        if (!reviewList || reviewList.length === 0) {
+            topReviewListEl.innerHTML = `<div class="sps-empty">등록된 후기가 없습니다.</div>`;
+            return;
+        }
+
+        let html = "";
+
+        reviewList.forEach(review => {
+            const writerProfileImg = buildImageUrl(
+                review.writerProfileImg,
+                ctxBase + "/images/default_profile.png"
+            );
+
+            html += `
+                <article class="spx-review">
+                    <div class="spx-reviewLeft">
+                        <div class="spx-reviewWhoWrap" style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                            <img src="${writerProfileImg}" alt="${escapeHtml(review.writerName || "사용자")}"
+                                 style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid #eee;">
+                            <div class="spx-reviewWho">${escapeHtml(review.writerName || "사용자")}</div>
+                        </div>
+                        <div class="spx-reviewTxt">${escapeHtml(review.reviewContent || "")}</div>
+                    </div>
+                    <div class="spx-stars" aria-label="별점 ${Number(review.rating || 0)}점">
+                        ${makeStarIcons(Number(review.rating || 0))}
+                    </div>
+                </article>
+            `;
+        });
+
+        topReviewListEl.innerHTML = html;
+    }
+
+    function renderReviewSummary(summary) {
+        if (!reviewSummaryEl) return;
+
+        const totalCount = Number(summary.totalCount || 0);
+        const avgRating = Number(summary.avgRating || 0).toFixed(1);
+        const kindCount = Number(summary.kindCount || 0);
+        const promiseCount = Number(summary.promiseCount || 0);
+        const sameDescCount = Number(summary.sameDescCount || 0);
+        const carefulCount = Number(summary.carefulCount || 0);
+
+        const chipWrap = document.querySelector(".spx-chips");
+        if (chipWrap) {
+            chipWrap.innerHTML = `
+                <p class="spx-chip">친절해요 <span>${kindCount}</span></p>
+                <p class="spx-chip">시간 약속 잘 지켜요 <span>${promiseCount}</span></p>
+                <p class="spx-chip">설명대로예요 <span>${sameDescCount}</span></p>
+                <p class="spx-chip">꼼꼼해요 <span>${carefulCount}</span></p>
+            `;
+        }
+
+        reviewSummaryEl.innerHTML = `
+            <div class="sps-rvScore">
+                <div class="sps-rvScoreBig">
+                    <strong>${avgRating}</strong> <span>/ 5</span>
+                </div>
+                <div class="sps-rvStars" aria-label="평균 별점 ${avgRating}점">
+                    ${makeStarIcons(Math.round(Number(avgRating)))}
+                    <em class="sps-rvCount">후기 ${totalCount}</em>
+                </div>
+                <div class="sps-rvHint">전체 거래후기 기준</div>
+            </div>
+
+            <div class="sps-rvBadges" aria-label="후기 키워드 요약">
+                <button class="sps-rvChip ${currentReviewCategory === "" ? "is-active" : ""}" type="button" data-category="">
+                    전체 <span>${totalCount}</span>
+                </button>
+                <button class="sps-rvChip ${currentReviewCategory === "친절해요" ? "is-active" : ""}" type="button" data-category="친절해요">
+                    친절해요 <span>${kindCount}</span>
+                </button>
+                <button class="sps-rvChip ${currentReviewCategory === "시간 약속 잘 지켜요" ? "is-active" : ""}" type="button" data-category="시간 약속 잘 지켜요">
+                    시간 약속 잘 지켜요 <span>${promiseCount}</span>
+                </button>
+                <button class="sps-rvChip ${currentReviewCategory === "설명대로예요" ? "is-active" : ""}" type="button" data-category="설명대로예요">
+                    설명대로예요 <span>${sameDescCount}</span>
+                </button>
+                <button class="sps-rvChip ${currentReviewCategory === "꼼꼼해요" ? "is-active" : ""}" type="button" data-category="꼼꼼해요">
+                    꼼꼼해요 <span>${carefulCount}</span>
+                </button>
+            </div>
+        `;
+    }
+
+    function renderReviewList(reviewList) {
+        if (!reviewListEl) return;
+
+        if (!reviewList || reviewList.length === 0) {
+            reviewListEl.innerHTML = `<div class="sps-empty">등록된 후기가 없습니다.</div>`;
+            return;
+        }
+
+        let html = "";
+
+        reviewList.forEach(review => {
+            html += makeReviewCard(review);
+        });
+
+        reviewListEl.innerHTML = html;
+    }
+
+    function appendReviewList(reviewList) {
+        if (!reviewListEl || !reviewList) return;
+
+        let html = "";
+
+        reviewList.forEach(review => {
+            html += makeReviewCard(review);
+        });
+
+        reviewListEl.insertAdjacentHTML("beforeend", html);
+    }
+
+    function makeReviewCard(review) {
+        const writerName = escapeHtml(review.writerName || "닉네임");
+        const reviewContent = escapeHtml(review.reviewContent || "");
+        const oneLineCat = escapeHtml(review.oneLineCat || "");
+        const productName = escapeHtml(review.productName || "상품명");
+        const createdAt = formatDate(review.createdAt);
+        const rating = Number(review.rating || 0);
+
+        const writerProfileImg = buildImageUrl(
+            review.writerProfileImg,
+            ctxBase + "/images/default_profile.png"
+        );
+
+        let productImgHtml = "";
+        const rawImgUrls = String(review.productImgUrls || "").trim();
+
+        if (rawImgUrls !== "") {
+            const imgList = rawImgUrls.split("||");
+
+            imgList.forEach(function(imgPath, idx) {
+                const safeImgUrl = buildImageUrl(imgPath, ctxBase + "/images/no_image.png");
+                productImgHtml += `
+                    <img src="${safeImgUrl}"
+                         alt="${productName} 이미지 ${idx + 1}"
+                         class="sps-rvProductImg">
+                `;
+            });
+        }
+        else {
+            const fallbackImgUrl = buildImageUrl(
+                review.productImgUrl,
+                ctxBase + "/images/no_image.png"
+            );
+
+            productImgHtml = `
+                <img src="${fallbackImgUrl}"
+                     alt="${productName}"
+                     class="sps-rvProductImg">
+            `;
+        }
+
+        return `
+            <article class="sps-rvCard">
+                <div class="sps-rvTop">
+                    <div class="sps-rvWho">
+                        <span class="sps-rvUser">
+                            <span class="sps-rvAvatar"
+                                  aria-hidden="true"
+                                  style="background-image:url('${writerProfileImg}'); background-size:cover; background-position:center;"></span>
+                            <strong>${writerName}</strong>
+                        </span>
+                        <span class="sps-rvMeta">
+                            <span class="sps-rvStarsSm" aria-label="별점 ${rating}점">
+                                ${makeStarIcons(rating)}
+                            </span>
+                            <span class="sps-rvDate">
+                                <i class="fa-regular fa-clock"></i> ${createdAt}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="sps-rvTag">${oneLineCat}</div>
+                </div>
+
+                <div class="sps-rvProduct">
+                    <i class="fa-solid fa-box"></i> 거래상품:
+                    <span class="rv-product-name">${productName}</span>
+                </div>
+
+                <div class="sps-rvProductImgs">
+                    ${productImgHtml}
+                </div>
+
+                <p class="sps-rvText">${reviewContent}</p>
+            </article>
+        `;
+    }
+
+    function initReviewSortButtons() {
+        reviewSortBtns.forEach(btn => {
+            btn.addEventListener("click", function () {
+                reviewSortBtns.forEach(el => {
+                    el.classList.remove("is-active");
+                    el.setAttribute("aria-selected", "false");
+                });
+
+                this.classList.add("is-active");
+                this.setAttribute("aria-selected", "true");
+
+                const text = this.textContent.trim();
+
+                if (text.includes("높은")) {
+                    reviewSortType = "high";
+                } else if (text.includes("낮은")) {
+                    reviewSortType = "low";
+                } else {
+                    reviewSortType = "latest";
+                }
+
+                loadSellerReviews(true);
+            });
+        });
+    }
+
+    function initReviewLoadMore() {
+        if (!reviewLoadMoreBtn) return;
+
+        reviewLoadMoreBtn.addEventListener("click", function () {
+            loadSellerReviews(false);
+        });
+    }
+
+    function initReviewCategoryButtons() {
+        document.addEventListener("click", function (e) {
+            const chip = e.target.closest(".sps-rvChip");
+            if (!chip) return;
+
+            const chipWrap = chip.closest(".sps-rvBadges");
+            if (!chipWrap) return;
+
+            chipWrap.querySelectorAll(".sps-rvChip").forEach(btn => {
+                btn.classList.remove("is-active");
+            });
+
+            chip.classList.add("is-active");
+
+            currentReviewCategory = chip.getAttribute("data-category") || "";
+            loadSellerReviews(true);
+        });
+    }
+
+    function toggleReviewLoadMoreButton() {
+        if (!reviewLoadMoreBtn) return;
+        reviewLoadMoreBtn.style.display = reviewHasMore ? "inline-flex" : "none";
+    }
+
+    function makeStarIcons(score) {
+        let html = "";
+
+        for (let i = 1; i <= 5; i++) {
+            if (i <= score) {
+                html += `<i class="fa-solid fa-star"></i>`;
+            } else {
+                html += `<i class="fa-regular fa-star"></i>`;
+            }
+        }
+
+        return html;
+    }
+
+    function formatDate(value) {
+        if (!value) return "";
+
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return "";
+
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+
+        return y + "." + m + "." + d;
     }
 
     function formatTimeAgo(regDate) {
@@ -674,7 +917,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#39;");
     }
-    
+
     function initWishlistButtons() {
         document.addEventListener("click", function (e) {
             const likeBtn = e.target.closest(".sps-like");
@@ -688,7 +931,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (!login) {
                 alert("로그인이 필요합니다.");
-                location.href = ctxPath + "/security/login";
+                location.href = ctxBase + "/security/login";
                 return;
             }
 
@@ -702,7 +945,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function toggleWishlist(button, targetProductNo) {
-        fetch(ctxPath + "/product/wishlist/toggle", {
+        fetch(ctxBase + "/product/wishlist/toggle", {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -717,18 +960,19 @@ document.addEventListener("DOMContentLoaded", function () {
             return response.json();
         })
         .then(data => {
-    if (!data.success) {
-        alert(data.message || "찜 처리에 실패했습니다.");
-        return;
-    }
-    const wished = !!data.wished;
-    updateWishButton(button, wished);
+            if (!data.success) {
+                alert(data.message || "찜 처리에 실패했습니다.");
+                return;
+            }
 
-    if (wished) {
-        alert("찜 성공");
-    } else {
-        alert("찜 취소");
-    }
+            const wished = !!data.wished;
+            updateWishButton(button, wished);
+
+            if (wished) {
+                alert("찜 성공");
+            } else {
+                alert("찜 취소");
+            }
         })
         .catch(error => {
             console.error(error);

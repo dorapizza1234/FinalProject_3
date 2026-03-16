@@ -84,7 +84,7 @@ public class ProductDTO {
     //로그인 접속 시간
     private Date lastLoginDate;
     
-   
-
+    //리뷰
+    private List<ReviewDTO> recentReviewList;
    
 }

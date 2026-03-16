@@ -29,6 +29,8 @@ import com.spring.app.product.domain.ProductPriceStatsDTO;
 import com.spring.app.product.domain.ProductPriceTrendDTO;
 import com.spring.app.product.domain.ProductReportDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.ReviewDTO;
+import com.spring.app.product.domain.ReviewSummaryDTO;
 import com.spring.app.product.domain.SearchKeywordDTO;
 import com.spring.app.product.domain.SearchLogDTO;
 import com.spring.app.product.domain.WishlistDTO;
@@ -418,6 +420,9 @@ public class ProductController {
         pservice.updateViewCount(productNo);
 
         List<ProductDTO> similarProductList = pservice.selectSimilarProducts(productDto);
+        List<ReviewDTO> recentReviewList = pservice.selectRecentReviewsByProductNo(productNo);
+
+        productDto.setRecentReviewList(recentReviewList);
 
         model.addAttribute("product", productDto);
         model.addAttribute("similarProductList", similarProductList);
@@ -714,5 +719,49 @@ public class ProductController {
 
             return failResult("신고 처리 중 오류가 발생했습니다.");
         }
+    }
+    
+    //리뷰 요약
+    @GetMapping("/seller/reviews/summary")
+    @ResponseBody
+    public Map<String, Object> sellerReviewSummary(@RequestParam("productNo") int productNo) {
+
+        ReviewSummaryDTO summary = pservice.selectSellerReviewSummaryByProductNo(productNo);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("success", true);
+        result.put("summary", summary);
+        return result;
+    }
+    
+    //리뷰목록
+    @GetMapping("/seller/reviews")
+    @ResponseBody
+    public Map<String, Object> sellerReviews(@RequestParam("productNo") int productNo,
+                                             @RequestParam(name = "sortType", defaultValue = "latest") String sortType,
+                                             @RequestParam(name = "reviewCategory", required = false) String reviewCategory,
+                                             @RequestParam(name = "page", defaultValue = "1") int page,
+                                             @RequestParam(name = "size", defaultValue = "5") int size) {
+
+        int startRow = ((page - 1) * size) + 1;
+        int endRow = page * size;
+
+        Map<String, Object> paraMap = new LinkedHashMap<>();
+        paraMap.put("productNo", productNo);
+        paraMap.put("sortType", sortType);
+        paraMap.put("reviewCategory", reviewCategory);
+        paraMap.put("startRow", startRow);
+        paraMap.put("endRow", endRow);
+
+        List<ReviewDTO> reviewList = pservice.selectSellerReviewListByProductNo(paraMap);
+        int totalCount = pservice.selectSellerReviewTotalCountByProductNo(paraMap);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("success", true);
+        result.put("reviewList", reviewList);
+        result.put("totalCount", totalCount);
+        result.put("hasMore", totalCount > endRow);
+
+        return result;
     }
 }

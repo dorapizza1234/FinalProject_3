@@ -16,6 +16,8 @@ import com.spring.app.product.domain.ProductPriceStatsDTO;
 import com.spring.app.product.domain.ProductPriceTrendDTO;
 import com.spring.app.product.domain.ProductReportDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.ReviewDTO;
+import com.spring.app.product.domain.ReviewSummaryDTO;
 import com.spring.app.product.domain.SearchKeywordDTO;
 import com.spring.app.product.domain.SearchLogDTO;
 import com.spring.app.product.domain.WishlistDTO;
@@ -370,5 +372,28 @@ public class ProductService_imple implements ProductService {
         return pdao.insertProductReport(reportDto);
     }
     
+  //리뷰 조회(상품상세)
+    @Override
+    public List<ReviewDTO> selectRecentReviewsByProductNo(int productNo) {
+        return pdao.selectRecentReviewsByProductNo(productNo);
+    }
+    @Override
+    public int selectReviewCountBySellerEmail(String sellerEmail) {
+        return pdao.selectReviewCountBySellerEmail(sellerEmail);
+    }
+    
+  //리뷰 조회(판매자정보)
+    @Override
+    public ReviewSummaryDTO selectSellerReviewSummaryByProductNo(int productNo) {
+        return pdao.selectSellerReviewSummaryByProductNo(productNo);
+    }
+    @Override
+    public List<ReviewDTO> selectSellerReviewListByProductNo(Map<String, Object> paraMap) {
+        return pdao.selectSellerReviewListByProductNo(paraMap);
+    }
+    @Override
+    public int selectSellerReviewTotalCountByProductNo(Map<String, Object> paraMap) {
+        return pdao.selectSellerReviewTotalCountByProductNo(paraMap);
+    }
     
 }

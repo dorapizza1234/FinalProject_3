@@ -534,17 +534,20 @@
 
                         <div class="pdinfo-stats">
 						    <div class="pdinfo-stat">
-						        <div class="k">안심결제</div>
-						        <div class="v" th:text="${product.safePayCount != null ? product.safePayCount : 0}">0</div>
-						    </div>
-						    <div class="pdinfo-stat">
-						        <div class="k">거래후기</div>
-						        <div class="v" th:text="${product.reviewCount != null ? product.reviewCount : 0}">0</div>
-						    </div>
-						    <div class="pdinfo-stat">
-						        <div class="k">거래횟수</div>
-						        <div class="v" th:text="${product.tradeCount != null ? product.tradeCount : 0}">0</div>
-						    </div>
+    <div class="k">안심결제</div>
+    <div class="v" id="pdinfoSafePayCount"
+         th:text="${product.safePayCount != null ? product.safePayCount : 0}">0</div>
+</div>
+<div class="pdinfo-stat">
+    <div class="k">거래후기</div>
+    <div class="v" id="pdinfoReviewCount"
+         th:text="${product.reviewCount != null ? product.reviewCount : 0}">0</div>
+</div>
+<div class="pdinfo-stat">
+    <div class="k">거래횟수</div>
+    <div class="v" id="pdinfoTradeCount"
+         th:text="${product.tradeCount != null ? product.tradeCount : 0}">0</div>
+</div>
 						</div>
                     </div>
 
@@ -557,48 +560,40 @@
                     </div>
 
                     <div class="pdinfo-reviews">
-                        <div class="pdinfo-review">
-                            <div>
-                                <div class="pdinfo-user">사용자 아이디</div>
-                                <div class="pdinfo-desc">설명 그대로 상태 좋아요. 응답도 빠릅니다.</div>
-                            </div>
-                            <div class="pdinfo-stars">
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                            </div>
-                        </div>
 
-                        <div class="pdinfo-review">
-                            <div>
-                                <div class="pdinfo-user">사용자 아이디</div>
-                                <div class="pdinfo-desc">친절하고 거래 매너가 좋아요.</div>
-                            </div>
-                            <div class="pdinfo-stars">
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                            </div>
-                        </div>
+    <div class="pdinfo-review"
+         th:each="review : ${product.recentReviewList}"
+         th:if="${product.recentReviewList != null and !#lists.isEmpty(product.recentReviewList)}">
 
-                        <div class="pdinfo-review">
-                            <div>
-                                <div class="pdinfo-user">사용자 아이디</div>
-                                <div class="pdinfo-desc">포장 꼼꼼하고 제품 상태 만족합니다.</div>
-                            </div>
-                            <div class="pdinfo-stars">
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                            </div>
-                        </div>
-                    </div>
+        <div>
+            <div class="pdinfo-user" th:text="${review.writerName}">사용자 아이디</div>
+            <div class="pdinfo-desc" th:text="${review.reviewContent}">후기 내용</div>
+        </div>
+
+        <div class="pdinfo-stars">
+            <i class="fa-solid fa-star" th:if="${review.rating >= 1}"></i>
+            <i class="fa-solid fa-star" th:if="${review.rating >= 2}"></i>
+            <i class="fa-solid fa-star" th:if="${review.rating >= 3}"></i>
+            <i class="fa-solid fa-star" th:if="${review.rating >= 4}"></i>
+            <i class="fa-solid fa-star" th:if="${review.rating >= 5}"></i>
+
+            <i class="fa-regular fa-star" th:if="${review.rating < 1}"></i>
+            <i class="fa-regular fa-star" th:if="${review.rating < 2}"></i>
+            <i class="fa-regular fa-star" th:if="${review.rating < 3}"></i>
+            <i class="fa-regular fa-star" th:if="${review.rating < 4}"></i>
+            <i class="fa-regular fa-star" th:if="${review.rating < 5}"></i>
+        </div>
+    </div>
+
+    <div class="pdinfo-review"
+         th:if="${product.recentReviewList == null or #lists.isEmpty(product.recentReviewList)}">
+        <div>
+            <div class="pdinfo-user">후기 없음</div>
+            <div class="pdinfo-desc">아직 등록된 거래후기가 없습니다.</div>
+        </div>
+    </div>
+
+</div>
 
                 </div>
             </section>

@@ -10,6 +10,8 @@ import com.spring.app.product.domain.ProductPriceStatsDTO;
 import com.spring.app.product.domain.ProductPriceTrendDTO;
 import com.spring.app.product.domain.ProductReportDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.ReviewDTO;
+import com.spring.app.product.domain.ReviewSummaryDTO;
 import com.spring.app.product.domain.SearchKeywordDTO;
 import com.spring.app.product.domain.SearchLogDTO;
 import com.spring.app.product.domain.WishlistDTO;
@@ -82,9 +84,14 @@ public interface ProductService {
 	Integer selectProductReportTypeId(ProductReportDTO reportDto);
 	int insertProductReport(ProductReportDTO reportDto);
 
+	//리뷰 조회(상품상세)
+	List<ReviewDTO> selectRecentReviewsByProductNo(int productNo);
+	int selectReviewCountBySellerEmail(String sellerEmail);
 	
-	
-	
+	//리뷰 조회(판매자정보)
+	ReviewSummaryDTO selectSellerReviewSummaryByProductNo(int productNo);
+	List<ReviewDTO> selectSellerReviewListByProductNo(Map<String, Object> paraMap);
+	int selectSellerReviewTotalCountByProductNo(Map<String, Object> paraMap);
 	}
 	
 	

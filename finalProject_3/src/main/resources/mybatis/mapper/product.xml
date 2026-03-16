@@ -188,7 +188,11 @@
                   )
             ) AS safePayCount,
 
-            0 AS reviewCount,
+            (
+    SELECT COUNT(*)
+    FROM REVIEWS
+    WHERE REVIEWS.TARGET_EMAIL = PRODUCTS.SELLER_EMAIL
+) AS reviewCount,
 
             (
                 SELECT COUNT(*)
@@ -1112,7 +1116,11 @@
             MEMBER.PROFILE_IMG AS sellerProfileImg,
             MEMBER.MANNER_TEMP AS mannerTemp,
 
-            0 AS reviewCount,
+           (
+    SELECT COUNT(*)
+    FROM REVIEWS
+    WHERE REVIEWS.TARGET_EMAIL = MEMBER.EMAIL
+) AS reviewCount,
             (
                 SELECT COUNT(*)
                 FROM TRANSACTIONS
@@ -1309,5 +1317,201 @@
             #{reportImg, jdbcType=VARCHAR}
         )
     </insert>
+    
+    
+    <!-- 리뷰 -->
+    <select id="selectRecentReviewsByProductNo"
+    parameterType="int"
+    resultType="com.spring.app.product.domain.ReviewDTO">
 
+    SELECT
+        reviewNo,
+        writerEmail,
+        targetEmail,
+        transactionId,
+        rating,
+        oneLineCat,
+        reviewContent,
+        createdAt,
+        writerName,
+        productName,
+        productImgUrl
+    FROM
+    (
+        SELECT
+            REVIEWS.REVIEW_NO AS reviewNo,
+            REVIEWS.WRITER_EMAIL AS writerEmail,
+            REVIEWS.TARGET_EMAIL AS targetEmail,
+            REVIEWS.TRANSACTION_ID AS transactionId,
+            REVIEWS.RATING AS rating,
+            REVIEWS.ONE_LINE_CAT AS oneLineCat,
+            REVIEWS.REVIEW_CONTENT AS reviewContent,
+            REVIEWS.CREATED_AT AS createdAt,
+            MEMBER.NICKNAME AS writerName,
+            PRODUCTS.PRODUCT_NAME AS productName,
+
+            (
+                SELECT PRODUCT_IMAGE.IMG_URL
+                FROM PRODUCT_IMAGE
+                WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                  AND PRODUCT_IMAGE.IS_MAIN = 'Y'
+                  AND ROWNUM = 1
+            ) AS productImgUrl,
+
+            ROW_NUMBER() OVER (ORDER BY REVIEWS.CREATED_AT DESC) AS rno
+
+        FROM PRODUCTS
+        JOIN TRANSACTIONS
+          ON PRODUCTS.PRODUCT_NO = TRANSACTIONS.PRODUCT_NO
+        JOIN REVIEWS
+          ON TRANSACTIONS.TRANSACTION_ID = REVIEWS.TRANSACTION_ID
+        JOIN MEMBER
+          ON REVIEWS.WRITER_EMAIL = MEMBER.EMAIL
+
+        WHERE REVIEWS.TARGET_EMAIL =
+        (
+            SELECT PRODUCTS.SELLER_EMAIL
+            FROM PRODUCTS
+            WHERE PRODUCTS.PRODUCT_NO = #{productNo}
+        )
+    )
+    WHERE rno BETWEEN 1 AND 3
+</select>
+
+<select id="selectReviewCountBySellerEmail"
+    parameterType="string"
+    resultType="int">
+
+    SELECT COUNT(*)
+    FROM REVIEWS
+    WHERE TARGET_EMAIL = #{sellerEmail}
+</select>
+
+
+<!-- 리뷰요약 -->
+<select id="selectSellerReviewSummaryByProductNo"
+    parameterType="int"
+    resultType="com.spring.app.product.domain.ReviewSummaryDTO">
+
+    SELECT
+        COUNT(*) AS totalCount,
+        NVL(ROUND(AVG(REVIEWS.RATING), 1), 0) AS avgRating,
+
+        NVL(SUM(CASE WHEN REVIEWS.ONE_LINE_CAT = '친절해요' THEN 1 ELSE 0 END), 0) AS kindCount,
+        NVL(SUM(CASE WHEN REVIEWS.ONE_LINE_CAT = '시간 약속 잘 지켜요' THEN 1 ELSE 0 END), 0) AS promiseCount,
+        NVL(SUM(CASE WHEN REVIEWS.ONE_LINE_CAT = '설명대로예요' THEN 1 ELSE 0 END), 0) AS sameDescCount,
+        NVL(SUM(CASE WHEN REVIEWS.ONE_LINE_CAT = '꼼꼼해요' THEN 1 ELSE 0 END), 0) AS carefulCount
+
+    FROM REVIEWS
+    WHERE REVIEWS.TARGET_EMAIL =
+    (
+        SELECT PRODUCTS.SELLER_EMAIL
+        FROM PRODUCTS
+        WHERE PRODUCTS.PRODUCT_NO = #{productNo}
+    )
+</select>
+
+<!-- 리뷰목록 -->
+<select id="selectSellerReviewListByProductNo"
+    parameterType="hashMap"
+    resultType="com.spring.app.product.domain.ReviewDTO">
+
+    SELECT
+        reviewNo,
+        writerEmail,
+        targetEmail,
+        transactionId,
+        rating,
+        oneLineCat,
+        reviewContent,
+        createdAt,
+        writerName,
+        writerProfileImg,
+        productName,
+        productImgUrl,
+        productImgUrls
+    FROM
+    (
+        SELECT
+            ROW_NUMBER() OVER (
+                <choose>
+                    <when test="sortType == 'high'">
+                        ORDER BY REVIEWS.RATING DESC, REVIEWS.CREATED_AT DESC
+                    </when>
+                    <when test="sortType == 'low'">
+                        ORDER BY REVIEWS.RATING ASC, REVIEWS.CREATED_AT DESC
+                    </when>
+                    <otherwise>
+                        ORDER BY REVIEWS.CREATED_AT DESC
+                    </otherwise>
+                </choose>
+            ) AS rno,
+
+            REVIEWS.REVIEW_NO AS reviewNo,
+            REVIEWS.WRITER_EMAIL AS writerEmail,
+            REVIEWS.TARGET_EMAIL AS targetEmail,
+            REVIEWS.TRANSACTION_ID AS transactionId,
+            REVIEWS.RATING AS rating,
+            REVIEWS.ONE_LINE_CAT AS oneLineCat,
+            REVIEWS.REVIEW_CONTENT AS reviewContent,
+            REVIEWS.CREATED_AT AS createdAt,
+
+            MEMBER.NICKNAME AS writerName,
+            MEMBER.PROFILE_IMG AS writerProfileImg,
+            PRODUCTS.PRODUCT_NAME AS productName,
+
+            (
+                SELECT PRODUCT_IMAGE.IMG_URL
+                FROM PRODUCT_IMAGE
+                WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+                  AND PRODUCT_IMAGE.IS_MAIN = 'Y'
+                  AND ROWNUM = 1
+            ) AS productImgUrl,
+
+            (
+                SELECT LISTAGG(PRODUCT_IMAGE.IMG_URL, '||') WITHIN GROUP (ORDER BY PRODUCT_IMAGE.SORT_NO)
+                FROM PRODUCT_IMAGE
+                WHERE PRODUCT_IMAGE.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+            ) AS productImgUrls
+
+        FROM REVIEWS
+        JOIN MEMBER
+          ON REVIEWS.WRITER_EMAIL = MEMBER.EMAIL
+        JOIN TRANSACTIONS
+          ON REVIEWS.TRANSACTION_ID = TRANSACTIONS.TRANSACTION_ID
+        JOIN PRODUCTS
+          ON TRANSACTIONS.PRODUCT_NO = PRODUCTS.PRODUCT_NO
+
+       WHERE REVIEWS.TARGET_EMAIL =
+(
+    SELECT PRODUCTS.SELLER_EMAIL
+    FROM PRODUCTS
+    WHERE PRODUCTS.PRODUCT_NO = #{productNo}
+)
+
+<if test="reviewCategory != null and reviewCategory != ''">
+    AND REVIEWS.ONE_LINE_CAT = #{reviewCategory}
+</if>
+    )
+    WHERE rno BETWEEN #{startRow} AND #{endRow}
+</select>
+<!-- 리뷰 총 개수 -->
+
+<select id="selectSellerReviewTotalCountByProductNo"
+    parameterType="hashMap"
+    resultType="int">
+
+    SELECT COUNT(*)
+    FROM REVIEWS
+    WHERE REVIEWS.TARGET_EMAIL =
+    (
+        SELECT PRODUCTS.SELLER_EMAIL
+        FROM PRODUCTS
+        WHERE PRODUCTS.PRODUCT_NO = #{productNo}
+    )
+
+    <if test="reviewCategory != null and reviewCategory != ''">
+        AND REVIEWS.ONE_LINE_CAT = #{reviewCategory}
+    </if>
+</select>
 </mapper>
