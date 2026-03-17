@@ -44,6 +44,7 @@ public interface MyPageDAO {
     int insertReview(Map<String, Object> params);
 
     // 계좌
+    AccountDTO getPrimaryAccount(String email);
     List<AccountDTO> getAccountList(String email);
     int getAccountCount(String email);
     int insertAccount(AccountDTO account);

@@ -138,6 +138,10 @@ jwt:
 aes256:
   secret-key: FinalProject3!@#$
 
+account:
+  encryption:
+    key: FP3AccountKey1234  # AES-128 키 (유틸에서 16바이트로 자동 조정)
+
 toss:
   payments:
     client-key: test_ck_4yKeq5bgrpzZ5k20qP1p3GX0lzW6

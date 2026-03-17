@@ -133,6 +133,11 @@ public class MyPageDAO_imple implements MyPageDAO {
 
     // 계좌
     @Override
+    public AccountDTO getPrimaryAccount(String email) {
+        return sqlsession.selectOne(ns + ".getPrimaryAccount", email);
+    }
+
+    @Override
     public List<AccountDTO> getAccountList(String email) {
         return sqlsession.selectList(ns + ".getAccountList", email);
     }
