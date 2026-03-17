@@ -320,6 +320,23 @@
         VALUES (#{reviewNo}, #{writerEmail}, #{targetEmail}, #{transactionId}, #{rating}, #{oneLineCat}, #{reviewContent, jdbcType=VARCHAR}, SYSDATE)
     </insert>
 
+    <!-- ===== 내 통계 ===== -->
+    <select id="getMySafePayCount" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM TRANSACTIONS t
+        JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
+        WHERE p.SELLER_EMAIL = #{email}
+          AND t.USE_ESCROW = 'Y'
+          AND t.PAY_STATUS = 'DONE'
+    </select>
+
+    <select id="getMyTradeCount" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM PRODUCTS
+        WHERE SELLER_EMAIL = #{email}
+          AND TRADE_STATUS = '판매완료'
+    </select>
+
     <!-- ===== 신고관리 ===== -->
 
     <select id="getMyReportsSent" parameterType="String" resultType="com.spring.app.mypage.domain.MyReportDTO">

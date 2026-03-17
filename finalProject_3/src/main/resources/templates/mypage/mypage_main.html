@@ -53,11 +53,11 @@
                 <div class="mp-stats-card">
                     <div class="mp-stat-item">
                         <span class="k">안심결제</span>
-                        <span class="v">5</span>
+                        <span class="v" th:text="${safePayCount != null ? safePayCount : 0}">0</span>
                     </div>
                     <div class="mp-stat-item">
                         <span class="k">거래횟수</span>
-                        <span class="v">5</span>
+                        <span class="v" th:text="${tradeCount != null ? tradeCount : 0}">0</span>
                     </div>
                 </div>
             </div>
@@ -1079,10 +1079,11 @@
                         <span class="rp-label">신고 상품</span>
                         ${productLink}
                     </div>
+                    ${isSent ? `
                     <div class="rp-card-row">
                         <span class="rp-label">${nicknameLabel}</span>
                         <span class="rp-value">${nicknameValue}</span>
-                    </div>
+                    </div>` : ''}
                     <div class="rp-card-row">
                         <span class="rp-label">신고 유형</span>
                         <span class="rp-value">${r.mainCategory ? r.mainCategory + ' > ' : ''}${r.typeName || '-'}</span>

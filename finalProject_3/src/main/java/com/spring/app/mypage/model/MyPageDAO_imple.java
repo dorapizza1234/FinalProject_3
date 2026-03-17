@@ -198,6 +198,17 @@ public class MyPageDAO_imple implements MyPageDAO {
         return sqlsession.update(ns + ".setPrimaryDelivery", params);
     }
 
+    // 내 통계
+    @Override
+    public int getMySafePayCount(String email) {
+        return sqlsession.selectOne(ns + ".getMySafePayCount", email);
+    }
+
+    @Override
+    public int getMyTradeCount(String email) {
+        return sqlsession.selectOne(ns + ".getMyTradeCount", email);
+    }
+
     // 신고관리
     @Override
     public List<MyReportDTO> getMyReportsSent(String email) {

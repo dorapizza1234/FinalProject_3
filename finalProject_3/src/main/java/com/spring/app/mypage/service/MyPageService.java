@@ -60,6 +60,10 @@ public interface MyPageService {
     int deleteDelivery(Map<String, Object> params);
     int setPrimaryDelivery(Map<String, Object> params);
 
+    // 내 통계
+    int getMySafePayCount(String email);
+    int getMyTradeCount(String email);
+
     // 신고관리
     List<MyReportDTO> getMyReportsSent(String email);
     List<MyReportDTO> getMyReportsReceived(String email);

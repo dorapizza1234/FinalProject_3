@@ -166,6 +166,17 @@ public class MyPageService_imple implements MyPageService {
         return myPageDAO.setPrimaryDelivery(params);
     }
 
+    // 내 통계
+    @Override
+    public int getMySafePayCount(String email) {
+        return myPageDAO.getMySafePayCount(email);
+    }
+
+    @Override
+    public int getMyTradeCount(String email) {
+        return myPageDAO.getMyTradeCount(email);
+    }
+
     // 신고관리
     @Override
     public List<MyReportDTO> getMyReportsSent(String email) {

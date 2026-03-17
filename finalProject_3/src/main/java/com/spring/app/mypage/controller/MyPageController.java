@@ -79,6 +79,8 @@ public class MyPageController {
                     profileImgUrl = ctxPath + "/resources/profile_images/" + profileImg;
                 }
                 model.addAttribute("profileImgUrl", profileImgUrl);
+                model.addAttribute("safePayCount", myPageService.getMySafePayCount(principal.getName()));
+                model.addAttribute("tradeCount", myPageService.getMyTradeCount(principal.getName()));
             }
         }
         return "mypage/mypage_main";
