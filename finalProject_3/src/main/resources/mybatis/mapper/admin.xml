@@ -126,10 +126,10 @@
                        NICKNAME as nickname, PROFILE_IMG as profileImg
                 FROM MEMBER
                 <where>
-                    <if test="status != null and status == '1'">
+                    <if test='status != null and status == "1"'>
                         STATUS = 1 AND SUSPENDED = 0 AND IDLE = 0
                     </if>
-                    <if test="status != null and status == '0'">
+                    <if test='status != null and status == "0"'>
                         (STATUS = 0 OR SUSPENDED = 1)
                     </if>
                     <if test="keyword != null and keyword != ''">
@@ -147,10 +147,10 @@
     <select id="countSearchMembers" parameterType="map" resultType="int">
         SELECT COUNT(*) FROM MEMBER
         <where>
-            <if test="status != null and status == '1'">
+            <if test='status != null and status == "1"'>
                 STATUS = 1 AND SUSPENDED = 0 AND IDLE = 0
             </if>
-            <if test="status != null and status == '0'">
+            <if test='status != null and status == "0"'>
                 (STATUS = 0 OR SUSPENDED = 1)
             </if>
             <if test="keyword != null and keyword != ''">
@@ -197,6 +197,10 @@
         DELETE FROM SUSPEND_SCHEDULE WHERE SCHEDULE_ID = #{scheduleId}
     </delete>
 
+    <delete id="deleteUserSuspendSchedule" parameterType="int">
+        DELETE FROM SUSPEND_SCHEDULE WHERE USER_NO = #{userNo}
+    </delete>
+
     <select id="hasPendingSuspension" parameterType="int" resultType="int">
         SELECT COUNT(*) FROM SUSPEND_SCHEDULE WHERE USER_NO = #{userNo}
     </select>
@@ -208,7 +212,7 @@
                p.PRODUCT_NAME as productName,
                p.PRODUCT_PRICE as productPrice,
                p.TRADE_STATUS as tradeStatus,
-               TO_CHAR(p.REG_DATE, 'YYYY-MM-DD') as regDate,
+               p.REG_DATE as regDate,
                c.CATEGORY_NAME as categoryName
         FROM PRODUCTS p
         JOIN MEMBER m ON p.SELLER_EMAIL = m.EMAIL
@@ -256,10 +260,16 @@
         p.trade_status AS tradeStatus,
         p.reg_date AS regDate,
         m.nickname AS sellerName
+        <if test="filter == 'reported'">
+        ,(SELECT COUNT(*) FROM REPORTS r2 WHERE r2.PRODUCT_NUM = p.PRODUCT_NO) AS reportCount
+        ,(SELECT LISTAGG(rt.TYPE_NAME, ', ') WITHIN GROUP (ORDER BY rt.TYPE_ID)
+          FROM REPORTS r3 JOIN REPORT_TYPES rt ON r3.TYPE_ID = rt.TYPE_ID
+          WHERE r3.PRODUCT_NUM = p.PRODUCT_NO) AS reportTypes
+        </if>
     FROM products p
     JOIN member m ON p.seller_email = m.email
     <if test="filter == 'reported'">
-    JOIN (SELECT DISTINCT TARGET_NO FROM REPORTS WHERE TARGET_TYPE = '상품') r ON p.PRODUCT_NO = r.TARGET_NO
+    JOIN (SELECT DISTINCT PRODUCT_NUM FROM REPORTS WHERE PRODUCT_NUM IS NOT NULL) r ON p.PRODUCT_NO = r.PRODUCT_NUM
     </if>
     <where>
         <if test="status != null and status != ''">
@@ -274,7 +284,7 @@
     SELECT COUNT(*)
     FROM products p
     <if test="filter == 'reported'">
-    JOIN (SELECT DISTINCT TARGET_NO FROM REPORTS WHERE TARGET_TYPE = '상품') r ON p.PRODUCT_NO = r.TARGET_NO
+    JOIN (SELECT DISTINCT PRODUCT_NUM FROM REPORTS WHERE PRODUCT_NUM IS NOT NULL) r ON p.PRODUCT_NO = r.PRODUCT_NUM
     </if>
     <where>
         <if test="status != null and status != ''">
@@ -432,7 +442,7 @@
     </select>
 		
 		<select id="getReportedProductCount" resultType="int">
-    SELECT COUNT(*) FROM REPORTS
+    SELECT COUNT(DISTINCT PRODUCT_NUM) FROM REPORTS WHERE PRODUCT_NUM IS NOT NULL
 </select>
 
 <!-- 미처리 신고+문의 건수 -->

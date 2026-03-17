@@ -49,6 +49,7 @@ public interface AdminDAO {
     List<Map<String, Object>> getDueSuspensions();
     void deleteSuspendSchedule(int scheduleId);
     int hasPendingSuspension(int userNo);
+    void deleteUserSuspendSchedule(int userNo);
 
     List<ProductDTO> getMemberActiveProducts(int userNo);
 

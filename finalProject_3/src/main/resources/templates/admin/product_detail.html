@@ -199,7 +199,7 @@
                     <div th:if="${product.images != null and not #lists.isEmpty(product.images)}"
                          class="img-gallery">
                         <img th:each="img : ${product.images}"
-                             th:src="${img}"
+                             th:src="@{${img}}"
                              class="img-thumb"
                              alt="상품이미지"
                              onclick="openImgModal(this.src)">

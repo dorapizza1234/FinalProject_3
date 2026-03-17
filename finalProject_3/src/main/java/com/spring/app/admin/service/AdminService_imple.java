@@ -482,7 +482,10 @@ public class AdminService_imple implements AdminService {
 	public void suspendMember(int userNo) { dao.suspendMember(userNo); }
 
 	@Override
-	public void unsuspendMember(int userNo) { dao.unsuspendMember(userNo); }
+	public void unsuspendMember(int userNo) {
+		dao.unsuspendMember(userNo);
+		dao.deleteUserSuspendSchedule(userNo);
+	}
 
 	@Override
 	public void permanentBanMember(int userNo) { dao.permanentBanMember(userNo); }

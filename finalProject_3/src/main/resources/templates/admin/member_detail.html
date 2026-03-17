@@ -4,58 +4,239 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원 상세 관리 - 관리자</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/admin/sideBar.css}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
+
     <style>
-        .info-label { width: 160px; background-color: #f8f9fa; font-weight: bold; vertical-align: middle; }
-        .action-card { border-top: 4px solid #0d6efd; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .profile-section { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .main-content { min-height: 100vh; background-color: #f4f7f6; }
+        body { background-color: #f0f2f5; }
+        .main-content { min-height: 100vh; background-color: #f0f2f5; }
+
+        /* 프로필 섹션 */
+        .profile-section {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+        }
+        .profile-avatar {
+            width: 100px; height: 100px;
+            object-fit: cover;
+            border: 3px solid #e8eaed;
+        }
+        .manner-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* 상태 배지 */
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .status-active    { background: #d1fae5; color: #065f46; }
+        .status-withdrawn { background: #f3f4f6; color: #6b7280; }
+        .status-suspended { background: #fef3c7; color: #92400e; }
+        .status-banned    { background: #fee2e2; color: #991b1b; }
+        .status-idle      { background: #e0e7ff; color: #3730a3; }
+
+        /* 정보 테이블 */
+        .info-card {
+            border: 1px solid #e8eaed;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .info-card .card-header {
+            background: #f8f9fc;
+            border-bottom: 1px solid #e8eaed;
+            font-size: 0.9rem;
+            color: #374151;
+            padding: 12px 18px;
+        }
+        .info-label {
+            width: 140px;
+            background-color: #f8f9fc;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #6b7280;
+            vertical-align: middle;
+            border-color: #e8eaed !important;
+        }
+        .info-card td {
+            border-color: #e8eaed !important;
+            font-size: 0.9rem;
+            color: #111827;
+            vertical-align: middle;
+            padding: 10px 14px;
+        }
+        .auth-badge {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            font-size: 0.78rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        /* 처분 카드 */
+        .action-card {
+            border: 1px solid #e8eaed;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .action-card .card-header {
+            background: #1e2a3a;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            padding: 13px 18px;
+            border: none;
+        }
+        .action-card .card-body { padding: 20px; }
+        .form-label { font-size: 0.82rem; font-weight: 600; color: #374151; }
+        .form-control {
+            border-color: #d1d5db;
+            font-size: 0.875rem;
+            border-radius: 8px;
+        }
+        .form-control:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+
+        /* 버튼 */
+        .btn-send {
+            background: #4f46e5;
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 9px;
+        }
+        .btn-send:hover:not(:disabled) { background: #4338ca; color: #fff; }
+        .btn-send:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn-suspend-outline {
+            border: 1.5px solid #d97706;
+            color: #d97706;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            padding: 9px;
+        }
+        .btn-suspend-outline:hover { background: #fffbeb; color: #d97706; }
+        .btn-ban {
+            background: #dc2626;
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            padding: 9px;
+        }
+        .btn-ban:hover { background: #b91c1c; color: #fff; }
+
+        /* 탈퇴 안내 박스 */
+        .withdrawn-notice {
+            background: #f9fafb;
+            border: 1.5px dashed #d1d5db;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .withdrawn-notice .wi-icon {
+            font-size: 2.2rem;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+        .withdrawn-notice p { color: #6b7280; font-size: 0.88rem; margin: 0; }
+
+        /* 상단 헤더 */
+        .page-header h4 { font-size: 1.1rem; color: #1e2a3a; }
+        .btn-back {
+            border: 1px solid #d1d5db;
+            color: #374151;
+            background: #fff;
+            font-size: 0.82rem;
+            border-radius: 7px;
+        }
+        .btn-back:hover { background: #f3f4f6; color: #111827; }
+
+        /* 안내 메시지 */
+        .action-notice {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #166534;
+            padding: 8px 12px;
+        }
+
+        hr.divider { border-color: #e5e7eb; margin: 14px 0; }
     </style>
 </head>
 <body class="d-flex">
     <aside th:replace="~{admin/admin_sidebar :: adminSidebar}"></aside>
 
     <main class="main-content w-100 p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold"><i class="bi bi-person-badge"></i> 회원 상세 정보 및 관리</h4>
-            <a th:href="@{/admin/member}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left"></i> 목록으로 돌아가기
+        <div class="d-flex justify-content-between align-items-center mb-4 page-header">
+            <h4 class="fw-bold mb-0"><i class="bi bi-person-badge me-2"></i>회원 상세 정보 및 관리</h4>
+            <a th:href="@{/admin/member}" class="btn btn-back btn-sm px-3">
+                <i class="bi bi-arrow-left me-1"></i> 목록으로
             </a>
         </div>
 
         <div class="row g-4" th:if="${member != null}">
+            <!-- 왼쪽: 프로필 + 정보 테이블 -->
             <div class="col-lg-8">
+                <!-- 프로필 카드 -->
                 <div class="profile-section d-flex align-items-center mb-4">
-                    <img th:src="${member.profileImg != null ? member.profileImg : 'https://via.placeholder.com/150'}" 
-                         class="rounded-circle border me-4" style="width: 120px; height: 120px; object-fit: cover;">
+                    <img th:src="${member.profileImg != null ? member.profileImg : 'https://via.placeholder.com/100'}"
+                         class="rounded-circle profile-avatar me-4 flex-shrink-0">
                     <div>
-                        <h2 class="fw-bold mb-1" th:text="${member.nickname}">닉네임</h2>
-                        <div class="mb-2">
-                            <span class="badge bg-primary me-1" th:text="${member.mannerTemp} + '℃'">50℃</span>
-                            <span>
-                                <span th:if="${member.status == 0}" class="badge bg-dark">탈퇴회원</span>
-                                <th:block th:if="${member.status == 1}">
-                                    <span th:if="${member.suspended == 0}" class="badge bg-success">활동중</span>
-                                    <span th:if="${member.suspended == 1}" class="badge bg-warning text-dark">일시정지</span>
-                                    <span th:if="${member.suspended == -1}" class="badge bg-danger">영구정지</span>
-                                    <span th:if="${member.idle == 1}" class="badge bg-secondary">휴면</span>
-                                </th:block>
+                        <h5 class="fw-bold mb-2" th:text="${member.nickname}">닉네임</h5>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="manner-badge" th:text="${member.mannerTemp} + '°C'">36.5°C</span>
+
+                            <!-- 탈퇴 -->
+                            <span th:if="${member.status == 0}" class="status-badge status-withdrawn">
+                                <i class="bi bi-person-dash me-1"></i>탈퇴회원
                             </span>
+
+                            <!-- 활동중 / 정지 / 영구정지 / 휴면 -->
+                            <th:block th:if="${member.status == 1}">
+                                <span th:if="${member.suspended == 0 and member.idle != 1}" class="status-badge status-active">
+                                    <i class="bi bi-circle-fill me-1" style="font-size:0.55rem;vertical-align:middle;"></i>활동중
+                                </span>
+                                <span th:if="${member.suspended == 1}" class="status-badge status-suspended">
+                                    <i class="bi bi-pause-circle me-1"></i>일시정지
+                                </span>
+                                <span th:if="${member.suspended == -1}" class="status-badge status-banned">
+                                    <i class="bi bi-x-circle me-1"></i>영구정지
+                                </span>
+                                <span th:if="${member.idle == 1}" class="status-badge status-idle">
+                                    <i class="bi bi-moon me-1"></i>휴면
+                                </span>
+                            </th:block>
                         </div>
-                        <p class="text-muted mb-0 small" th:text="'가입일: ' + ${member.regDate}"></p>
+                        <p class="mb-0 mt-2" style="font-size:0.82rem; color:#4b5563;" th:text="'가입일: ' + ${member.regDate}"></p>
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white fw-bold">회원 기본 및 활동 정보</div>
+                <!-- 정보 테이블 -->
+                <div class="info-card">
+                    <div class="card-header fw-bold">
+                        <i class="bi bi-list-ul me-2"></i>회원 기본 및 활동 정보
+                    </div>
                     <div class="table-responsive">
-                        <table class="table table-bordered mb-0">
+                        <table class="table mb-0">
                             <tr>
-                                <td class="info-label text-center">이메일(ID)</td>
+                                <td class="info-label text-center">이메일 (ID)</td>
                                 <td th:text="${member.email}"></td>
                                 <td class="info-label text-center">회원번호</td>
                                 <td th:text="${member.userNo}"></td>
@@ -74,12 +255,16 @@
                             </tr>
                             <tr>
                                 <td class="info-label text-center">주소</td>
-                                <td colspan="3" th:text="${member.address != null} ? ('[' + ${member.postcode} + '] ' + ${member.address} + ' ' + ${member.detailaddress} + ' ' + (${member.extraaddress != null ? member.extraaddress : ''})) : '정보 없음'"></td>
+                                <td colspan="3"
+                                    th:text="${member.address != null}
+                                        ? ('[' + ${member.postcode} + '] ' + ${member.address} + ' ' + ${member.detailaddress} + ' ' + (${member.extraaddress != null ? member.extraaddress : ''}))
+                                        : '정보 없음'"></td>
                             </tr>
                             <tr>
                                 <td class="info-label text-center">보유 권한</td>
                                 <td colspan="3">
-                                    <span th:each="auth : ${member.authorities}" th:text="${auth}" class="badge bg-light text-dark border me-1"></span>
+                                    <span th:each="auth : ${member.authorities}"
+                                          th:text="${auth}" class="auth-badge me-1"></span>
                                 </td>
                             </tr>
                         </table>
@@ -87,44 +272,58 @@
                 </div>
             </div>
 
+            <!-- 오른쪽: 처분 카드 -->
             <div class="col-lg-4">
-                <div class="card action-card">
-                    <div class="card-header bg-white fw-bold text-primary">
-                        <i class="bi bi-exclamation-triangle"></i> 계정 처분 및 메시지 발송
+                <div class="action-card">
+                    <div class="card-header fw-bold">
+                        <i class="bi bi-shield-exclamation me-2"></i>계정 처분 및 메시지 발송
                     </div>
                     <div class="card-body">
-                        <div class="alert alert-warning small py-2">
-                            <i class="bi bi-info-circle"></i> 메시지는 즉시 발송되며, 처분 예약 시 3일의 유예 기간이 부여됩니다.
+
+                        <!-- 탈퇴 회원: 메시지 발송 불가 안내 -->
+                        <div th:if="${member.status == 0}" class="withdrawn-notice mb-3">
+                            <div class="wi-icon"><i class="bi bi-person-slash"></i></div>
+                            <p class="fw-semibold mb-1" style="color:#4b5563;">탈퇴한 회원입니다</p>
+                            <p>탈퇴 회원에게는 메시지를<br>발송할 수 없습니다.</p>
                         </div>
-                        
-                        <form id="adminActionForm">
-                            <input type="hidden" id="targetUserNo" th:value="${member.userNo}">
-                            <input type="hidden" id="targetEmail" th:value="${member.email}">
 
-                            <div class="mb-2">
-                                <label class="form-label fw-bold small">제목</label>
-                                <input type="text" id="adminTitle" class="form-control"
-                                       placeholder="메시지 제목을 입력하세요.">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small">내용</label>
-                                <textarea id="adminMessage" class="form-control" rows="5"
-                                          placeholder="회원에게 전달될 내용을 입력하세요."></textarea>
+                        <!-- 활동중 회원: 메시지 + 처분 폼 -->
+                        <th:block th:if="${member.status != 0}">
+                            <div class="action-notice mb-3">
+                                <i class="bi bi-info-circle me-1"></i>
+                                메시지는 즉시 발송되며, 처분 예약 시 3일의 유예 기간이 부여됩니다.
                             </div>
 
-                            <div class="d-grid gap-2">
-                                <button type="button" id="sendMsgBtn" class="btn btn-primary" onclick="sendMessageOnly()">
-                                    <i class="bi bi-send me-1"></i>메시지 전송
-                                </button>
-                                <hr class="my-2">
-                                <button type="button" class="btn btn-outline-danger" onclick="alert('준비 중인 기능입니다.')">
-                                    <i class="bi bi-clock-history"></i> 3일 후 일시정지 예약
-                                </button>
-                                <button type="button" class="btn btn-danger" onclick="alert('준비 중인 기능입니다.')">
-                                    <i class="bi bi-person-x"></i> 3일 후 강제 탈퇴 예약
-                                </button>
-                            </div>
-                        </form>
+                            <form id="adminActionForm">
+                                <input type="hidden" id="targetUserNo" th:value="${member.userNo}">
+                                <input type="hidden" id="targetEmail" th:value="${member.email}">
+
+                                <div class="mb-2">
+                                    <label class="form-label">제목</label>
+                                    <input type="text" id="adminTitle" class="form-control"
+                                           placeholder="메시지 제목을 입력하세요.">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">내용</label>
+                                    <textarea id="adminMessage" class="form-control" rows="5"
+                                              placeholder="회원에게 전달될 내용을 입력하세요."></textarea>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button type="button" id="sendMsgBtn" class="btn btn-send" onclick="sendMessageOnly()">
+                                        <i class="bi bi-send me-1"></i>메시지 전송
+                                    </button>
+                                    <hr class="divider">
+                                    <button type="button" class="btn btn-suspend-outline" onclick="alert('준비 중인 기능입니다.')">
+                                        <i class="bi bi-clock-history me-1"></i>3일 후 일시정지 예약
+                                    </button>
+                                    <button type="button" class="btn btn-ban" onclick="alert('준비 중인 기능입니다.')">
+                                        <i class="bi bi-person-x me-1"></i>3일 후 강제 탈퇴 예약
+                                    </button>
+                                </div>
+                            </form>
+                        </th:block>
+
                     </div>
                 </div>
             </div>
@@ -137,6 +336,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script th:inline="javascript">
+    // 전화번호 하이픈 포맷
+    function formatPhone(p) {
+        if (!p) return '-';
+        const d = p.replace(/\D/g, '');
+        if (d.length === 11) return d.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+        if (d.length === 10) return d.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+        return p;
+    }
+    document.querySelectorAll('td').forEach(td => {
+        const text = td.textContent.trim();
+        if (/^0\d{9,10}$/.test(text.replace(/-/g,''))) {
+            td.textContent = formatPhone(text);
+        }
+    });
+
     const contextPath = /*[[@{/}]]*/ '/';
     function sendMessageOnly() {
         const email   = document.getElementById('targetEmail').value;
@@ -156,13 +370,15 @@
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                btn.className = 'btn btn-success';
+                btn.className = 'btn btn-send';
+                btn.style.background = '#059669';
                 btn.innerHTML = '<i class="bi bi-check2 me-1"></i>전송완료';
                 document.getElementById('adminTitle').value = '';
                 document.getElementById('adminMessage').value = '';
                 setTimeout(() => {
                     btn.disabled = false;
-                    btn.className = 'btn btn-primary';
+                    btn.style.background = '';
+                    btn.className = 'btn btn-send';
                     btn.innerHTML = '<i class="bi bi-send me-1"></i>메시지 전송';
                 }, 2500);
             } else {

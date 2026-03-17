@@ -542,6 +542,8 @@ public class AdminController {
             result.put("success", true);
         } catch (Exception e) {
             result.put("success", false);
+            result.put("message", e.getMessage());
+            e.printStackTrace();
         }
         return result;
     }

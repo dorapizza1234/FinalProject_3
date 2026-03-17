@@ -25,11 +25,15 @@
             border-left: 4px solid #dee2e6;
         }
         .stat-card-link:hover { transform: translateY(-2px); box-shadow: 0 0.5rem 2rem rgba(58,59,69,.2); color: inherit; }
-        .stat-card-link.active-filter { box-shadow: 0 0 0 3px #4e73df, 0 0.15rem 1.75rem rgba(58,59,69,.1); }
         .stat-card-link.border-primary   { border-left-color: #4e73df !important; }
         .stat-card-link.border-warning   { border-left-color: #f6c23e !important; }
         .stat-card-link.border-danger    { border-left-color: #e74a3b !important; }
         .stat-card-link.border-success   { border-left-color: #1cc88a !important; }
+        /* active-filter: 카드별 고유 색상 테두리 */
+        .stat-card-link.border-primary.active-filter { box-shadow: 0 0 0 3px #4e73df, 0 0.15rem 1.75rem rgba(58,59,69,.1); }
+        .stat-card-link.border-warning.active-filter { box-shadow: 0 0 0 3px #f6c23e, 0 0.15rem 1.75rem rgba(58,59,69,.1); }
+        .stat-card-link.border-danger.active-filter  { box-shadow: 0 0 0 3px #e74a3b, 0 0.15rem 1.75rem rgba(58,59,69,.1); }
+        .stat-card-link.border-success.active-filter { box-shadow: 0 0 0 3px #1cc88a, 0 0.15rem 1.75rem rgba(58,59,69,.1); }
 
         /* status badges */
         .status-badge { padding: 5px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; }
@@ -149,29 +153,43 @@
 
     <!-- ── 테이블 ── -->
     <div class="card p-0 overflow-hidden border-0 shadow-sm">
-        <table class="table table-hover mb-0 text-center align-middle">
+        <table class="table table-hover mb-0 text-center align-middle" style="table-layout:fixed;">
+            <colgroup>
+                <col style="width:56px;">
+                <col style="width:16%;">
+                <col><!-- 상품명: 남은 너비 -->
+                <col style="width:9%;">
+                <col style="width:9%;">
+                <col style="width:8%;">
+                <col style="width:9%;">
+                <th:block th:if="${selectedFilter=='reported'}"><col style="width:14%;"></th:block>
+                <col style="width:9%;">
+            </colgroup>
             <thead>
                 <tr>
-                    <th style="width:70px;">번호</th>
+                    <th>번호</th>
                     <th>판매자</th>
                     <th class="text-start">상품명</th>
                     <th>카테고리</th>
                     <th>판매가격</th>
                     <th>거래상태</th>
                     <th>등록일</th>
+                    <th th:if="${selectedFilter=='reported'}" class="text-danger">신고유형</th>
                     <th>관리</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:if="${#lists.isEmpty(productList)}">
-                    <td colspan="8" class="py-5 text-muted">해당하는 상품이 없습니다.</td>
+                    <td th:colspan="${selectedFilter=='reported' ? 9 : 8}" class="py-5 text-muted">해당하는 상품이 없습니다.</td>
                 </tr>
                 <tr th:each="product, stat : ${productList}"
                     th:classappend="${product.suspect} ? 'table-warning-subtle' : ''">
                     <td class="text-muted small" th:text="${(currentPage-1)*size + stat.count}">1</td>
-                    <td><small class="fw-bold" th:text="${product.sellerEmail}">email</small></td>
-                    <td class="text-start">
-                        <span class="fw-bold" th:text="${product.productName}">상품명</span>
+                    <td class="text-truncate" style="max-width:0;">
+                        <small class="fw-bold" th:text="${product.sellerEmail}" th:title="${product.sellerEmail}">email</small>
+                    </td>
+                    <td class="text-start text-truncate" style="max-width:0;">
+                        <span class="fw-bold" th:text="${product.productName}" th:title="${product.productName}">상품명</span>
                         <span th:if="${product.suspect}" class="badge bg-danger ms-1"
                               style="font-size:.65rem;padding:2px 5px;">⚠️ 의심</span>
                     </td>
@@ -186,6 +204,18 @@
                               th:text="${product.tradeStatus}">판매중</span>
                     </td>
                     <td th:text="${product.regDate != null ? #dates.format(product.regDate,'yyyy-MM-dd') : ''}"></td>
+                    <!-- 신고유형 (reported 필터일 때만) -->
+                    <td th:if="${selectedFilter=='reported'}">
+                        <div class="d-flex flex-column align-items-center gap-1">
+                            <span class="badge bg-danger-subtle text-danger fw-semibold"
+                                  style="font-size:.7rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                                  th:text="${product.reportTypes != null ? product.reportTypes : '기타'}"
+                                  th:title="${product.reportTypes}"></span>
+                            <small class="text-muted" th:text="${product.reportCount + '건'}"></small>
+                            <a th:href="@{/admin/complaint}" class="btn btn-outline-danger rounded-pill"
+                               style="font-size:.68rem;padding:2px 8px;">신고보기</a>
+                        </div>
+                    </td>
                     <td>
                         <a th:href="@{/admin/productDetail(productNo=${product.productNo})}"
                            class="btn btn-sm btn-outline-dark rounded-pill px-3">상세보기</a>

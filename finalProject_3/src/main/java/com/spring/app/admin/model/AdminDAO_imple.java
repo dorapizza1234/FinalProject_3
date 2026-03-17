@@ -117,6 +117,11 @@ public class AdminDAO_imple implements AdminDAO {
 	}
 
 	@Override
+	public void deleteUserSuspendSchedule(int userNo) {
+		sqlsession.delete(admin + ".deleteUserSuspendSchedule", userNo);
+	}
+
+	@Override
 	public List<ProductDTO> getMemberActiveProducts(int userNo) {
 		return sqlsession.selectList(admin + ".getMemberActiveProducts", userNo);
 	}

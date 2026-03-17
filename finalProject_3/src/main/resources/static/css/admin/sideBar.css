@@ -28,6 +28,8 @@
             height: 100vh;
             overflow-y: auto;
             z-index: 100;
+            font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+            font-size: 13px;
         }
         .admin-profile {
             padding: 32px 16px 20px;

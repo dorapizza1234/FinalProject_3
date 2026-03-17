@@ -80,6 +80,9 @@ public class ProductDTO {
     
     // 관리자 페이지 전용 의심 플래그
     private boolean suspect;
+    // 관리자 신고 필터 전용
+    private int reportCount;
+    private String reportTypes;
     
     //로그인 접속 시간
     private Date lastLoginDate;
