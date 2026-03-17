@@ -283,6 +283,7 @@
                t.AMOUNT        AS amount,
                t.PAYMENT_TYPE  AS paymentType,
                t.TRADE_STATUS  AS tradeStatus,
+               t.PAY_STATUS    AS payStatus,
                TO_CHAR(t.TRADE_DATE, 'YYYY-MM-DD HH24:MI') AS tradeDate,
                pi.IMG_URL      AS imgUrl,
                t.TRANSACTION_ID AS transactionId,
@@ -294,6 +295,7 @@
         JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
         LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
         WHERE t.BUYER_EMAIL = #{email}
+          AND t.PAY_STATUS != 'READY'
         ORDER BY t.TRADE_DATE DESC
     </select>
 

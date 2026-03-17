@@ -12,6 +12,9 @@ public interface PaymentDAO {
     // 거래 생성 (READY 상태)
     int insertTransaction(TransactionDTO dto);
 
+    // 동일 상품+구매자의 기존 READY 거래 조회 (중복 방지)
+    TransactionDTO selectReadyTransaction(Map<String, Object> paraMap);
+
     // 거래 조회 (tossOrderId 기준)
     TransactionDTO selectTransactionByOrderId(String tossOrderId);
 

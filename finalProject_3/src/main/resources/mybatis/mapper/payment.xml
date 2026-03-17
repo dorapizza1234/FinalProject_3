@@ -32,6 +32,26 @@
         WHERE P.PRODUCT_NO = #{productNo}
     </insert>
 
+    <!-- ===================== 기존 READY 거래 조회 (중복 방지용) ===================== -->
+    <select id="selectReadyTransaction" parameterType="Map"
+            resultType="com.spring.app.payment.domain.TransactionDTO">
+        SELECT TRANSACTION_ID AS transactionId,
+               PRODUCT_NO     AS productNo,
+               BUYER_EMAIL    AS buyerEmail,
+               PAYMENT_TYPE   AS paymentType,
+               AMOUNT         AS amount,
+               PAY_STATUS     AS payStatus,
+               TOSS_ORDER_ID  AS tossOrderId,
+               TOSS_PAY_KEY   AS tossPayKey,
+               USE_ESCROW     AS useEscrow
+        FROM TRANSACTIONS
+        WHERE PRODUCT_NO  = #{productNo}
+          AND BUYER_EMAIL = #{buyerEmail}
+          AND PAY_STATUS  = 'READY'
+        ORDER BY TRADE_DATE DESC
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+
     <!-- ===================== 거래 조회 (orderId) ===================== -->
 	<select id="selectTransactionByOrderId" parameterType="String"
             resultType="com.spring.app.payment.domain.TransactionDTO">

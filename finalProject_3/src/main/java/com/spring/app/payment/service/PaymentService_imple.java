@@ -49,6 +49,19 @@ public class PaymentService_imple implements PaymentService {
     @Transactional
     public TransactionDTO createTransaction(int productNo, String buyerEmail, String paymentType, int amount) {
 
+        // 동일 상품+구매자의 READY 거래가 이미 있으면 재사용 (중복 방지)
+        Map<String, Object> checkMap = new HashMap<>();
+        checkMap.put("productNo", productNo);
+        checkMap.put("buyerEmail", buyerEmail);
+        TransactionDTO existing = paymentDAO.selectReadyTransaction(checkMap);
+        if (existing != null) {
+            if (existing.getTossOrderId() == null) {
+                String newOrderId = "ORDER_" + UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+                existing.setTossOrderId(newOrderId);
+            }
+            return existing;
+        }
+
         String orderId = "ORDER_" + UUID.randomUUID().toString().replace("-", "").substring(0, 20);
 
         TransactionDTO dto = new TransactionDTO();

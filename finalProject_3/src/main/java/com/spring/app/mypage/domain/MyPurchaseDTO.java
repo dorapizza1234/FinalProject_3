@@ -11,6 +11,7 @@ public class MyPurchaseDTO {
     private Integer amount;
     private String paymentType;
     private String tradeStatus;
+    private String payStatus;
     private String tradeDate;
     private String imgUrl;
     private Integer transactionId;
