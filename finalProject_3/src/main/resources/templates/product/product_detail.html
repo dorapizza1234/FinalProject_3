@@ -418,20 +418,33 @@
 
                         <div class="pd-value pd-value-location">
 
-                            <th:block th:if="${product.meetLocationList != null and !#lists.isEmpty(product.meetLocationList)}">
+                           <th:block th:if="${product.meetLocationList != null and !#lists.isEmpty(product.meetLocationList)}">
 
-                                <button type="button"
-                                        class="pd-location"
-                                        th:each="ml, stat : ${product.meetLocationList}"
-                                        th:text="${ml.placeName != null ? ml.placeName : ml.fullAddress}"
-                                        th:attr="data-lat=${ml.latitude},
-                                                 data-lng=${ml.longitude},
-                                                 data-place=${ml.placeName != null ? ml.placeName : ml.fullAddress},
-                                                 data-target-id='map-place-' + ${stat.index}"
-                                        th:classappend="${stat.index > 0 ? ' pd-location--line' : ''}">
-                                </button>
+    <div class="pd-location-item"
+         th:each="ml, stat : ${product.meetLocationList}"
+         th:classappend="${stat.index > 0 ? ' pd-location-item--line' : ''}">
 
-                            </th:block>
+        <button type="button"
+                class="pd-location"
+                th:text="${ml.placeName != null ? ml.placeName : ml.fullAddress}"
+                th:attr="data-lat=${ml.latitude},
+                         data-lng=${ml.longitude},
+                         data-place=${ml.placeName != null ? ml.placeName : ml.fullAddress},
+                         data-target-id='map-place-' + ${stat.index}">
+        </button>
+
+        <button type="button"
+                class="pd-route-btn"
+                th:attr="data-lat=${ml.latitude},
+                         data-lng=${ml.longitude},
+                         data-place=${ml.placeName != null ? ml.placeName : ml.fullAddress}">
+            길찾기
+        </button>
+
+       
+    </div>
+
+</th:block>
 
                             <span class="pd-location"
                                   th:if="${product.meetLocationList == null or #lists.isEmpty(product.meetLocationList)}">
