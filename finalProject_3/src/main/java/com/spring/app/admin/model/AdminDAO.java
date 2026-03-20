@@ -52,6 +52,11 @@ public interface AdminDAO {
     void deleteUserSuspendSchedule(int userNo);
 
     List<ProductDTO> getMemberActiveProducts(int userNo);
+    
+    int countMonthNewMembers(); //이번달 신규
+    int countIdleMembers();     //휴면회원
+    Map<String,Object> countByAge();  //연려대별
+    List<Map<String,Object>> countByRegion(); //지역별 
 
     //-------------------------------------------------------------------------
     List<ProductDTO> selectProductList(Map<String, Object> params); //상품리스트 보기
@@ -131,6 +136,8 @@ public interface AdminDAO {
 	// 상품 상세
 	ProductDetailDTO getProductDetail(int productNo);
 	List<String> getProductImages(int productNo);
+	Map<String,Object> getBuyerForProduct(int productNo);
+	void deleteProduct(int productNo);
 
 	// 회계관리
 	long getThisMonthAdRevenue();

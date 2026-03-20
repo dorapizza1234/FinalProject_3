@@ -54,6 +54,14 @@ public interface AdminService {
 
 	 List<ProductDTO> getProductList(int page, int size, String status, String filter); //상품 리스트 보여주기
 	 int getProductCount(String status, String filter); //필터 포함 상품 수
+	 
+	 int getMonthNewMembersCount(); //이달 신규 가입자수 
+	 
+	 int getIdleMembersCount();//휴면 회원
+	 
+	 List<Integer> getMemberAgeStats();//연령대별 
+	  
+	 List<Map<String,Object>> getMemberRegionStats();//지역별 
 	//--------------------------------------------------------------------------------
 	 int getTotalProductsCount(); //총상품개수 
 
@@ -133,10 +141,13 @@ public interface AdminService {
 
 	 // 상품 상세
 	 ProductDetailDTO getProductDetail(int productNo);
+	 void deleteProduct(int productNo, String sellerEmail, String sellerMsg, String buyerEmail, String buyerMsg);
 
 	 // 회계관리
 	 Map<String, Object> getAccountingStats();
 	 Map<String, Object> getAccountingList(int page, int size);
+
+	
 
 
 

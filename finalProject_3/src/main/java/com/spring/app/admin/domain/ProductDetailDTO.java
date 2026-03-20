@@ -16,4 +16,6 @@ public class ProductDetailDTO {
     private String tradeMethod;
     private String regDate;
     private List<String> images;
+    private String buyerEmail;
+    private String buyerNickname;
 }

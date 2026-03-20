@@ -249,6 +249,59 @@
     </select>
 
 
+ 
+  <!-- 이번달 신규가입자 -->
+  <select id="countMonthNewMembers" resultType="int">
+      SELECT COUNT(*) FROM MEMBER
+      WHERE TRUNC(REG_DATE, 'MM') = TRUNC(SYSDATE, 'MM')
+      AND STATUS = 1
+  </select>
+
+  <!-- 휴면회원 -->
+  <select id="countIdleMembers" resultType="int">
+      SELECT COUNT(*) FROM MEMBER WHERE IDLE = 1
+  </select>
+
+  <!-- 연령대별 회원수 (단일 행으로 반환) -->
+  <select id="countByAge" resultType="map">
+      SELECT
+          SUM(CASE WHEN TO_NUMBER(SUBSTR(BIRTH_DATE,1,4)) >= EXTRACT(YEAR FROM SYSDATE)-19
+                   THEN 1 ELSE 0 END) AS TEEN,
+          SUM(CASE WHEN TO_NUMBER(SUBSTR(BIRTH_DATE,1,4)) BETWEEN EXTRACT(YEAR FROM SYSDATE)-29
+                                                               AND EXTRACT(YEAR FROM SYSDATE)-20
+                   THEN 1 ELSE 0 END) AS TWENTY,
+          SUM(CASE WHEN TO_NUMBER(SUBSTR(BIRTH_DATE,1,4)) BETWEEN EXTRACT(YEAR FROM SYSDATE)-39
+                                                               AND EXTRACT(YEAR FROM SYSDATE)-30
+                   THEN 1 ELSE 0 END) AS THIRTY,
+          SUM(CASE WHEN TO_NUMBER(SUBSTR(BIRTH_DATE,1,4)) BETWEEN EXTRACT(YEAR FROM SYSDATE)-49
+                                                               AND EXTRACT(YEAR FROM SYSDATE)-40
+                   THEN 1 ELSE 0 END) AS FORTY,
+          SUM(CASE WHEN TO_NUMBER(SUBSTR(BIRTH_DATE,1,4)) BETWEEN EXTRACT(YEAR FROM SYSDATE)-59
+                                                               AND EXTRACT(YEAR FROM SYSDATE)-50
+                   THEN 1 ELSE 0 END) AS FIFTY,
+          SUM(CASE WHEN TO_NUMBER(SUBSTR(BIRTH_DATE,1,4)) &lt;= EXTRACT(YEAR FROM SYSDATE)-60
+                   THEN 1 ELSE 0 END) AS SIXTY_PLUS
+      FROM MEMBER
+      WHERE BIRTH_DATE IS NOT NULL
+      AND LENGTH(BIRTH_DATE) = 8
+      AND STATUS = 1
+  </select>
+
+  <!-- 지역별(구) 회원수 -->
+  <select id="countByRegion" resultType="map">
+      SELECT
+          REGEXP_SUBSTR(ADDRESS, '\S+[구군]') AS REGION,
+          COUNT(*) AS CNT
+      FROM MEMBER
+      WHERE STATUS = 1
+      AND ADDRESS IS NOT NULL
+      AND REGEXP_SUBSTR(ADDRESS, '\S+[구군]') IS NOT NULL
+      GROUP BY REGEXP_SUBSTR(ADDRESS, '\S+[구군]')
+      ORDER BY CNT DESC
+      FETCH FIRST 10 ROWS ONLY
+  </select>
+ 
+
   <select id="selectProduct" parameterType="map" resultType="com.spring.app.product.domain.ProductDTO">
     SELECT
         p.product_no AS productNo,
@@ -732,6 +785,22 @@
         ORDER BY SORT_NO ASC
     </select>
 
+    <!-- 예약중 상품의 구매자 정보 -->
+    <select id="getBuyerForProduct" parameterType="int" resultType="map">
+        SELECT buyerEmail, buyerNickname FROM (
+            SELECT t.BUYER_EMAIL AS buyerEmail, m.NICKNAME AS buyerNickname
+            FROM TRANSACTIONS t
+            LEFT JOIN MEMBER m ON t.BUYER_EMAIL = m.EMAIL
+            WHERE t.PRODUCT_NO = #{productNo}
+            ORDER BY t.TRADE_DATE DESC
+        ) WHERE ROWNUM = 1
+    </select>
+
+    <!-- 상품 삭제 (soft delete) -->
+    <update id="deleteProduct" parameterType="int">
+        UPDATE PRODUCTS SET TRADE_STATUS = '삭제' WHERE PRODUCT_NO = #{productNo}
+    </update>
+
     <!-- 신고 유형별 통계 -->
     <select id="getProductReportCount" resultType="int">
         SELECT COUNT(*) FROM REPORTS WHERE PRODUCT_NUM IS NOT NULL
@@ -811,5 +880,6 @@
     <select id="countAdRevenue" resultType="int">
         SELECT COUNT(*) FROM ADS WHERE STATUS = 'CONFIRM'
     </select>
+
 
 </mapper>

@@ -96,23 +96,6 @@ body{
 }
 
 
-.badge{
-  position:absolute;
-  left:14px;
-  top:-8px;
-  min-width:18px;
-  height:18px;
-  padding:0 5px;
-  border-radius:999px;
-  color:#000;
-  font-size:12px;
-
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  transform:translateX(14px);
-}
-
 /* ===== Nav ===== */
 .nav-wrap{
   border-top:1px solid transparent;
@@ -177,6 +160,11 @@ body{
   height:3px;
   background:#222;
   transition:width .35s ease;
+}
+
+.gnb-link:hover{
+  color:#000;
+  text-decoration:none;
 }
 
 .gnb-link:hover::after{
@@ -377,7 +365,9 @@ body{
   text-decoration: none;
   color: #222;
   font-size: 14px;
+  line-height: 1;
   font-weight: 500;
+  box-sizing: border-box;
   transition: background .2s ease, color .2s ease, padding .2s ease;
 }
 

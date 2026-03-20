@@ -313,6 +313,7 @@
     document.addEventListener('DOMContentLoaded',()=>updateUserChart('week'));
 
     // 탈퇴 사유 차트
+    // 컨트롤러에서 해당 데이터 추가 필요: withdrawStats {labels, data}
     const withdrawStats = /*[[${withdrawStats}]]*/ {labels:[],data:[]};
     if (withdrawStats && withdrawStats.labels && withdrawStats.labels.length > 0) {
         new Chart(document.getElementById('exitChart'), {

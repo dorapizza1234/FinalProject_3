@@ -104,7 +104,35 @@ public class AdminService_imple implements AdminService {
 	        return dao.countTotalMembers();
 	    }
 
+	    //이번달 신규 
+	    @Override
+	    public int getMonthNewMembersCount() {
+	    	return dao.countMonthNewMembers(); 
+	    	}
+	    
+	    //휴면회원
+	    @Override
+	    public int getIdleMembersCount() {
+	    	return dao.countIdleMembers(); 
+	    	}
+	    //연령대별
+	    @Override
+	    public List<Integer> getMemberAgeStats() {
+	        Map<String,Object> row = dao.countByAge();
+	        return List.of(
+	            toInt(row.get("TEEN")),
+	            toInt(row.get("TWENTY")),
+	            toInt(row.get("THIRTY")),
+	            toInt(row.get("FORTY")),
+	            toInt(row.get("FIFTY")),
+	            toInt(row.get("SIXTY_PLUS"))
+	        );
+	    }
+  
+	    @Override
+	    public List<Map<String,Object>> getMemberRegionStats() { return dao.countByRegion(); }
 
+	    private int toInt(Object v) { return v == null ? 0 : ((Number) v).intValue(); }
 		@Override
 		public MemberDTO getMemberByNo(int userNo) {
 			return dao.getMemberByNo(userNo);
@@ -446,10 +474,27 @@ public class AdminService_imple implements AdminService {
 		ProductDetailDTO dto = dao.getProductDetail(productNo);
 		if (dto != null) {
 			dto.setImages(dao.getProductImages(productNo));
+			if ("예약중".equals(dto.getTradeStatus())) {
+				Map<String,Object> buyer = dao.getBuyerForProduct(productNo);
+				if (buyer != null) {
+					dto.setBuyerEmail((String) buyer.get("BUYEREMAIL"));
+					dto.setBuyerNickname((String) buyer.get("BUYERNICKNAME"));
+				}
+			}
 		}
 		return dto;
 	}
 
+	@Override
+	public void deleteProduct(int productNo, String sellerEmail, String sellerMsg, String buyerEmail, String buyerMsg) {
+		if (sellerEmail != null && sellerMsg != null && !sellerMsg.isBlank()) {
+			sendAdminNotification(sellerEmail, "[관리자] 상품 삭제 안내", sellerMsg);
+		}
+		if (buyerEmail != null && !buyerEmail.isBlank() && buyerMsg != null && !buyerMsg.isBlank()) {
+			sendAdminNotification(buyerEmail, "[관리자] 예약 상품 삭제 안내", buyerMsg);
+		}
+		dao.deleteProduct(productNo);
+	}
 
 	@Override
 	public int getSuspendedMembersCount() {

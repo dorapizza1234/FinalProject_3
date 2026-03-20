@@ -7,104 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" th:href="@{/css/admin/sideBar.css}">
-    <style>
-        body { background: #f0f2f5; }
-
-        .stat-card {
-            background: #fff; border-radius: 16px; padding: 22px 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.07); border-left: 4px solid transparent;
-            transition: transform .2s;
-        }
-        .stat-card:hover { transform: translateY(-3px); }
-        .stat-card.blue  { border-left-color: #4e73df; }
-        .stat-card.green { border-left-color: #1cc88a; }
-        .stat-card.red   { border-left-color: #e74a3b; }
-        .stat-icon { width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem; }
-        .stat-icon.blue  { background:#eef0fb;color:#4e73df; }
-        .stat-icon.green { background:#e8f8f2;color:#1cc88a; }
-        .stat-icon.red   { background:#fdf0ef;color:#e74a3b; }
-
-        .search-bar { background:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:20px; }
-
-        /* status filter pills */
-        .filter-pill { border-radius:20px;font-size:.8rem;padding:5px 16px;font-weight:600;text-decoration:none;display:inline-block;transition:all .15s; }
-        .filter-pill.all     { background:#212529;color:#fff; }
-        .filter-pill.all.off { background:#f8f9fa;color:#6c757d;border:1px solid #dee2e6; }
-        .filter-pill.act     { background:#198754;color:#fff; }
-        .filter-pill.act.off { background:#f8f9fa;color:#198754;border:1px solid #198754; }
-        .filter-pill.stp     { background:#dc3545;color:#fff; }
-        .filter-pill.stp.off { background:#f8f9fa;color:#dc3545;border:1px solid #dc3545; }
-
-        .table-card { background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden; }
-        .table thead th { background:#f8f9fc;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:#6c757d;border-bottom:2px solid #e9ecef;padding:12px 14px; }
-        .table tbody td { padding:12px 14px;vertical-align:middle;font-size:.88rem; }
-        .table tbody tr:hover { background:#f8f9fc; }
-
-        .avatar-placeholder { width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6c5ce7,#a29bfe);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:600; }
-        .avatar { width:36px;height:36px;border-radius:50%;object-fit:cover; }
-
-        .temp-badge { display:inline-flex;align-items:center;gap:3px;font-weight:600;font-size:.85rem; }
-        .temp-badge.hot  { color:#e74a3b; }
-        .temp-badge.warm { color:#f6c23e; }
-        .temp-badge.cool { color:#4e73df; }
-
-        .page-link { border-radius:8px!important;margin:0 2px;font-size:.84rem; }
-        .page-item.active .page-link { background:#4e73df;border-color:#4e73df; }
-
-        /* modal */
-        .modal-dialog { max-width:760px; }
-        .modal-content { border-radius:16px!important;border:none;box-shadow:0 24px 64px rgba(0,0,0,.18);overflow:hidden; }
-
-        .modal-top-bar { height:4px;background:linear-gradient(90deg,#4e73df,#a29bfe); }
-        .modal-header-bar { background:#fff;padding:20px 24px;border-bottom:1px solid #f1f3f9; }
-        .modal-avatar { width:60px;height:60px;border-radius:16px;object-fit:cover; }
-        .modal-avatar-placeholder { width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#4e73df,#764ba2);display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#fff;flex-shrink:0; }
-
-        /* status pills - 모달용 */
-        .status-pill { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600; }
-        .status-pill::before { content:'';width:6px;height:6px;border-radius:50%;display:inline-block; }
-        .status-pill.sp-active { background:#e8f8f2;color:#1cc88a; }
-        .status-pill.sp-active::before { background:#1cc88a; }
-        .status-pill.sp-suspended { background:#fdf0ef;color:#e74a3b; }
-        .status-pill.sp-suspended::before { background:#e74a3b; }
-        .status-pill.sp-idle { background:#fef9e7;color:#e0a800; }
-        .status-pill.sp-idle::before { background:#f6c23e; }
-        .status-pill.sp-withdraw { background:#f1f3f5;color:#6c757d; }
-        .status-pill.sp-withdraw::before { background:#6c757d; }
-        .status-pill.sp-pending { background:#fff3cd;color:#856404; }
-        .status-pill.sp-pending::before { background:#ffc107; }
-
-        /* status dots - 테이블용 */
-        .status-dot { display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:600; }
-        .status-dot::before { content:'';width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0; }
-        .status-dot.sd-active { color:#1cc88a; }
-        .status-dot.sd-active::before { background:#1cc88a; }
-        .status-dot.sd-suspended { color:#e74a3b; }
-        .status-dot.sd-suspended::before { background:#e74a3b; }
-        .status-dot.sd-idle { color:#e0a800; }
-        .status-dot.sd-idle::before { background:#f6c23e; }
-        .status-dot.sd-withdraw { color:#6c757d; }
-        .status-dot.sd-withdraw::before { background:#adb5bd; }
-
-        .info-section { padding:16px 24px 0; }
-        .info-grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px; }
-        .info-item { background:#f8f9fc;border-radius:10px;padding:10px 14px; }
-        .info-label { font-size:.68rem;color:#b2bec3;text-transform:uppercase;letter-spacing:.07em;font-weight:700; }
-        .info-value { font-size:.87rem;font-weight:600;color:#2d3436;margin-top:2px;word-break:break-all; }
-
-        .modal-tabs .nav-link { color:#b2bec3;font-size:.82rem;padding:8px 16px;border:none;border-bottom:2px solid transparent;border-radius:0;font-weight:500;transition:color .15s; }
-        .modal-tabs .nav-link:hover { color:#4e73df; }
-        .modal-tabs .nav-link.active { color:#4e73df;border-bottom-color:#4e73df;font-weight:700; }
-        .modal-tabs { border-bottom:1px solid #f1f3f9; }
-
-        .products-scroll { max-height:160px;overflow-y:auto; }
-        .products-scroll::-webkit-scrollbar { width:4px; }
-        .products-scroll::-webkit-scrollbar-thumb { background:#dee2e6;border-radius:4px; }
-        .msg-compose { background:#f8f9fc;border-radius:12px;padding:16px; }
-        .pending-alert { background:#fff8e1;border-left:3px solid #ffc107;border-radius:8px;padding:10px 14px;font-size:.82rem;color:#856404; }
-        .modal-footer { border-top:1px solid #f1f3f9;padding:12px 20px; }
-        .btn-action { border-radius:10px;font-size:.82rem;padding:7px 16px;font-weight:600; }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/admin/member.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="d-flex">
 <aside th:replace="~{admin/admin_sidebar :: adminSidebar}"></aside>
@@ -117,74 +21,95 @@
         </div>
     </div>
 
-    <!-- stat cards -->
+    <!-- 차트 + 통계카드 -->
     <div class="row g-3 mb-4">
+        <!-- 연령대별 도넛 차트 -->
         <div class="col-md-4">
-            <div class="stat-card blue d-flex align-items-center gap-3">
-                <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
-                <div>
-                    <div class="text-muted small">총 가입자</div>
-                    <div class="h4 fw-bold mb-0" th:text="${totalMembers != null ? totalMembers + '명' : '0명'}">0명</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card green d-flex align-items-center gap-3">
-                <div class="stat-icon green"><i class="bi bi-person-plus-fill"></i></div>
-                <div>
-                    <div class="text-muted small">신규 가입 (오늘)</div>
-                    <div class="h4 fw-bold mb-0 text-success" th:text="${newMembers != null ? newMembers + '명' : '0명'}">0명</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card red d-flex align-items-center gap-3">
-                <div class="stat-icon red"><i class="bi bi-slash-circle-fill"></i></div>
-                <div>
-                    <div class="text-muted small">정지 회원</div>
-                    <div class="h4 fw-bold mb-0 text-danger" th:text="${suspendedMembers != null ? suspendedMembers + '명' : '0명'}">0명</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- search bar + status filter -->
-    <div class="search-bar">
-        <div class="d-flex flex-wrap align-items-center gap-2 justify-content-between">
-            <!-- status filter pills (링크로 처리) -->
-            <div class="d-flex gap-2 flex-wrap align-items-center">
-                <a th:href="@{/admin/member(page=1,keyword=${searchKeyword})}"
-                   th:class="${searchStatus == null or searchStatus == ''} ? 'filter-pill all' : 'filter-pill all off'">전체</a>
-                <a th:href="@{/admin/member(page=1,status='1',keyword=${searchKeyword})}"
-                   th:class="${searchStatus == '1'} ? 'filter-pill act' : 'filter-pill act off'">활동중</a>
-                <a th:href="@{/admin/member(page=1,status='0',keyword=${searchKeyword})}"
-                   th:class="${searchStatus == '0'} ? 'filter-pill stp' : 'filter-pill stp off'">탈퇴/정지</a>
-
-                <!-- keyword search -->
-                <form th:action="@{/admin/member}" method="get" class="d-flex gap-2 ms-2" id="searchForm">
-                    <input type="hidden" name="page" value="1">
-                    <input type="hidden" name="status" th:value="${searchStatus}">
-                    <div class="input-group" style="width:240px;">
-                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" class="form-control border-start-0 ps-0 form-control-sm"
-                               name="keyword" th:value="${searchKeyword}"
-                               placeholder="이메일 또는 이름 검색" id="keywordInput">
+            <div class="card h-100">
+                <div class="fw-bold mb-3 small text-primary text-uppercase">📊 연령대별 회원 분포</div>
+                <div class="d-flex align-items-center" style="height:220px;">
+                    <div style="width:160px;flex-shrink:0;height:100%;position:relative;">
+                        <canvas id="ageChart"></canvas>
                     </div>
-                    <button type="submit" class="btn btn-dark btn-sm px-3">검색</button>
-                </form>
+                    <div class="flex-grow-1 ps-3" id="ageLegend"></div>
+                </div>
             </div>
-            <div class="text-muted small">
-                조회 결과 <span class="fw-bold text-dark" th:text="${searchCount != null ? searchCount : 0}">0</span>명
+        </div>
+
+        <!-- 지역별(구) 가로 막대 차트 -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="fw-bold mb-3 small text-success text-uppercase">📍 지역별(구) 회원 분포</div>
+                <div class="chart-wrapper" style="height:220px;">
+                    <canvas id="regionChart"></canvas>
+                    <div id="regionNoData" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;">
+                        <span class="text-muted small">데이터 없음</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 통계 카드 세로 -->
+        <div class="col-md-4">
+            <div class="d-flex flex-column gap-2 h-100">
+                <a th:href="@{/admin/member}" class="stat-card-link border-primary flex-fill py-2 text-center">
+                    <div class="text-muted small">총 가입자</div>
+                    <div class="h5 fw-bold mb-0 text-dark"
+                         th:text="${totalMembers != null ? #numbers.formatInteger(totalMembers,0,'COMMA') + '명' : '-'}">-</div>
+                </a>
+                <a th:href="@{/admin/member}" class="stat-card-link border-success flex-fill py-2 text-center">
+                    <div class="text-muted small">신규가입 (오늘)</div>
+                    <div class="h5 fw-bold mb-0 text-success"
+                         th:text="${newMembers != null ? newMembers + '명' : '-'}">-</div>
+                </a>
+                <a th:href="@{/admin/member(page=1,status='1')}" class="stat-card-link border-warning flex-fill py-2 text-center">
+                    <div class="text-muted small">정지 회원</div>
+                    <div class="h5 fw-bold mb-0 text-warning"
+                         th:text="${suspendedMembers != null ? suspendedMembers + '명' : '-'}">-</div>
+                </a>
+                <a th:href="@{/admin/member(page=1,status='0')}" class="stat-card-link border-danger flex-fill py-2 text-center">
+                    <div class="text-muted small">탈퇴 회원</div>
+                    <div class="h5 fw-bold mb-0 text-danger"
+                         th:text="${withdrawnMembers != null ? withdrawnMembers + '명' : '-'}">-</div>
+                </a>
             </div>
         </div>
     </div>
+
+    <!-- 검색 + 테이블 -->
+    <div class="section-card">
+        <div class="section-header">
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <h6 class="mb-0"><i class="bi bi-people-fill text-primary me-2"></i>회원 목록
+                    <span class="badge bg-light text-dark border ms-1"
+                          th:text="${searchCount != null ? searchCount : 0} + '명'"></span>
+                </h6>
+                <a th:href="@{/admin/member(page=1,keyword=${searchKeyword})}"
+                   th:class="${searchStatus == null or searchStatus == ''} ? 'status-tab active-all' : 'status-tab'">전체</a>
+                <a th:href="@{/admin/member(page=1,status='1',keyword=${searchKeyword})}"
+                   th:class="${searchStatus == '1'} ? 'status-tab active-act' : 'status-tab'">활동중</a>
+                <a th:href="@{/admin/member(page=1,status='0',keyword=${searchKeyword})}"
+                   th:class="${searchStatus == '0'} ? 'status-tab active-stp' : 'status-tab'">탈퇴/정지</a>
+            </div>
+            <form th:action="@{/admin/member}" method="get" class="d-flex gap-2" id="searchForm">
+                <input type="hidden" name="page" value="1">
+                <input type="hidden" name="status" th:value="${searchStatus}">
+                <div class="input-group" style="width:240px;">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0 form-control-sm"
+                           name="keyword" th:value="${searchKeyword}"
+                           placeholder="이메일 또는 이름 검색" id="keywordInput">
+                </div>
+                <button type="submit" class="btn btn-dark btn-sm px-3">검색</button>
+            </form>
+        </div>
 
     <!-- table -->
-    <div class="table-card">
+    <div>
         <table class="table mb-0">
             <thead>
                 <tr class="text-center">
-                    <th>#</th>
+                    <th>순서</th>
                     <th class="text-start">계정 정보</th>
                     <th>연락처</th>
                     <th>상태</th>
@@ -262,6 +187,7 @@
             </li>
         </ul>
     </nav>
+    </div><!-- /section-card -->
 </main>
 
 <!-- ══════════════════════════════════════════
@@ -606,6 +532,79 @@
         document.getElementById('msgContent').value = '';
         document.getElementById('msgResult').style.display = 'none';
     }
+
+    // ── 대시보드 차트 초기화 ─────────────────────
+    (function() {
+        // 연령대별 doughnut chart
+        const ageLabels = /*[[${ageLabels}]]*/ ['10대','20대','30대','40대','50대','60대+'];
+        const ageData   = /*[[${ageData}]]*/ [0,0,0,0,0,0];
+        const ageColors = ['#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b','#858796'];
+
+        new Chart(document.getElementById('ageChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ageLabels,
+                datasets: [{ data: ageData, backgroundColor: ageColors, borderWidth: 2 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                cutout: '68%'
+            }
+        });
+
+        // 오른쪽 범례 + 수치
+        const total = ageData.reduce((a, b) => a + b, 0);
+        const legend = document.getElementById('ageLegend');
+        legend.innerHTML = ageLabels.map((label, i) => `
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width:10px;height:10px;border-radius:50%;background:${ageColors[i]};flex-shrink:0;display:inline-block;"></span>
+                    <span style="font-size:.82rem;color:#555;">${label}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size:.82rem;font-weight:700;color:#2e3750;">${ageData[i].toLocaleString()}명</span>
+                    <span style="font-size:.75rem;color:#aaa;width:34px;text-align:right;">${total > 0 ? Math.round(ageData[i]/total*100) : 0}%</span>
+                </div>
+            </div>`).join('');
+
+        // 지역별(구) horizontal bar chart - 구마다 다른 색
+        const regionLabels = /*[[${regionLabels}]]*/ [];
+        const regionData   = /*[[${regionData}]]*/ [];
+        const regionPalette = ['#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b','#858796','#5a5c69','#fd7e14','#6f42c1','#20c997'];
+        const regionColors  = regionLabels.map((_, i) => regionPalette[i % regionPalette.length]);
+
+        if (regionLabels && regionLabels.length > 0) {
+            document.getElementById('regionNoData').style.display = 'none';
+            new Chart(document.getElementById('regionChart'), {
+                type: 'bar',
+                data: {
+                    labels: regionLabels,
+                    datasets: [{
+                        label: '회원 수',
+                        data: regionData,
+                        backgroundColor: regionColors,
+                        borderColor: regionColors,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } }, grid: { color: '#f0f0f0' } },
+                        y: { ticks: { font: { size: 11 } }, grid: { display: false } }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('regionChart').style.display = 'none';
+            document.getElementById('regionNoData').style.display = 'flex';
+        }
+    })();
 </script>
 </body>
 </html>

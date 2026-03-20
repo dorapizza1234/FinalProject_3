@@ -143,6 +143,29 @@ public class AdminDAO_imple implements AdminDAO {
 	public int getOnsaleProductCount() {
 		return sqlsession.selectOne(admin+".getOnsaleProductCount");
 	}
+	
+	 // 이번달 신규
+	  @Override
+	  public int countMonthNewMembers() {
+	      return sqlsession.selectOne(admin + ".countMonthNewMembers");
+	  }
+
+	  // 휴면회원
+	  @Override
+	  public int countIdleMembers() {
+	      return sqlsession.selectOne(admin + ".countIdleMembers");
+	  }
+
+	  @Override
+	  public Map<String, Object> countByAge() {
+	      return sqlsession.selectOne(admin + ".countByAge");
+	  }
+
+	  @Override
+	  public List<Map<String, Object>> countByRegion() {
+	      return sqlsession.selectList(admin + ".countByRegion");  // selectList + () 제거
+	  }
+	
 	//===========================================================
 	//상품리스트 가져오기
 	@Override
@@ -365,6 +388,16 @@ public class AdminDAO_imple implements AdminDAO {
 		return sqlsession.selectList(admin + ".getProductImages", productNo);
 	}
 
+	@Override
+	public Map<String,Object> getBuyerForProduct(int productNo) {
+		return sqlsession.selectOne(admin + ".getBuyerForProduct", productNo);
+	}
+
+	@Override
+	public void deleteProduct(int productNo) {
+		sqlsession.update(admin + ".deleteProduct", productNo);
+	}
+
 	// 회계관리
 	@Override
 	public long getThisMonthAdRevenue() {
@@ -430,6 +463,8 @@ public class AdminDAO_imple implements AdminDAO {
 	public List<String> getFaqKeywords() {
 		return sqlsession.selectList(admin + ".getFaqKeywords");
 	}
+
+
 
 }
 

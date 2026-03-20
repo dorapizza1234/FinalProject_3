@@ -54,13 +54,12 @@ public class AdminController {
     //index페이지 신규가입자
     @GetMapping("/user-stats")
     @ResponseBody
-    // (value = "type") 을 추가해서 이름을 명시해줍니다.
     public Map<String, Object> getUserStats(@RequestParam(value = "type", defaultValue = "week") String type) {
         return adminService.getUserRegistrationStats(type);
     }
     
     //=====================================================================================//
-     //회원 관리 페이지
+    //회원 관리 페이지
     @GetMapping("/member")
     public String memebrPage(Model model,
                              @RequestParam(value = "page", defaultValue = "1") int page,
@@ -80,7 +79,18 @@ public class AdminController {
         model.addAttribute("searchStatus", status);
         model.addAttribute("searchKeyword", keyword);
         model.addAttribute("searchCount", totalMembers);
+        model.addAttribute("monthNewMembers",  adminService.getMonthNewMembersCount());
+        model.addAttribute("idleMembers",      adminService.getIdleMembersCount());
+        model.addAttribute("withdrawnMembers", adminService.getWithdrawalsCount());
+        
+     // 연령대 차트
+        model.addAttribute("ageLabels", List.of("10대","20대","30대","40대","50대","60대+"));
+        model.addAttribute("ageData",   adminService.getMemberAgeStats());
 
+        // 지역 차트
+        List<Map<String,Object>> regionList = adminService.getMemberRegionStats();
+        model.addAttribute("regionLabels", regionList.stream().map(m -> (String) m.get("REGION")).toList());
+        model.addAttribute("regionData",   regionList.stream().map(m -> m.get("CNT")).toList());
         return "admin/member";
     }
 
@@ -170,6 +180,8 @@ public class AdminController {
         }
         return result;
     }
+    
+
     
     //=====================================================================================//
     
@@ -352,7 +364,8 @@ public class AdminController {
         String dirPath = uploadDir + File.separator + subDir;
         fileManager.doFileDownload(fileName, originalName, dirPath, response);
     }
-
+    
+    // 광고 승인
     @PostMapping("/ad/approve")
     @ResponseBody
     public String approvedAd(@RequestParam("adId") Long adId) {
@@ -360,7 +373,7 @@ public class AdminController {
     	return "ok";
     }
     
-    
+    //광고 거절
     @PostMapping("/ad/reject")
     @ResponseBody
     public String rejectAd(@RequestParam("adId") Long adId,
@@ -370,7 +383,8 @@ public class AdminController {
 
         return "ok";
     }
-
+    	
+    //광고 철회
     @PostMapping("/ad/withdraw")
     @ResponseBody
     public String withdrawAd(@RequestParam("adId") Long adId,
@@ -378,7 +392,7 @@ public class AdminController {
         adminService.withdrawAd(adId, reason);
         return "ok";
     }
-
+    //메인페이지 배너
     @PostMapping("/banner/update")
     @ResponseBody
     public String updateBanner(@RequestParam("text") String text) {
@@ -512,7 +526,7 @@ public class AdminController {
         }
         return result;
     }
-
+    //회원 메시지 전달
     @PostMapping("/api/sendMessage")
     @ResponseBody
     public Map<String, Object> sendMessage(@org.springframework.web.bind.annotation.RequestBody Map<String, Object> body) {
@@ -586,8 +600,27 @@ public class AdminController {
         model.addAttribute("product", adminService.getProductDetail(productNo));
         return "admin/product_detail";
     }
-    
-    
+
+    // 상품 삭제
+    @PostMapping("/product/delete")
+    @ResponseBody
+    public Map<String, Object> deleteProduct(
+            @RequestParam("productNo") int productNo,
+            @RequestParam(value = "sellerEmail", required = false) String sellerEmail,
+            @RequestParam(value = "sellerMsg", required = false) String sellerMsg,
+            @RequestParam(value = "buyerEmail", required = false) String buyerEmail,
+            @RequestParam(value = "buyerMsg", required = false) String buyerMsg) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.deleteProduct(productNo, sellerEmail, sellerMsg, buyerEmail, buyerMsg);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
   //=========================================================================================================================
 	 // 사용자 문의내역 게시판 
 	
