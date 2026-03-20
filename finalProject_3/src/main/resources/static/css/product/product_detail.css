@@ -1055,9 +1055,34 @@ img {
   margin-top: auto;
 }
 
-@media (max-width: 768px) {
-  .product-report-panel {
+/*==*/
+.pd-location-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.pd-route-btn {
+    border: 1px solid #222;
+    background: #fff;
+    color: #222;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pd-route-btn:hover {
+    background: #222;
+    color: #fff;
+}
+
+.pd-route-distance {
     width: 100%;
-    right: -100%;
-  }
+    font-size: 12px;
+    color: #666;
+    margin-left: 2px;
 }

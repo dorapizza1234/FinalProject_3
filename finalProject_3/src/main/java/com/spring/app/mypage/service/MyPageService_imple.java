@@ -68,8 +68,23 @@ public class MyPageService_imple implements MyPageService {
     }
 
     @Override
+    public int getProductReportCount(int productNo) {
+        return myPageDAO.getProductReportCount(productNo);
+    }
+
+    @Override
     public int deleteMyProduct(Map<String, Object> params) {
         return myPageDAO.deleteMyProduct(params);
+    }
+
+    @Override
+    public int saveInvoice(Map<String, Object> params) {
+        return myPageDAO.saveInvoice(params);
+    }
+
+    @Override
+    public ProductDTO getInvoice(Map<String, Object> params) {
+        return myPageDAO.getInvoice(params);
     }
 
     @Override public ProductImageDTO getProductImageByNo(int prdImgNo) { return myPageDAO.getProductImageByNo(prdImgNo); }
