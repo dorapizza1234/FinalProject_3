@@ -572,7 +572,7 @@
                        r.CREATED_AT      as createdAt,
                        0                 as flagged
                 FROM REVIEWS r
-                JOIN MEMBER m ON r.EMAIL = m.EMAIL
+                JOIN MEMBER m ON r.WRITER_EMAIL = m.EMAIL
                 <if test="keyword != null and keyword != ''">
                 WHERE (LOWER(m.NICKNAME) LIKE '%' || LOWER(#{keyword}) || '%'
                    OR LOWER(r.REVIEW_CONTENT) LIKE '%' || LOWER(#{keyword}) || '%')

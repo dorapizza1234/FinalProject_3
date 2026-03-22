@@ -10,6 +10,7 @@ import com.spring.app.mypage.domain.AccountDTO;
 import com.spring.app.mypage.domain.DeliveryAddressDTO;
 import com.spring.app.mypage.domain.MyPurchaseDTO;
 import com.spring.app.mypage.domain.MyReportDTO;
+import com.spring.app.product.domain.ReviewDTO;
 import com.spring.app.mypage.domain.NotificationDTO;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
@@ -190,6 +191,17 @@ public class MyPageService_imple implements MyPageService {
     @Override
     public int getMyTradeCount(String email) {
         return myPageDAO.getMyTradeCount(email);
+    }
+
+    // 후기관리
+    @Override
+    public List<ReviewDTO> getReceivedReviews(String email) {
+        return myPageDAO.getReceivedReviews(email);
+    }
+
+    @Override
+    public List<ReviewDTO> getWrittenReviews(String email) {
+        return myPageDAO.getWrittenReviews(email);
     }
 
     // 신고관리

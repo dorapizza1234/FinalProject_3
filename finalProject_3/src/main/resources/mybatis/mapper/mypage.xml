@@ -345,8 +345,49 @@
             SELECT SEQ_REVIEW_NO.NEXTVAL FROM DUAL
         </selectKey>
         INSERT INTO REVIEWS (REVIEW_NO, WRITER_EMAIL, TARGET_EMAIL, TRANSACTION_ID, RATING, ONE_LINE_CAT, REVIEW_CONTENT, CREATED_AT)
-        VALUES (#{reviewNo}, #{writerEmail}, #{targetEmail}, #{transactionId}, #{rating}, #{oneLineCat}, #{reviewContent, jdbcType=VARCHAR}, SYSDATE)
+        VALUES (#{reviewNo}, #{writerEmail}, #{targetEmail}, #{transactionId}, #{rating}, #{oneLineCat}, #{reviewContent, jdbcType=CLOB}, SYSDATE)
     </insert>
+
+    <!-- ===== 후기관리 ===== -->
+    <select id="getReceivedReviews" parameterType="String" resultType="com.spring.app.product.domain.ReviewDTO">
+        SELECT r.REVIEW_NO       AS reviewNo,
+               r.WRITER_EMAIL   AS writerEmail,
+               r.RATING         AS rating,
+               r.ONE_LINE_CAT   AS oneLineCat,
+               r.REVIEW_CONTENT AS reviewContent,
+               r.CREATED_AT     AS createdAt,
+               m.NICKNAME       AS writerName,
+               m.PROFILE_IMG    AS writerProfileImg,
+               p.PRODUCT_NAME   AS productName,
+               pi.IMG_URL       AS productImgUrl
+        FROM REVIEWS r
+        JOIN MEMBER m ON r.WRITER_EMAIL = m.EMAIL
+        JOIN TRANSACTIONS t ON r.TRANSACTION_ID = t.TRANSACTION_ID
+        JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
+        LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
+        WHERE r.TARGET_EMAIL = #{email}
+        ORDER BY r.CREATED_AT DESC
+    </select>
+
+    <select id="getWrittenReviews" parameterType="String" resultType="com.spring.app.product.domain.ReviewDTO">
+        SELECT r.REVIEW_NO       AS reviewNo,
+               r.TARGET_EMAIL   AS targetEmail,
+               r.RATING         AS rating,
+               r.ONE_LINE_CAT   AS oneLineCat,
+               r.REVIEW_CONTENT AS reviewContent,
+               r.CREATED_AT     AS createdAt,
+               m.NICKNAME       AS writerName,
+               m.PROFILE_IMG    AS writerProfileImg,
+               p.PRODUCT_NAME   AS productName,
+               pi.IMG_URL       AS productImgUrl
+        FROM REVIEWS r
+        JOIN MEMBER m ON r.TARGET_EMAIL = m.EMAIL
+        JOIN TRANSACTIONS t ON r.TRANSACTION_ID = t.TRANSACTION_ID
+        JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
+        LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
+        WHERE r.WRITER_EMAIL = #{email}
+        ORDER BY r.CREATED_AT DESC
+    </select>
 
     <!-- ===== 내 통계 ===== -->
     <select id="getMySafePayCount" parameterType="String" resultType="int">

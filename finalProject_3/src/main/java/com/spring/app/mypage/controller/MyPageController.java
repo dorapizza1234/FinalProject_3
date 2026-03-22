@@ -27,6 +27,7 @@ import com.spring.app.mypage.domain.AccountDTO;
 import com.spring.app.mypage.domain.DeliveryAddressDTO;
 import com.spring.app.mypage.domain.MyPurchaseDTO;
 import com.spring.app.mypage.domain.MyReportDTO;
+import com.spring.app.product.domain.ReviewDTO;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
@@ -298,12 +299,12 @@ public class MyPageController {
     @GetMapping("/review/write")
     public String reviewWritePage(
             @RequestParam("transactionId") int transactionId,
-            @RequestParam String targetEmail,
-            @RequestParam String productName,
-            @RequestParam(required = false) String imgUrl,
-            @RequestParam(required = false) String amount,
-            @RequestParam(required = false) String paymentType,
-            @RequestParam(required = false) String saleType,
+            @RequestParam("targetEmail") String targetEmail,
+            @RequestParam("productName") String productName,
+            @RequestParam(value = "imgUrl", required = false) String imgUrl,
+            @RequestParam(value = "amount", required = false) String amount,
+            @RequestParam(value = "paymentType", required = false) String paymentType,
+            @RequestParam(value = "saleType", required = false) String saleType,
             Model model) {
         model.addAttribute("transactionId", transactionId);
         model.addAttribute("targetEmail", targetEmail);
@@ -684,6 +685,31 @@ public class MyPageController {
             result.put("message", "배송 조회 중 오류가 발생했습니다.");
         }
         return result;
+    }
+
+    // ===== 후기관리 =====
+
+    @GetMapping("/reviews/received")
+    @ResponseBody
+    public List<ReviewDTO> getReceivedReviews(Principal principal) {
+        if (principal == null) return List.of();
+        return myPageService.getReceivedReviews(principal.getName());
+    }
+
+    @GetMapping("/reviews/written")
+    @ResponseBody
+    public List<ReviewDTO> getWrittenReviews(Principal principal) {
+        if (principal == null) return List.of();
+        return myPageService.getWrittenReviews(principal.getName());
+    }
+
+    @GetMapping("/reviews/pending")
+    @ResponseBody
+    public List<MyPurchaseDTO> getPendingReviews(Principal principal) {
+        if (principal == null) return List.of();
+        return myPageService.getMyPurchases(principal.getName()).stream()
+                .filter(p -> "거래완료".equals(p.getTradeStatus()) && (p.getHasReview() == null || p.getHasReview() == 0))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     // ===== 신고관리 =====

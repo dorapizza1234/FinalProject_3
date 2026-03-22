@@ -7,6 +7,7 @@ import com.spring.app.mypage.domain.AccountDTO;
 import com.spring.app.mypage.domain.DeliveryAddressDTO;
 import com.spring.app.mypage.domain.MyPurchaseDTO;
 import com.spring.app.mypage.domain.MyReportDTO;
+import com.spring.app.product.domain.ReviewDTO;
 import com.spring.app.mypage.domain.NotificationDTO;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
@@ -68,6 +69,10 @@ public interface MyPageService {
     // 내 통계
     int getMySafePayCount(String email);
     int getMyTradeCount(String email);
+
+    // 후기관리
+    List<ReviewDTO> getReceivedReviews(String email);
+    List<ReviewDTO> getWrittenReviews(String email);
 
     // 신고관리
     List<MyReportDTO> getMyReportsSent(String email);

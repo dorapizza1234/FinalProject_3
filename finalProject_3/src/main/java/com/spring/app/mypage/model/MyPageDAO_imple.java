@@ -11,6 +11,7 @@ import com.spring.app.mypage.domain.AccountDTO;
 import com.spring.app.mypage.domain.DeliveryAddressDTO;
 import com.spring.app.mypage.domain.MyPurchaseDTO;
 import com.spring.app.mypage.domain.MyReportDTO;
+import com.spring.app.product.domain.ReviewDTO;
 import com.spring.app.mypage.domain.NotificationDTO;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.product.domain.ProductImageDTO;
@@ -144,6 +145,16 @@ public class MyPageDAO_imple implements MyPageDAO {
     @Override
     public int insertReview(Map<String, Object> params) {
         return sqlsession.insert(ns + ".insertReview", params);
+    }
+
+    @Override
+    public List<ReviewDTO> getReceivedReviews(String email) {
+        return sqlsession.selectList(ns + ".getReceivedReviews", email);
+    }
+
+    @Override
+    public List<ReviewDTO> getWrittenReviews(String email) {
+        return sqlsession.selectList(ns + ".getWrittenReviews", email);
     }
 
     // 계좌
