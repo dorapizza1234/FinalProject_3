@@ -67,9 +67,9 @@ public class MyAuthenticationSuccessHandler extends SavedRequestAwareAuthenticat
         System.out.println("### refreshToken = " + jwtToken.getRefreshToken());
         System.out.println("### expiresIn    = " + jwtToken.getAccessTokenExpiresIn());
 
-        // AccessToken → HttpOnly 쿠키
+        // AccessToken → 쿠키 (JS에서 읽을 수 있도록 httpOnly 제거)
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", jwtToken.getAccessToken())
-                .httpOnly(true)
+                .httpOnly(false)
                 .secure(false)
                 .path("/")
                 .maxAge(3600)

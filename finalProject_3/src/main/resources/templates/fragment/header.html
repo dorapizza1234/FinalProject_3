@@ -7,7 +7,7 @@
     <!-- 상단 프로모 배너 -->
     <div class="promo-banner" role="banner">
       <div class="promo-inner">
-        <p class="promo-text">
+        <p class="promo-text" th:text="${promoBanner}">
           카페 1900만 고객이 판매하는 하루 10만개의 상품을 편리하게 검색해보세요
         </p>
       </div>
@@ -35,15 +35,24 @@
             <a class="util-link" th:href="@{/security/logout}">
 				로그아웃
             </a>
+
+            <th:block th:if="${#authentication != null and #authentication.name == 'didthfk2345@naver.com'}">
+              <span class="util-sep" aria-hidden="true">|</span>
+              <a class="util-link" th:href="@{/admin/index}"
+                 style="color:#4e73df; font-weight:700;">
+                <i class="fa-solid fa-shield-halved me-1"></i>관리자페이지
+              </a>
+            </th:block>
+
 		  </th:block>
 		  
             <span class="util-sep" aria-hidden="true">|</span>
 
-            <a href="javascript:void(0);" onclick="toggleChatPopup()">
+            <a href="javascript:void(0);" onclick="toggleChatPopup(); resetChatBadge();">
 			  <div class="notification">
 			    <button type="button" class="not-btn">
 			      <i class="fa-solid fa-comment-dots"></i>
-			      <span class="number">2</span>
+			      <span class="number" id="chatBadge" style="display:none;">0</span>
 			    </button>
 			  </div>
 			</a>
@@ -58,26 +67,103 @@
 
             <span class="util-sep" aria-hidden="true">|</span>
 
-            <a th:href="@{/notification}">
+            <a th:href="@{/noti/list}" id="bellLink">
               <div class="notification">
-                <button type="button" class="not-btn">
+                <button type="button" class="not-btn" id="bellBtn">
                   <i class="fas fa-bell"></i>
-                  <span class="number">2</span>
+                  <span class="number" id="bellBadge" style="display:none;">0</span>
                 </button>
-
-                <div class="not-box">
-                  <div class="not-list">
-                    <div class="not-item">
-                     
-                      <div class="not-text">
-                        <p>알림내용</p>
-                        <span>1시간 전</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </a>
+
+            <!-- 실시간 토스트 -->
+            <div id="notiToast" style="display:none; position:fixed; top:70px; right:20px; z-index:9999;
+                background:#fff; border-left:4px solid #4e73df; border-radius:8px;
+                box-shadow:0 4px 20px rgba(0,0,0,.15); padding:14px 18px; min-width:260px;">
+              <div style="font-weight:700; font-size:.9rem;" id="toastTitle"></div>
+              <div style="font-size:.82rem; color:#666; margin-top:4px;" id="toastMsg"></div>
+              <div style="font-size:.75rem; color:#aaa; margin-top:6px;"><a href="/noti/list" style="color:#4e73df;">알림 보기</a></div>
+            </div>
+
+            <script th:inline="javascript">
+            (function() {
+              const userEmail = /*[[${#authentication != null && #authentication.name != 'anonymousUser' ? #authentication.name : ''}]]*/ '';
+              if (!userEmail) return;
+              const _ctx = (/*[[@{/}]]*/ '/').replace(/\/$/, '');
+              fetch(_ctx + '/noti/count').then(r=>r.json()).then(d=>updateBadge(d.count));
+              function connectWs() {
+                if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') { setTimeout(connectWs,500); return; }
+                const client = Stomp.over(new SockJS(_ctx + '/ws-chat'));
+                client.debug = null;
+                client.connect({}, function() {
+                  client.subscribe('/topic/noti/' + userEmail, function(frame) {
+                    const p = JSON.parse(frame.body);
+                    const b = document.getElementById('bellBadge');
+                    updateBadge((parseInt(b.textContent)||0)+1);
+                    showToast(p.title, p.message);
+                  });
+                }, function(){ setTimeout(connectWs,3000); });
+              }
+              connectWs();
+              function updateBadge(n) {
+                const b = document.getElementById('bellBadge');
+                if(!b) return;
+                b.textContent = n>99?'99+':n;
+                b.style.display = n>0 ? '' : 'none';
+              }
+              function showToast(t,m) {
+                document.getElementById('toastTitle').textContent = t||'새 알림';
+                document.getElementById('toastMsg').textContent   = m||'';
+                const el = document.getElementById('notiToast');
+                el.style.display='block';
+                clearTimeout(window._tt);
+                window._tt = setTimeout(()=>el.style.display='none', 4000);
+              }
+            })();
+            </script>
+
+            <script th:inline="javascript">
+            function resetChatBadge() {
+              const b = document.getElementById('chatBadge');
+              if (b) { b.textContent = '0'; b.style.display = 'none'; }
+              // DB 미읽음 카운트 초기화
+              const _ctx = (/*[[@{/}]]*/ '/').replace(/\/$/, '');
+              fetch(_ctx + '/api/chat/reset-all-unread', { method: 'POST' }).catch(function(){});
+            }
+            (function() {
+              const userEmail = /*[[${#authentication != null && #authentication.name != 'anonymousUser' ? #authentication.name : ''}]]*/ '';
+              if (!userEmail) return;
+              const _ctx = (/*[[@{/}]]*/ '/').replace(/\/$/, '');
+
+              // 페이지 로드 시 DB에서 미읽음 카운트 초기값 로드
+              fetch(_ctx + '/api/chat/unread-count').then(function(r){ return r.json(); }).then(function(d){
+                updateChatBadge(d.count);
+              }).catch(function(){});
+
+              function updateChatBadge(n) {
+                const b = document.getElementById('chatBadge');
+                if (!b) return;
+                b.textContent = n > 99 ? '99+' : n;
+                b.style.display = n > 0 ? '' : 'none';
+              }
+
+              function connectChatBadge() {
+                if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') { setTimeout(connectChatBadge, 500); return; }
+                const client = Stomp.over(new SockJS(_ctx + '/ws-chat'));
+                client.debug = null;
+                client.connect({}, function() {
+                  client.subscribe('/topic/chat-unread/' + userEmail, function() {
+                    const b = document.getElementById('chatBadge');
+                    if (!b) return;
+                    const cur = parseInt(b.textContent) || 0;
+                    b.textContent = cur + 1 > 99 ? '99+' : cur + 1;
+                    b.style.display = '';
+                  });
+                }, function() { setTimeout(connectChatBadge, 3000); });
+              }
+              connectChatBadge();
+            })();
+            </script>
 
         </nav>
       </div>
@@ -95,22 +181,22 @@
               </button>
 
               <!-- 패널 -->
-              <section class="category-panel" id="categoryPanel" role="menu">
-                <div class="category-wrap">
-                  <aside class="category-left">
-                    <ul class="category-left-list" id="mainMenu">
-                      <li class="is-active"><button type="button">패션(수입명품 / 패션의류 / 패션잡화)</button></li>
-                      <li><button type="button">육아(출산 / 유아동)</button></li>
-                      <li><button type="button">디지털·전자기기(모바일 / 태블릿 / 노트북 / PC / 카메라 / 캠코더)</button></li>
-                      <li><button type="button">가전(가전제품)</button></li>
-                      <li><button type="button">홈·인테리어(가구 / 인테리어 / 리빙 / 생활)</button></li>
-                      <li><button type="button">취미(게임, 반려동물, 독서)</button></li>
-                      <li><button type="button">여행(등산, 캠핑 등등)</button></li>
-                      <li><button type="button">공구/산업용품</button></li>
-                    </ul>
-                  </aside>
-                </div>
-              </section>
+             <section class="category-panel" id="categoryPanel" role="menu">
+  <div class="category-wrap">
+    <aside class="category-left">
+      <ul class="category-left-list" id="mainMenu">
+        <li><a th:href="@{/product/product_list(categoryNo=1)}">패션</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=2)}">육아</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=3)}">가전</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=4)}">홈·인테리어</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=5)}">취미</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=6)}">여행</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=7)}">공구/산업용품</a></li>
+        <li><a th:href="@{/product/product_list(categoryNo=8)}">디지털·전자기기</a></li>
+      </ul>
+    </aside>
+  </div>
+</section>
             </div>
           </div>
 
@@ -118,6 +204,7 @@
             <a th:href="@{/product/product_list}" class="gnb-link">장터</a>
             <a th:href="@{/product/price_check}" class="gnb-link">시세조회</a>
             <a th:href="@{/product/sell}" class="gnb-link">판매하기</a>
+            <a th:href="@{~/board-service/notice/list}" class="gnb-link">공지사항</a>
           </nav>
 
         </div>

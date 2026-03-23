@@ -24,6 +24,10 @@ public class ProductDTO {
     private String tradeStatus;
     private String tradeMethod;
 
+    private String carrierCode;   // 택배사 코드
+    private String invoiceNo;     // 송장번호
+    private Integer transactionId; // 거래 ID (송장 저장용)
+
     private Integer viewCount;
     private Date regDate;
 
@@ -63,6 +67,8 @@ public class ProductDTO {
     private String placeName;   // 목록에서 장소명 표시
     private String imgUrl;      // 대표 이미지
     
+    private int canAccessDetail;
+    
     private String areaGu;
     /* ============================= */
     /* 찜 */
@@ -78,5 +84,14 @@ public class ProductDTO {
     
     // 관리자 페이지 전용 의심 플래그
     private boolean suspect;
-
+    // 관리자 신고 필터 전용
+    private int reportCount;
+    private String reportTypes;
+    
+    //로그인 접속 시간
+    private Date lastLoginDate;
+    
+    //리뷰
+    private List<ReviewDTO> recentReviewList;
+   
 }

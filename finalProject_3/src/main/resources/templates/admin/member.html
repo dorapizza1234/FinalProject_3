@@ -5,183 +5,606 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원관리 - 관리자</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" th:href="@{/css/admin/sideBar.css}">
+    <link rel="stylesheet" th:href="@{/css/admin/member.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="d-flex">
 <aside th:replace="~{admin/admin_sidebar :: adminSidebar}"></aside>
-    <main class="main-content w-100">
-        <h4 class="mb-4 fw-bold">회원 관리</h4>
 
-        <div class="row g-3 mb-4">
-            <div class="col-md-4">
-                <div class="stat-card text-center">
-                    <div class="text-muted small">총 가입자 수</div>
-                    <div class="h4 fw-bold mb-0" th:text="${totalMembers != null ? totalMembers + '명' : '0명'}">0명</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card text-center">
-                    <div class="text-muted small">신규 가입 (오늘)</div>
-                    <div class="h4 fw-bold mb-0 text-primary" th:text="${newMembers != null ? newMembers + '명' : '0명'}">0명</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card text-center">
-                    <div class="text-muted small">일시/영구 정지</div>
-                    <div class="h4 fw-bold mb-0 text-danger" th:text="${suspendedMembers != null ? suspendedMembers + '명' : '0명'}">0명</div>
+<main class="main-content w-100">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-0">회원 관리</h4>
+            <small class="text-muted">가입 회원 현황 및 상태 관리</small>
+        </div>
+    </div>
+
+    <!-- 차트 + 통계카드 -->
+    <div class="row g-3 mb-4">
+        <!-- 연령대별 도넛 차트 -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="fw-bold mb-3 small text-primary text-uppercase">📊 연령대별 회원 분포</div>
+                <div class="d-flex align-items-center" style="height:220px;">
+                    <div style="width:160px;flex-shrink:0;height:100%;position:relative;">
+                        <canvas id="ageChart"></canvas>
+                    </div>
+                    <div class="flex-grow-1 ps-3" id="ageLegend"></div>
                 </div>
             </div>
         </div>
 
-        <div class="filter-bar d-flex align-items-center justify-content-between">
-            <div class="d-flex gap-2">
-                <select class="form-select form-select-sm" style="width: 120px;">
-                    <option value="">전체상태</option>
-                    <option value="1">활동중</option>
-                    <option value="0">탈퇴/정지</option>
-                </select>
-                <input type="text" class="form-control form-control-sm" placeholder="이메일 또는 이름 검색" style="width: 200px;">
-                <button class="btn btn-dark btn-sm">검색</button>
-            </div>
-            <div class="text-muted small">
-                조회 결과 : <span class="fw-bold" th:text="${#lists.size(members)}">0</span>명
-            </div>
-        </div>
-
-        <div class="member-table-wrap">
-            <table class="table member-table table-hover mb-0">
-                <thead>
-                    <tr class="text-center">
-                        <th>번호</th>
-                        <th>계정 정보</th>
-                        <th>연락처</th>
-                        <th>상태</th>
-                        <th>매너온도</th>
-                        <th>가입일</th>
-                        <th>관리</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="m, stat : ${members}" class="text-center align-middle">
-                        <td th:text="${stat.count}">1</td>
-                        <td class="text-start">
-                            <div class="fw-bold" th:text="${m.email}">email@address.com</div>
-                            <small class="text-muted" th:text="${m.userName}">회원명</small>
-                        </td>
-                        <td th:text="${m.phone}">010-0000-0000</td>
-                        <td>
-                            <span th:if="${m.status == 0}" class="badge bg-dark">탈퇴</span>
-                            <span th:if="${m.status == 1 and m.suspended == 1}" class="badge bg-danger">관리자정지</span>
-                            <span th:if="${m.status == 1 and m.idle == 1}" class="badge bg-secondary">휴면</span>
-                            <span th:if="${m.status == 1 and m.suspended == 0 and m.idle == 0}" class="badge bg-success">활동중</span>
-                        </td>
-                        <td><span class="fw-bold text-primary" th:text="${m.mannerTemp}">50</span>℃</td>
-                        <td th:text="${m.regDate}">2026-02-10</td>
-                        <td>
-                            <button class="btn btn-outline-primary btn-sm" 
-                                    th:onclick="openMemberModal([[${m.userNo}]])">상세보기</button>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(members)}">
-                        <td colspan="7" class="py-5 text-center text-muted">가입된 회원이 존재하지 않습니다.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <nav aria-label="Page navigation" class="mt-4">
-            <ul class="pagination justify-content-center pagination-sm">
-                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
-                    <a class="page-link" th:href="@{/admin/member(page=${currentPage - 1})}">이전</a>
-                </li>
-                <li class="page-item"
-                    th:each="i : ${#numbers.sequence(1, totalPages)}"
-                    th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link"
-                       th:href="@{/admin/member(page=${i})}"
-                       th:text="${i}">1</a>
-                </li>
-                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
-                    <a class="page-link" th:href="@{/admin/member(page=${currentPage + 1})}">다음</a>
-                </li>
-            </ul>
-        </nav>
-    </main>
-
-    <div class="modal fade" id="memberDetailModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">회원 상세 정보</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center border-end">
-                            <img id="modalProfileImg" src="https://via.placeholder.com/150" class="rounded-circle img-thumbnail mb-3" style="width: 150px; height: 150px; object-fit: cover;">
-                            <h4 id="modalNickname" class="fw-bold">닉네임</h4>
-                            <p id="modalManner" class="text-primary fw-bold">50℃</p>
-                        </div>
-                        <div class="col-md-8">
-                            <table class="table table-sm">
-                                <tr><th width="30%">이메일</th><td id="modalEmail"></td></tr>
-                                <tr><th>이름</th><td id="modalName"></td></tr>
-                                <tr><th>연락처</th><td id="modalPhone"></td></tr>
-                                <tr><th>가입일</th><td id="modalRegDate"></td></tr>
-                                <tr><th>상태</th><td id="modalStatus"></td></tr>
-                            </table>
-                        </div>
+        <!-- 지역별(구) 가로 막대 차트 -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="fw-bold mb-3 small text-success text-uppercase">📍 지역별(구) 회원 분포</div>
+                <div class="chart-wrapper" style="height:220px;">
+                    <canvas id="regionChart"></canvas>
+                    <div id="regionNoData" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;">
+                        <span class="text-muted small">데이터 없음</span>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                    <button type="button" class="btn btn-danger">활동 정지</button>
-                </div>
+            </div>
+        </div>
+
+        <!-- 통계 카드 세로 -->
+        <div class="col-md-4">
+            <div class="d-flex flex-column gap-2 h-100">
+                <a th:href="@{/admin/member}" class="stat-card-link border-primary flex-fill py-2 text-center">
+                    <div class="text-muted small">총 가입자</div>
+                    <div class="h5 fw-bold mb-0 text-dark"
+                         th:text="${totalMembers != null ? #numbers.formatInteger(totalMembers,0,'COMMA') + '명' : '-'}">-</div>
+                </a>
+                <a th:href="@{/admin/member}" class="stat-card-link border-success flex-fill py-2 text-center">
+                    <div class="text-muted small">신규가입 (오늘)</div>
+                    <div class="h5 fw-bold mb-0 text-success"
+                         th:text="${newMembers != null ? newMembers + '명' : '-'}">-</div>
+                </a>
+                <a th:href="@{/admin/member(page=1,status='1')}" class="stat-card-link border-warning flex-fill py-2 text-center">
+                    <div class="text-muted small">정지 회원</div>
+                    <div class="h5 fw-bold mb-0 text-warning"
+                         th:text="${suspendedMembers != null ? suspendedMembers + '명' : '-'}">-</div>
+                </a>
+                <a th:href="@{/admin/member(page=1,status='0')}" class="stat-card-link border-danger flex-fill py-2 text-center">
+                    <div class="text-muted small">탈퇴 회원</div>
+                    <div class="h5 fw-bold mb-0 text-danger"
+                         th:text="${withdrawnMembers != null ? withdrawnMembers + '명' : '-'}">-</div>
+                </a>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script th:inline="javascript">
-        function openMemberModal(userNo) {
-            if(!userNo) {
-                alert("유효하지 않은 회원 번호입니다.");
-                return;
-            }
+    <!-- 검색 + 테이블 -->
+    <div class="section-card">
+        <div class="section-header">
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <h6 class="mb-0"><i class="bi bi-people-fill text-primary me-2"></i>회원 목록
+                    <span class="badge bg-light text-dark border ms-1"
+                          th:text="${searchCount != null ? searchCount : 0} + '명'"></span>
+                </h6>
+                <a th:href="@{/admin/member(page=1,keyword=${searchKeyword})}"
+                   th:class="${searchStatus == null or searchStatus == ''} ? 'status-tab active-all' : 'status-tab'">전체</a>
+                <a th:href="@{/admin/member(page=1,status='1',keyword=${searchKeyword})}"
+                   th:class="${searchStatus == '1'} ? 'status-tab active-act' : 'status-tab'">활동중</a>
+                <a th:href="@{/admin/member(page=1,status='0',keyword=${searchKeyword})}"
+                   th:class="${searchStatus == '0'} ? 'status-tab active-stp' : 'status-tab'">탈퇴/정지</a>
+            </div>
+            <form th:action="@{/admin/member}" method="get" class="d-flex gap-2" id="searchForm">
+                <input type="hidden" name="page" value="1">
+                <input type="hidden" name="status" th:value="${searchStatus}">
+                <div class="input-group" style="width:240px;">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0 form-control-sm"
+                           name="keyword" th:value="${searchKeyword}"
+                           placeholder="이메일 또는 이름 검색" id="keywordInput">
+                </div>
+                <button type="submit" class="btn btn-dark btn-sm px-3">검색</button>
+            </form>
+        </div>
 
-            // 서버 API 호출 (사용자 정보를 JSON으로 반환하는 컨트롤러 필요)
-            const ctx = /*[[@{/}]]*/ '/';
-            fetch(`${ctx}admin/member/detail?userNo=${userNo}`)
-                .then(response => {
-                    if(!response.ok) throw new Error("데이터를 가져오는데 실패했습니다.");
-                    return response.json();
-                })
-                .then(data => {
-                  
-                    document.getElementById('modalProfileImg').src = data.profileImg || 'https://via.placeholder.com/150';
-                    document.getElementById('modalNickname').innerText = data.nickname;
-                    document.getElementById('modalManner').innerText = data.mannerTemp + '℃';
-                    document.getElementById('modalEmail').innerText = data.email;
-                    document.getElementById('modalName').innerText = data.userName;
-                    document.getElementById('modalPhone').innerText = data.phone; 
-                    document.getElementById('modalRegDate').innerText = data.regDate;
-                    
-                    
-                    let statusText = "활동중";
-                    if(data.status == 0) statusText = "탈퇴";
-                    else if(data.suspended == 1) statusText = "관리자정지";
-                    else if(data.idle == 1) statusText = "휴면";
-                    document.getElementById('modalStatus').innerText = statusText;
+    <!-- table -->
+    <div>
+        <table class="table mb-0">
+            <thead>
+                <tr class="text-center">
+                    <th>순서</th>
+                    <th class="text-start">계정 정보</th>
+                    <th>연락처</th>
+                    <th>상태</th>
+                    <th>매너온도</th>
+                    <th>가입일</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="m, stat : ${members}" class="text-center">
+                    <td class="text-muted" th:text="${stat.count}">1</td>
+                    <td class="text-start">
+                        <div class="d-flex align-items-center gap-2">
+                            <span th:if="${m.profileImg == null or m.profileImg == ''}"
+                                  class="avatar-placeholder"
+                                  th:text="${#strings.substring(m.userName != null ? m.userName : 'U', 0, 1)}">U</span>
+                            <img th:if="${m.profileImg != null and m.profileImg != ''}"
+                                 th:src="${m.profileImg}" class="avatar" alt="profile">
+                            <div>
+                                <div class="fw-semibold" style="font-size:.9rem;" th:text="${m.email}">email</div>
+                                <small class="text-muted" th:text="${m.userName}">이름</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-muted" style="font-size:.82rem;">암호화됨</td>
+                    <td>
+                        <span th:if="${m.status == 0}" class="status-dot sd-withdraw">탈퇴</span>
+                        <span th:if="${m.status == 1 and m.suspended == 1}" class="status-dot sd-suspended">관리자정지</span>
+                        <span th:if="${m.status == 1 and m.idle == 1 and m.suspended == 0}" class="status-dot sd-idle">휴면</span>
+                        <span th:if="${m.status == 1 and m.suspended == 0 and m.idle == 0}" class="status-dot sd-active">활동중</span>
+                    </td>
+                    <td>
+                        <span th:with="t=${m.mannerTemp != null ? m.mannerTemp : 50}"
+                              th:class="${t >= 60} ? 'temp-badge hot' : (${t >= 40} ? 'temp-badge warm' : 'temp-badge cool')">
+                            <i th:class="${t >= 60} ? 'bi bi-thermometer-high' : (${t >= 40} ? 'bi bi-thermometer-half' : 'bi bi-thermometer-low')"></i>
+                            <span th:text="${t}">50</span>℃
+                        </span>
+                    </td>
+                    <td class="text-muted" style="font-size:.82rem;" th:text="${m.regDate}">2026-02-10</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                th:onclick="openMemberModal([[${m.userNo}]])">
+                            <i class="bi bi-eye me-1"></i>상세
+                        </button>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(members)}">
+                    <td colspan="7" class="py-5 text-center text-muted">
+                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>해당하는 회원이 없습니다.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-                    // 모달 열기
-                    const modal = new bootstrap.Modal(document.getElementById('memberDetailModal'));
-                    modal.show();
-                })
-                .catch(error => {
-                    console.error(error);
-                    alert("정보를 불러오는 중 오류가 발생했습니다.");
-                });
+    <!-- pagination -->
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center pagination-sm">
+            <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                <a class="page-link" th:href="@{/admin/member(page=${currentPage-1},status=${searchStatus},keyword=${searchKeyword})}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence(1, totalPages)}"
+                th:classappend="${i == currentPage} ? 'active'">
+                <a class="page-link"
+                   th:href="@{/admin/member(page=${i},status=${searchStatus},keyword=${searchKeyword})}"
+                   th:text="${i}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                <a class="page-link" th:href="@{/admin/member(page=${currentPage+1},status=${searchStatus},keyword=${searchKeyword})}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    </div><!-- /section-card -->
+</main>
+
+<!-- ══════════════════════════════════════════
+     회원 상세 모달
+══════════════════════════════════════════ -->
+<div class="modal fade" id="memberDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- color top bar -->
+            <div class="modal-top-bar"></div>
+
+            <!-- header -->
+            <div class="modal-header-bar d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div id="modalProfilePlaceholder" class="modal-avatar-placeholder"><i class="bi bi-person-fill"></i></div>
+                    <img id="modalProfileImg" class="modal-avatar d-none" src="" alt="profile">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="fw-bold" id="modalNickname" style="font-size:1rem;color:#2d3436;">닉네임</span>
+                            <span id="modalStatusBadge" class="status-pill sp-active">활동중</span>
+                        </div>
+                        <span class="text-muted" id="modalHeaderEmail" style="font-size:.82rem;"></span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- info grid (3열) -->
+            <div class="info-section">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label"><i class="bi bi-envelope me-1"></i>이메일</div>
+                        <div class="info-value" id="modalEmail">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="bi bi-person me-1"></i>이름</div>
+                        <div class="info-value" id="modalName">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="bi bi-telephone me-1"></i>연락처</div>
+                        <div class="info-value" id="modalPhone">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="bi bi-calendar me-1"></i>가입일</div>
+                        <div class="info-value" id="modalRegDate">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="bi bi-thermometer-half me-1"></i>매너온도</div>
+                        <div class="info-value" id="modalManner">50℃</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="bi bi-shield me-1"></i>계정상태</div>
+                        <div class="info-value" id="modalStatusDetail">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 예약된 정지 안내 -->
+            <div id="pendingAlert" class="pending-alert mx-4 mt-3 d-none">
+                <i class="bi bi-clock-history me-2"></i>
+                <strong>정지 예약됨:</strong> 3일 후 자동 적용됩니다.
+            </div>
+
+            <!-- tabs -->
+            <div class="px-4 pt-3 pb-3">
+                <ul class="nav modal-tabs mb-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="switchTab('products',this);return false;">
+                            <i class="bi bi-box-seam me-1"></i>판매중인 상품
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="switchTab('message',this);return false;">
+                            <i class="bi bi-chat-dots me-1"></i>메시지 보내기
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- tab: products -->
+                <div id="tabProducts">
+                    <div class="products-scroll">
+                        <table class="table table-sm table-hover mb-0" id="modalProductsTable">
+                            <thead class="table-light">
+                                <tr class="text-center" style="font-size:.77rem;">
+                                    <th class="text-start">상품명</th>
+                                    <th>카테고리</th>
+                                    <th>가격</th>
+                                    <th>상태</th>
+                                    <th>등록일</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalProductsTbody"></tbody>
+                        </table>
+                        <p id="modalNoProducts" class="text-muted text-center py-3 mb-0" style="display:none;">
+                            <i class="bi bi-inbox d-block fs-4 mb-1"></i>판매중인 상품이 없습니다.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- tab: message -->
+                <div id="tabMessage" style="display:none;">
+                    <!-- 탈퇴 회원 안내 -->
+                    <div id="withdrawnMsgNotice" style="display:none;"
+                         class="text-center py-4 text-muted">
+                        <i class="bi bi-person-slash d-block fs-2 mb-2"></i>
+                        <span style="font-size:.85rem;">탈퇴한 회원에게는 메시지를 발송할 수 없습니다.</span>
+                    </div>
+                    <!-- 일반 메시지 작성 -->
+                    <div id="msgComposeArea" class="msg-compose">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">제목</label>
+                            <input type="text" class="form-control form-control-sm" id="msgTitle" placeholder="메시지 제목">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">내용</label>
+                            <textarea class="form-control form-control-sm" id="msgContent" rows="4"
+                                      placeholder="회원에게 전달할 내용을 입력하세요."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button class="btn btn-sm btn-outline-secondary btn-action" onclick="clearMessage()">초기화</button>
+                            <button class="btn btn-sm btn-primary btn-action" onclick="sendMessage()">
+                                <i class="bi bi-send me-1"></i>전송
+                            </button>
+                        </div>
+                        <div id="msgResult" class="mt-2" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- footer -->
+            <div class="modal-footer justify-content-between">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-success btn-action btn-sm"
+                            id="btnUnsuspend" style="display:none;" onclick="unsuspendMember()">
+                        <i class="bi bi-unlock me-1"></i>정지 해제
+                    </button>
+                    <button type="button" class="btn btn-warning btn-action btn-sm"
+                            id="btnSuspend" style="display:none;" onclick="confirmSuspend()">
+                        <i class="bi bi-pause-circle me-1"></i>일시정지 예약
+                    </button>
+                    <button type="button" class="btn btn-danger btn-action btn-sm"
+                            id="btnBan" style="display:none;" onclick="confirmBan()">
+                        <i class="bi bi-ban me-1"></i>영구정지 예약
+                    </button>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-action btn-sm" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const base = (/*[[@{/}]]*/ '/').replace(/\/$/, '');
+    let currentUserNo = null;
+    let currentEmail  = null;
+    let currentStatus = null;
+
+    function formatPhone(p) {
+        if (!p) return '-';
+        const d = p.replace(/\D/g, '');
+        if (d.length === 11) return d.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+        if (d.length === 10) return d.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+        return p;
+    }
+
+    function switchTab(tab, el) {
+        document.getElementById('tabProducts').style.display = tab === 'products' ? '' : 'none';
+        document.getElementById('tabMessage').style.display  = tab === 'message'  ? '' : 'none';
+        document.querySelectorAll('.modal-tabs .nav-link').forEach(l => l.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function openMemberModal(userNo) {
+        if (!userNo) return;
+        currentUserNo = userNo;
+        switchTab('products', document.querySelector('.modal-tabs .nav-link'));
+
+        fetch(`${base}/admin/member/detail?userNo=${userNo}`)
+            .then(r => r.json())
+            .then(data => {
+                currentEmail  = data.email;
+                currentStatus = data.status;
+
+                // profile
+                const img  = document.getElementById('modalProfileImg');
+                const phdr = document.getElementById('modalProfilePlaceholder');
+                if (data.profileImg) { img.src = data.profileImg; img.classList.remove('d-none'); phdr.classList.add('d-none'); }
+                else                 { img.classList.add('d-none'); phdr.classList.remove('d-none'); }
+
+                document.getElementById('modalNickname').textContent    = data.nickname || '-';
+                document.getElementById('modalHeaderEmail').textContent = data.email    || '-';
+                document.getElementById('modalEmail').textContent       = data.email    || '-';
+                document.getElementById('modalName').textContent        = data.userName || '-';
+                document.getElementById('modalPhone').textContent       = formatPhone(data.phone);
+                document.getElementById('modalRegDate').textContent     = data.regDate  || '-';
+                document.getElementById('modalManner').textContent      = (data.mannerTemp || 0) + '℃';
+
+                // status
+                let badge = '', detail = '';
+                if (data.status == 0)                           { badge = '<span class="status-pill sp-withdraw">탈퇴</span>';        detail = badge; }
+                else if (data.suspended == 1)                   { badge = '<span class="status-pill sp-suspended">관리자정지</span>'; detail = badge; }
+                else if (data.pendingSuspension)                { badge = '<span class="status-pill sp-pending">정지예약</span>';     detail = badge; }
+                else if (data.idle == 1)                        { badge = '<span class="status-pill sp-idle">휴면</span>';            detail = badge; }
+                else                                            { badge = '<span class="status-pill sp-active">활동중</span>';        detail = badge; }
+                document.getElementById('modalStatusBadge').innerHTML = badge;
+                document.getElementById('modalStatusDetail').innerHTML = detail;
+
+                // pending suspension banner
+                const pa = document.getElementById('pendingAlert');
+                pa.classList.toggle('d-none', !data.pendingSuspension);
+
+                // buttons
+                ['btnSuspend','btnUnsuspend','btnBan'].forEach(id => document.getElementById(id).style.display='none');
+                if (data.status == 1 && data.suspended == 0 && !data.pendingSuspension) {
+                    document.getElementById('btnSuspend').style.display = 'inline-flex';
+                    document.getElementById('btnBan').style.display     = 'inline-flex';
+                } else if (data.status == 1 && (data.suspended == 1 || data.pendingSuspension)) {
+                    document.getElementById('btnUnsuspend').style.display = 'inline-flex';
+                    document.getElementById('btnBan').style.display       = 'inline-flex';
+                }
+
+                // products
+                const tbody = document.getElementById('modalProductsTbody');
+                const noMsg = document.getElementById('modalNoProducts');
+                const tbl   = document.getElementById('modalProductsTable');
+                tbody.innerHTML = '';
+                const products = data.products || [];
+                if (products.length === 0) { noMsg.style.display='block'; tbl.style.display='none'; }
+                else {
+                    noMsg.style.display='none'; tbl.style.display='';
+                    products.forEach(p => {
+                        const sc = p.tradeStatus==='판매중' ? 'bg-success' : p.tradeStatus==='예약중' ? 'bg-warning text-dark' : 'bg-primary';
+                        const price = p.productPrice != null ? Number(p.productPrice).toLocaleString()+'원' : '무료나눔';
+                        const dateStr = p.regDate ? new Date(p.regDate).toLocaleDateString('ko-KR') : '-';
+                        tbody.innerHTML += `<tr class="text-center" style="font-size:.82rem;">
+                            <td class="text-start">${p.productName||'-'}</td>
+                            <td>${p.categoryName||'-'}</td>
+                            <td>${price}</td>
+                            <td><span class="badge ${sc} rounded-pill">${p.tradeStatus||'-'}</span></td>
+                            <td>${dateStr}</td>
+                        </tr>`;
+                    });
+                }
+
+                document.getElementById('msgTitle').value = '';
+                document.getElementById('msgContent').value = '';
+                document.getElementById('msgResult').style.display = 'none';
+
+                // 탈퇴 회원: 메시지 탭 비활성화
+                const msgTabLink = document.querySelector('.modal-tabs .nav-link:nth-child(1)');
+                const allTabLinks = document.querySelectorAll('.modal-tabs .nav-link');
+                const msgTabNav = allTabLinks[1];
+                const withdrawnNotice = document.getElementById('withdrawnMsgNotice');
+                if (data.status == 0) {
+                    msgTabNav.style.opacity = '0.4';
+                    msgTabNav.style.pointerEvents = 'none';
+                    msgTabNav.style.cursor = 'not-allowed';
+                    withdrawnNotice.style.display = '';
+                    document.getElementById('msgComposeArea').style.display = 'none';
+                } else {
+                    msgTabNav.style.opacity = '';
+                    msgTabNav.style.pointerEvents = '';
+                    msgTabNav.style.cursor = '';
+                    withdrawnNotice.style.display = 'none';
+                    document.getElementById('msgComposeArea').style.display = '';
+                }
+
+                new bootstrap.Modal(document.getElementById('memberDetailModal')).show();
+            })
+            .catch(() => alert('정보를 불러오는 중 오류가 발생했습니다.'));
+    }
+
+    // ── 일시정지 예약 ────────────────────────
+    function confirmSuspend() {
+        if (!confirm('⚠️ 일시정지 예약\n\n이 회원을 3일 후 일시정지 처리하시겠습니까?\n예약 즉시 회원에게 안내 메시지가 발송됩니다.')) return;
+        fetch(`${base}/admin/member/suspend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `userNo=${currentUserNo}&email=${encodeURIComponent(currentEmail)}`
+        }).then(r => r.json()).then(d => {
+            alert(d.success ? '✅ ' + d.message : '❌ 처리 실패: ' + d.message);
+            if (d.success) { bootstrap.Modal.getInstance(document.getElementById('memberDetailModal')).hide(); location.reload(); }
+        });
+    }
+
+    // ── 영구정지 예약 ────────────────────────
+    function confirmBan() {
+        if (!confirm('⛔ 영구정지 예약\n\n이 회원을 3일 후 영구정지 처리하시겠습니까?\n예약 즉시 회원에게 안내 메시지가 발송됩니다.\n이 작업은 되돌리기 어렵습니다.')) return;
+        fetch(`${base}/admin/member/ban`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `userNo=${currentUserNo}&email=${encodeURIComponent(currentEmail)}`
+        }).then(r => r.json()).then(d => {
+            alert(d.success ? '✅ ' + d.message : '❌ 처리 실패: ' + d.message);
+            if (d.success) { bootstrap.Modal.getInstance(document.getElementById('memberDetailModal')).hide(); location.reload(); }
+        });
+    }
+
+    // ── 정지 해제 ────────────────────────────
+    function unsuspendMember() {
+        if (!confirm('이 회원의 정지를 해제하시겠습니까?')) return;
+        fetch(`${base}/admin/member/unsuspend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `userNo=${currentUserNo}`
+        }).then(r => r.json()).then(d => {
+            if (d.success) { alert('정지가 해제되었습니다.'); location.reload(); }
+            else { alert('처리 중 오류가 발생했습니다.'); }
+        });
+    }
+
+    // ── 메시지 ───────────────────────────────
+    function sendMessage() {
+        if (currentStatus == 0) { alert('탈퇴한 회원에게는 메시지를 발송할 수 없습니다.'); return; }
+        const title   = document.getElementById('msgTitle').value.trim();
+        const content = document.getElementById('msgContent').value.trim();
+        const resultEl = document.getElementById('msgResult');
+        if (!title || !content) {
+            resultEl.innerHTML = '<div class="alert alert-warning py-2 small mb-0">제목과 내용을 모두 입력해주세요.</div>';
+            resultEl.style.display = '';
+            return;
         }
-    </script>
+        fetch(`${base}/admin/api/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetEmail: currentEmail, title, message: content })
+        }).then(r => r.json()).then(d => {
+            resultEl.style.display = '';
+            resultEl.innerHTML = d.success
+                ? '<div class="alert alert-success py-2 small mb-0"><i class="bi bi-check-circle me-1"></i>전송되었습니다.</div>'
+                : `<div class="alert alert-danger py-2 small mb-0"><i class="bi bi-x-circle me-1"></i>${d.message||'전송 실패'}</div>`;
+        }).catch(() => {
+            resultEl.style.display = '';
+            resultEl.innerHTML = '<div class="alert alert-danger py-2 small mb-0">오류가 발생했습니다.</div>';
+        });
+    }
+
+    function clearMessage() {
+        document.getElementById('msgTitle').value = '';
+        document.getElementById('msgContent').value = '';
+        document.getElementById('msgResult').style.display = 'none';
+    }
+
+    // ── 대시보드 차트 초기화 ─────────────────────
+    (function() {
+        // 연령대별 doughnut chart
+        const ageLabels = /*[[${ageLabels}]]*/ ['10대','20대','30대','40대','50대','60대+'];
+        const ageData   = /*[[${ageData}]]*/ [0,0,0,0,0,0];
+        const ageColors = ['#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b','#858796'];
+
+        new Chart(document.getElementById('ageChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ageLabels,
+                datasets: [{ data: ageData, backgroundColor: ageColors, borderWidth: 2 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                cutout: '68%'
+            }
+        });
+
+        // 오른쪽 범례 + 수치
+        const total = ageData.reduce((a, b) => a + b, 0);
+        const legend = document.getElementById('ageLegend');
+        legend.innerHTML = ageLabels.map((label, i) => `
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width:10px;height:10px;border-radius:50%;background:${ageColors[i]};flex-shrink:0;display:inline-block;"></span>
+                    <span style="font-size:.82rem;color:#555;">${label}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size:.82rem;font-weight:700;color:#2e3750;">${ageData[i].toLocaleString()}명</span>
+                    <span style="font-size:.75rem;color:#aaa;width:34px;text-align:right;">${total > 0 ? Math.round(ageData[i]/total*100) : 0}%</span>
+                </div>
+            </div>`).join('');
+
+        // 지역별(구) horizontal bar chart - 구마다 다른 색
+        const regionLabels = /*[[${regionLabels}]]*/ [];
+        const regionData   = /*[[${regionData}]]*/ [];
+        const regionPalette = ['#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b','#858796','#5a5c69','#fd7e14','#6f42c1','#20c997'];
+        const regionColors  = regionLabels.map((_, i) => regionPalette[i % regionPalette.length]);
+
+        if (regionLabels && regionLabels.length > 0) {
+            document.getElementById('regionNoData').style.display = 'none';
+            new Chart(document.getElementById('regionChart'), {
+                type: 'bar',
+                data: {
+                    labels: regionLabels,
+                    datasets: [{
+                        label: '회원 수',
+                        data: regionData,
+                        backgroundColor: regionColors,
+                        borderColor: regionColors,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } }, grid: { color: '#f0f0f0' } },
+                        y: { ticks: { font: { size: 11 } }, grid: { display: false } }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('regionChart').style.display = 'none';
+            document.getElementById('regionNoData').style.display = 'flex';
+        }
+    })();
+</script>
 </body>
 </html>

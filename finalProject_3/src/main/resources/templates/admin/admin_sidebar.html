@@ -9,18 +9,44 @@
             <div class="admin-avatar"></div>
             <p class="admin-name mb-0">관리자님 환영합니다</p>
         </div>
-        
-        <nav class="nav flex-column">
-            <a th:href="@{/admin/index}" class="nav-menu-item active">메인페이지</a>
-            <a th:href="@{/admin/member}" class="nav-menu-item active">회원관리</a>
+
+        <nav class="nav flex-column pt-3 mt-1">
+            <a th:href="@{/admin/index}" class="nav-menu-item">메인페이지</a>
+            <a th:href="@{/admin/member}" class="nav-menu-item">회원관리</a>
             <a th:href="@{/admin/product}" class="nav-menu-item">상품관리</a>
             <a th:href="@{/admin/review}" class="nav-menu-item">리뷰관리</a>
             <a th:href="@{/admin/transaction}" class="nav-menu-item">거래관리</a>
             <a th:href="@{/admin/complaint}" class="nav-menu-item">신고관리</a>
             <a th:href="@{/admin/inquiry}" class="nav-menu-item">문의내역</a>
+            <a th:href="@{/admin/accounting}" class="nav-menu-item">회계관리</a>
             <a th:href="@{/admin/contents}" class="nav-menu-item">콘텐츠 및 운영</a>
         </nav>
+        <div style="padding: 16px 12px; margin-top: auto; border-top: 1px solid rgba(255,255,255,.1);">
+            <a th:href="@{/}" style="display:flex; align-items:center; gap:8px; color:rgba(255,255,255,.6);
+               font-size:0.82rem; text-decoration:none; padding:8px 12px; border-radius:8px;
+               transition:all .2s;"
+               onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.color='#fff'"
+               onmouseout="this.style.background='';this.style.color='rgba(255,255,255,.6)'">
+                <i class="bi bi-box-arrow-left"></i> 메인 사이트로
+            </a>
+        </div>
     </aside>
+
+    <script>
+    (function() {
+        var path = window.location.pathname;
+        var links = document.querySelectorAll('.nav-menu-item');
+        links.forEach(function(link) {
+            var href = link.getAttribute('href');
+            if (!href) return;
+            // href에서 컨텍스트 경로 제거 후 비교
+            var hrefPath = href.replace(/\?.*$/, '');
+            if (path === hrefPath || path.startsWith(hrefPath + '/') || path.startsWith(hrefPath + '?')) {
+                link.classList.add('active');
+            }
+        });
+    })();
+    </script>
 
 </body>
 </html>

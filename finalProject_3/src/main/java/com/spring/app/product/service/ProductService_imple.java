@@ -1,6 +1,7 @@
 package com.spring.app.product.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,10 @@ import com.spring.app.product.domain.ProductImageDTO;
 import com.spring.app.product.domain.ProductMeetLocationDTO;
 import com.spring.app.product.domain.ProductPriceStatsDTO;
 import com.spring.app.product.domain.ProductPriceTrendDTO;
+import com.spring.app.product.domain.ProductReportDTO;
 import com.spring.app.product.domain.ProductShippingOptionDTO;
+import com.spring.app.product.domain.ReviewDTO;
+import com.spring.app.product.domain.ReviewSummaryDTO;
 import com.spring.app.product.domain.SearchKeywordDTO;
 import com.spring.app.product.domain.SearchLogDTO;
 import com.spring.app.product.domain.WishlistDTO;
@@ -343,6 +347,53 @@ public class ProductService_imple implements ProductService {
     public int selectSellerProductCountByProductNo(int productNo) {
         return pdao.selectSellerProductCountByProductNo(productNo);
     }
+
+
+    @Override
+    public boolean isBuyerOfProduct(int productNo, String memberEmail) {
+        Map<String, Object> paraMap = new HashMap<>();
+        paraMap.put("productNo", productNo);
+        paraMap.put("memberEmail", memberEmail);
+
+        return pdao.isBuyerOfProduct(paraMap) > 0;
+    }
     
+    //게시글 신고하기
+    @Override
+    public String selectSellerEmailByProductNo(int productNo) {
+        return pdao.selectSellerEmailByProductNo(productNo);
+    }
+    @Override
+    public Integer selectProductReportTypeId(ProductReportDTO reportDto) {
+        return pdao.selectProductReportTypeId(reportDto);
+    }
+    @Override
+    public int insertProductReport(ProductReportDTO reportDto) {
+        return pdao.insertProductReport(reportDto);
+    }
+    
+  //리뷰 조회(상품상세)
+    @Override
+    public List<ReviewDTO> selectRecentReviewsByProductNo(int productNo) {
+        return pdao.selectRecentReviewsByProductNo(productNo);
+    }
+    @Override
+    public int selectReviewCountBySellerEmail(String sellerEmail) {
+        return pdao.selectReviewCountBySellerEmail(sellerEmail);
+    }
+    
+  //리뷰 조회(판매자정보)
+    @Override
+    public ReviewSummaryDTO selectSellerReviewSummaryByProductNo(int productNo) {
+        return pdao.selectSellerReviewSummaryByProductNo(productNo);
+    }
+    @Override
+    public List<ReviewDTO> selectSellerReviewListByProductNo(Map<String, Object> paraMap) {
+        return pdao.selectSellerReviewListByProductNo(paraMap);
+    }
+    @Override
+    public int selectSellerReviewTotalCountByProductNo(Map<String, Object> paraMap) {
+        return pdao.selectSellerReviewTotalCountByProductNo(paraMap);
+    }
     
 }

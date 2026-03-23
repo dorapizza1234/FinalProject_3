@@ -312,22 +312,27 @@
       transform: scale(1.04);
     }
 
- .sps-badge{
-  position:absolute;
-  top:10px;
-  left:10px;
-  padding:6px 10px;
-  border-radius:999px;
-  font-size:12px;
-  letter-spacing:-.2px;
-  color:#fff;
-  line-height:1;
-  z-index:2;
+.sps-badge {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 64px;
+	height: 30px;
+	padding: 0 12px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #fff;
+	
 }
 
 /* 상태별 색상만 분리 (기존 구조 유지하면서 확장 가능) */
 .sps-badge.selling{ background:#16a34a; }   /* 판매중 */
-.sps-badge.trading{ background:#f59e0b; }   /* 거래중 */
+.sps-badge.reserved { background:#f59e0b; }/* 예약중 */
 .sps-badge.soldout{ background:#6b7280; }   /* 판매완료 */
 
 .sps-thumb-wrap {
@@ -620,6 +625,48 @@
 .search-highlight {
     font-weight: bold;
     color: red;
+}
+
+/* ===== 검색 결과 없음 ===== */
+.no-result {
+  width: 100%;
+  margin: 0 auto 120px;
+  padding: 0 18px;
+}
+
+.no-result-inner {
+  width: min(680px, 100%);
+  margin: 0 auto;
+  padding: 56px 32px;
+  border-radius: 20px;
+  background: #fff;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.no-result-inner i {
+  font-size: 42px;
+  color: #9ca3af;
+  margin-bottom: 16px;
+}
+
+.no-result-text {
+  font-size: 18px;
+  font-weight: bold;
+  color: #111827;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.no-result-sub {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
 }
 
 

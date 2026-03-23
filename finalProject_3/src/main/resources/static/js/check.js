@@ -10,6 +10,12 @@ if (window.__priceCheckInitialized) {
         const searchWordInput = document.getElementById("searchWord");
         const displayList = document.getElementById("displayList");
 
+        function hideAutoComplete() {
+            if (!displayList) return;
+            displayList.innerHTML = "";
+            displayList.style.display = "none";
+        }
+
         function goPriceSearch(sortType, priceMode) {
             const searchWord = (searchWordInput?.value || "").trim();
 
@@ -27,6 +33,7 @@ if (window.__priceCheckInitialized) {
         }
 
         searchBtn?.addEventListener("click", function () {
+            hideAutoComplete();
             goPriceSearch("latest", window.priceMode || "list");
         });
 
@@ -37,15 +44,6 @@ if (window.__priceCheckInitialized) {
                 goPriceSearch(window.priceSortType || "latest", window.priceMode || "list");
             }
         });
-
-        /* =========================
-           검색어 자동완성
-        ========================= */
-        function hideAutoComplete() {
-            if (!displayList) return;
-            displayList.innerHTML = "";
-            displayList.style.display = "none";
-        }
 
         function fetchAutoComplete(searchWord) {
             if (!displayList) return;
@@ -137,9 +135,6 @@ if (window.__priceCheckInitialized) {
             });
         });
 
-        /* =========================
-           찜 버튼
-        ========================= */
         document.querySelectorAll(".sps-like").forEach(function (btn) {
 
             if (btn.dataset.bindWish === "true") {
@@ -210,11 +205,7 @@ if (window.__priceCheckInitialized) {
                         icon.className = wished ? "fa-solid fa-heart" : "fa-regular fa-heart";
                     }
 
-                    if (wished) {
-                        alert("찜 성공");
-                    } else {
-                        alert("찜 취소");
-                    }
+                    alert(wished ? "찜 성공" : "찜 취소");
                 })
                 .catch(function (err) {
                     console.error("찜 AJAX 오류:", err);
@@ -227,8 +218,35 @@ if (window.__priceCheckInitialized) {
             });
         });
 
-        if (!window.hasResult) {
-            return;
+        function applyTimeAgo() {
+            document.querySelectorAll(".time-ago").forEach(function (el) {
+                const timeStr = el.dataset.time;
+                if (!timeStr) return;
+
+                const regDate = new Date(timeStr.replace(" ", "T"));
+                const now = new Date();
+                const diff = Math.floor((now - regDate) / 1000);
+
+                let text = "";
+
+                if (diff < 60) {
+                    text = "방금 전";
+                }
+                else if (diff < 3600) {
+                    text = Math.floor(diff / 60) + "분 전";
+                }
+                else if (diff < 86400) {
+                    text = Math.floor(diff / 3600) + "시간 전";
+                }
+                else if (diff < 604800) {
+                    text = Math.floor(diff / 86400) + "일 전";
+                }
+                else {
+                    text = regDate.toLocaleDateString();
+                }
+
+                el.textContent = text;
+            });
         }
 
         const canvas = document.getElementById("mkChart");
@@ -238,6 +256,7 @@ if (window.__priceCheckInitialized) {
         const emptyMsg = document.getElementById("mkEmptyMsg");
 
         if (!canvas || !tip || !priceEl || tabs.length === 0) {
+            applyTimeAgo();
             return;
         }
 
@@ -275,14 +294,22 @@ if (window.__priceCheckInitialized) {
             return ymd.substring(5, 7) + "/" + ymd.substring(8, 10);
         }
 
-        let DATA = serverChartData.map(function (item) {
+        const DATA = serverChartData.map(function (item) {
             return {
                 x: fmtMMDD(item.priceDate),
                 fullDate: item.priceDate,
-                list: Number(item.avgPrice || 0),
-                sale: 0
+                list: Number(item.listAvgPrice || 0),
+                sale: Number(item.saleAvgPrice || 0)
             };
         });
+
+        function hasListData() {
+            return DATA.some(function (d) { return Number(d.list || 0) > 0; });
+        }
+
+        function hasSaleData() {
+            return DATA.some(function (d) { return Number(d.sale || 0) > 0; });
+        }
 
         function syncTabUI() {
             tabs.forEach(function (btn) {
@@ -331,6 +358,126 @@ if (window.__priceCheckInitialized) {
             draw();
         }
 
+        function drawLine(points, color, width) {
+            if (!points || points.length === 0) return;
+
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i].x, points[i].y);
+            }
+
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawPoints(points, color) {
+            ctx.save();
+
+            points.forEach(function (p) {
+                ctx.fillStyle = "#fff";
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.restore();
+        }
+
+        function hideTip() {
+            tip.style.opacity = "0";
+        }
+
+        function showTip(p) {
+            tip.style.opacity = "1";
+            tip.style.left = p.x + "px";
+            tip.style.top = p.y + "px";
+            tip.innerHTML = `
+                <div class="mk-tip-date">${p.fullDate}</div>
+                <div class="mk-tip-price">${p.key}: ${fmtMoney(p.v)}원</div>
+            `;
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        function findNearestPoint(mx, my) {
+            let best = null;
+            let bestD = Infinity;
+
+            for (const p of hitPoints) {
+                const dx = p.x - mx;
+                const dy = p.y - my;
+                const d = Math.sqrt(dx * dx + dy * dy);
+
+                if (d < bestD) {
+                    bestD = d;
+                    best = p;
+                }
+            }
+
+            return (best && bestD <= 18) ? best : null;
+        }
+
+        function updatePrice() {
+            let v = 0;
+
+            if (statsData && statsData.avgPrice != null) {
+                v = Number(statsData.avgPrice);
+            }
+
+            priceEl.innerHTML = `${fmtMoney(v)}<small>원</small>`;
+            priceEl.style.color = (mode === "sale") ? COLORS.blue : COLORS.green;
+        }
+
+        function updateEmptyMessage() {
+            const listExists = hasListData();
+            const saleExists = hasSaleData();
+
+            if (!DATA.length) {
+                emptyMsg.style.display = "flex";
+                emptyMsg.textContent = "차트 데이터가 없습니다.";
+                return;
+            }
+
+            if (mode === "list" && !listExists) {
+                emptyMsg.style.display = "flex";
+                emptyMsg.textContent = "등록가 데이터가 없습니다.";
+                return;
+            }
+
+            if (mode === "sale" && !saleExists) {
+                emptyMsg.style.display = "flex";
+                emptyMsg.textContent = "판매가 데이터가 없습니다.";
+                return;
+            }
+
+            if (mode === "all" && !listExists && !saleExists) {
+                emptyMsg.style.display = "flex";
+                emptyMsg.textContent = "최근 30일 기준 차트 데이터가 없습니다.";
+                return;
+            }
+
+            emptyMsg.style.display = "none";
+        }
+
         function draw() {
             const W = canvas.clientWidth;
             const H = canvas.clientHeight;
@@ -340,17 +487,23 @@ if (window.__priceCheckInitialized) {
             ctx.clearRect(0, 0, W, H);
             hideTip();
 
-            const maxListValue = Math.max(...DATA.map(function (d) { return d.list || 0; }), 0);
+            const listMax = Math.max(...DATA.map(function (d) { return d.list || 0; }), 0);
+            const saleMax = Math.max(...DATA.map(function (d) { return d.sale || 0; }), 0);
+
+            let modeMax = 0;
+            if (mode === "list") {
+                modeMax = listMax;
+            } else if (mode === "sale") {
+                modeMax = saleMax;
+            } else {
+                modeMax = Math.max(listMax, saleMax);
+            }
+
             const Y_MIN = 0;
-            const Y_MAX = getYMax(maxListValue);
+            const Y_MAX = getYMax(modeMax);
             const Y_TICKS = buildYTicks(Y_MIN, Y_MAX);
 
-            if (mode === "sale") {
-                emptyMsg.style.display = "flex";
-                emptyMsg.textContent = "판매가 기능은 아직 준비 중입니다.";
-            } else {
-                emptyMsg.style.display = "none";
-            }
+            updateEmptyMessage();
 
             const pad = { l: 60, r: 16, t: 16, b: 34 };
             const innerW = W - pad.l - pad.r;
@@ -395,29 +548,57 @@ if (window.__priceCheckInitialized) {
                     x: xToPx(i),
                     y: yToPx(d.list),
                     v: d.list,
-                    label: d.x,
                     fullDate: d.fullDate,
                     key: "등록가"
                 };
             });
 
+            const salePts = DATA.map(function (d, i) {
+                return {
+                    x: xToPx(i),
+                    y: yToPx(d.sale),
+                    v: d.sale,
+                    fullDate: d.fullDate,
+                    key: "판매가"
+                };
+            });
+
             hitPoints = [];
 
-            if (mode === "all" || mode === "list") {
-                hitPoints = listPts.map(function (p) {
-                    return {
-                        x: p.x,
-                        y: p.y,
-                        v: p.v,
-                        label: p.label,
-                        fullDate: p.fullDate,
-                        key: p.key,
-                        color: COLORS.green
-                    };
-                });
+            if ((mode === "all" || mode === "list") && hasListData()) {
+                hitPoints = hitPoints.concat(listPts
+                    .filter(function (p) { return Number(p.v || 0) > 0; })
+                    .map(function (p) {
+                        return {
+                            x: p.x,
+                            y: p.y,
+                            v: p.v,
+                            fullDate: p.fullDate,
+                            key: p.key,
+                            color: COLORS.green
+                        };
+                    }));
 
                 drawLine(listPts, COLORS.green, 3);
                 drawPoints(listPts, COLORS.green);
+            }
+
+            if ((mode === "all" || mode === "sale") && hasSaleData()) {
+                hitPoints = hitPoints.concat(salePts
+                    .filter(function (p) { return Number(p.v || 0) > 0; })
+                    .map(function (p) {
+                        return {
+                            x: p.x,
+                            y: p.y,
+                            v: p.v,
+                            fullDate: p.fullDate,
+                            key: p.key,
+                            color: COLORS.blue
+                        };
+                    }));
+
+                drawLine(salePts, COLORS.blue, 3);
+                drawPoints(salePts, COLORS.blue);
             }
 
             if (DATA.length > 0) {
@@ -438,107 +619,7 @@ if (window.__priceCheckInitialized) {
             }
         }
 
-        function drawLine(points, color, width) {
-            if (!points || points.length === 0) return;
-
-            ctx.save();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
-            ctx.lineJoin = "round";
-            ctx.lineCap = "round";
-
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-
-            for (let i = 1; i < points.length; i++) {
-                ctx.lineTo(points[i].x, points[i].y);
-            }
-
-            ctx.stroke();
-            ctx.restore();
-        }
-
-        function drawPoints(points, color) {
-            ctx.save();
-
-            points.forEach(function (p) {
-                ctx.fillStyle = "#fff";
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            ctx.restore();
-        }
-
-        function updatePrice() {
-            if (mode === "sale") {
-                priceEl.innerHTML = `0<small>원</small>`;
-                priceEl.style.color = COLORS.blue;
-                return;
-            }
-
-            let v = 0;
-
-            if (statsData && statsData.avgPrice != null) {
-                v = Number(statsData.avgPrice);
-            }
-
-            priceEl.innerHTML = `${fmtMoney(v)}<small>원</small>`;
-            priceEl.style.color = COLORS.green;
-        }
-
-        function hideTip() {
-            tip.style.opacity = "0";
-        }
-
-        function showTip(p) {
-            tip.style.opacity = "1";
-            tip.style.left = p.x + "px";
-            tip.style.top = p.y + "px";
-            tip.innerHTML = `
-                <div class="mk-tip-date">${p.fullDate}</div>
-                <div class="mk-tip-price">등록가: ${fmtMoney(p.v)}원</div>
-            `;
-        }
-
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-        }
-
-        function findNearestPoint(mx, my) {
-            let best = null;
-            let bestD = Infinity;
-
-            for (const p of hitPoints) {
-                const dx = p.x - mx;
-                const dy = p.y - my;
-                const d = Math.sqrt(dx * dx + dy * dy);
-
-                if (d < bestD) {
-                    bestD = d;
-                    best = p;
-                }
-            }
-
-            return (best && bestD <= 18) ? best : null;
-        }
-
         canvas.addEventListener("mousemove", function (e) {
-            if (mode === "sale") {
-                hideTip();
-                return;
-            }
-
             const pos = getMousePos(e);
             const p = findNearestPoint(pos.x, pos.y);
 
@@ -550,13 +631,9 @@ if (window.__priceCheckInitialized) {
 
         tabs.forEach(function (btn) {
             btn.addEventListener("click", function () {
-                mode = btn.dataset.mode || "list";
-                window.priceMode = mode;
-
-                syncTabUI();
-                updatePrice();
-                draw();
-                hideTip();
+                const nextMode = btn.dataset.mode || "list";
+                hideAutoComplete();
+                goPriceSearch(window.priceSortType || "latest", nextMode);
             });
         });
 
@@ -565,37 +642,6 @@ if (window.__priceCheckInitialized) {
         window.addEventListener("resize", resizeCanvas);
         resizeCanvas();
 
-        /* =========================
-           시간 표시
-        ========================= */
-        document.querySelectorAll(".time-ago").forEach(function(el){
-            const timeStr = el.dataset.time;
-            if(!timeStr) return;
-
-            const regDate = new Date(timeStr.replace(" ", "T"));
-            const now = new Date();
-            const diff = Math.floor((now - regDate) / 1000);
-
-            let text = "";
-
-            if (diff < 60) {
-                text = "방금 전";
-            }
-            else if (diff < 3600) {
-                text = Math.floor(diff / 60) + "분 전";
-            }
-            else if (diff < 86400) {
-                text = Math.floor(diff / 3600) + "시간 전";
-            }
-            else if (diff < 604800) {
-                text = Math.floor(diff / 86400) + "일 전";
-            }
-            else {
-                text = regDate.toLocaleDateString();
-            }
-
-            el.textContent = text;
-        });
-
+        applyTimeAgo();
     });
 }

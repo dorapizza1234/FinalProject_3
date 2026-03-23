@@ -57,7 +57,8 @@
             NICKNAME AS nickname,
             ADDRESS AS address,
             PROFILE_IMG AS profileImg,
-            IDLE AS idle
+            IDLE AS idle,
+            MANNER_TEMP AS mannerTemp
         FROM MEMBER
         WHERE EMAIL = #{email} AND STATUS = 1
     </select>
@@ -130,6 +131,32 @@
 	    WHERE EMAIL = #{email}
 	</delete>
 
+	<!-- 탈퇴 전 활성 상품 수 조회 (판매중/예약중 포함) -->
+	<select id="countActiveProducts" parameterType="String" resultType="int">
+	    SELECT COUNT(*) FROM PRODUCTS
+	    WHERE SELLER_EMAIL = #{email}
+	      AND TRADE_STATUS IN ('판매중', '예약중', '거래중')
+	</select>
+
+	<!-- 회원 탈퇴 전 알림 삭제 -->
+	<delete id="deleteNotificationsByEmail" parameterType="String">
+	    DELETE FROM WEB_NOTIFICATION
+	    WHERE USER_NO = (SELECT USER_NO FROM MEMBER WHERE EMAIL = #{email})
+	</delete>
+
+	<!-- 회원 탈퇴 (완전 삭제) -->
+	<delete id="withdrawMember" parameterType="String">
+	    DELETE FROM MEMBER WHERE EMAIL = #{email}
+	</delete>
+
+	<!-- 프로필 수정 (닉네임 + 프로필 이미지) -->
+	<update id="updateProfile" parameterType="com.spring.app.security.domain.MemberDTO">
+	    UPDATE MEMBER
+	    SET NICKNAME = #{nickname},
+	        PROFILE_IMG = #{profileImg}
+	    WHERE EMAIL = #{email}
+	</update>
+
     <!-- AUTHORITIES 테이블에서 권한 목록 조회 -->
     <select id="findAuthoritiesByEmail" parameterType="String" resultType="String">
         SELECT AUTHORITY FROM AUTHORITIES WHERE EMAIL = #{email}
@@ -151,5 +178,65 @@
     <delete id="deleteRefreshToken" parameterType="String">
         DELETE FROM TBL_REFRESHTOKEN WHERE EMAIL = #{email}
     </delete>
+
+    <!-- 소셜 로그인 전용 회원 조회 (STATUS 조건 없음) -->
+    <select id="findByEmailForSocial" parameterType="String" resultType="com.spring.app.security.domain.MemberDTO">
+        SELECT
+            EMAIL AS email,
+            USER_NO AS userNo,
+            PASSWORD AS password,
+            USER_NAME AS userName,
+            PHONE AS phone,
+            NICKNAME AS nickname,
+            ADDRESS AS address,
+            PROFILE_IMG AS profileImg,
+            IDLE AS idle,
+            MANNER_TEMP AS mannerTemp,
+            SOCIAL_TYPE AS socialType
+        FROM MEMBER
+        WHERE EMAIL = #{email}
+    </select>
+
+    <!-- 소셜 로그인 자동 회원가입 -->
+    <insert id="insertSocialMember" parameterType="com.spring.app.security.domain.MemberDTO">
+        INSERT INTO MEMBER (
+            EMAIL, USER_NO, PASSWORD, USER_NAME, NICKNAME,
+            POSTCODE, ADDRESS, DETAILADDRESS,
+            REG_DATE, LAST_PW_DATE,
+            STATUS, IDLE, SUSPENDED,
+            CASH_BALANCE, MANNER_TEMP,
+            SOCIAL_TYPE, SOCIAL_ID
+        ) VALUES (
+            #{email},
+            SEQ_MEMBER_NO.NEXTVAL,
+            #{password},
+            #{userName},
+            #{nickname},
+            #{postcode}, #{address}, #{detailaddress},
+            SYSDATE, SYSDATE,
+            DEFAULT, DEFAULT, DEFAULT,
+            DEFAULT, DEFAULT,
+            #{socialType}, #{socialId}
+        )
+    </insert>
+
+    <!-- 소셜 회원 권한 등록 -->
+    <insert id="insertAuthority" parameterType="String">
+        INSERT INTO AUTHORITIES (AUTH_NO, EMAIL, AUTHORITY)
+        VALUES (SEQ_AUTHORITIES_NO.NEXTVAL, #{email}, 'ROLE_USER')
+    </insert>
+    
+    <!-- ===================== 캐시 잔액 증가/차감 ===================== -->
+    <!--
+        구매확정(캐시결제) 시 판매자 정산에 사용.
+        amount에 양수를 전달하면 증가, 음수를 전달하면 차감.
+        호출부에서 반드시 양수를 넘길 것 (정산 목적이므로 증가만 사용).
+    -->
+    <update id="updateCashBalance" parameterType="Map">
+        UPDATE MEMBER
+           SET CASH_BALANCE = CASH_BALANCE + #{amount}
+         WHERE EMAIL  = #{email}
+           AND STATUS = 1
+    </update>
 
 </mapper>

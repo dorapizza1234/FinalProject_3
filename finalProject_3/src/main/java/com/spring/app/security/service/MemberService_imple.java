@@ -84,4 +84,42 @@ public class MemberService_imple implements MemberService {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public boolean isIdlePhone(String phone) {
+        try {
+            return dao.checkIdlePhone(aes256.encrypt(phone)) > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public void reactivateMember(String email) {
+        dao.reactivateMember(email);
+        dao.deleteFromUserDormant(email);
+    }
+
+    @Override
+    public MemberDTO getMemberByEmail(String email) {
+        return dao.findByEmail(email);
+    }
+
+    @Override
+    public void updateProfile(MemberDTO member) {
+        dao.updateProfile(member);
+    }
+
+    @Override
+    public int countActiveProducts(String email) {
+        return dao.countActiveProducts(email);
+    }
+
+    @Override
+    public void withdrawMember(String email) {
+        dao.deleteRefreshToken(email);
+        dao.deleteNotificationsByEmail(email);
+        dao.withdrawMember(email);
+    }
 }

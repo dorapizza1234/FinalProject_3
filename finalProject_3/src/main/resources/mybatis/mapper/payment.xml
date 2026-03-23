@@ -13,7 +13,8 @@
         INSERT INTO TRANSACTIONS (
             TRANSACTION_ID, PRODUCT_NO, SELLER_EMAIL, BUYER_EMAIL,
             PAYMENT_TYPE, AMOUNT, TRADE_STATUS, TRADE_DATE,
-            TOSS_PAY_KEY, TOSS_ORDER_ID, PAY_STATUS, USE_ESCROW
+            TOSS_PAY_KEY, TOSS_ORDER_ID, PAY_STATUS, USE_ESCROW,
+            ROOM_ID
         )
         SELECT
             #{transactionId},
@@ -21,20 +22,37 @@
             P.SELLER_EMAIL,
             #{buyerEmail},
             #{paymentType},
-            NVL(P.PRODUCT_PRICE, 0) + NVL(
-                (SELECT MIN(SO.SHIPPING_FEE)
-                 FROM PRODUCT_SHIPPING_OPTION SO
-                 WHERE SO.PRODUCT_NO = P.PRODUCT_NO), 0
-            ),
+            #{amount},
             '거래중',
             SYSTIMESTAMP,
             #{tossPayKey, jdbcType=VARCHAR},
             #{tossOrderId, jdbcType=VARCHAR},
             #{payStatus, jdbcType=VARCHAR},
-            #{useEscrow, jdbcType=VARCHAR}
+            #{useEscrow, jdbcType=VARCHAR},
+            #{roomId, jdbcType=VARCHAR}
         FROM PRODUCTS P
         WHERE P.PRODUCT_NO = #{productNo}
     </insert>
+
+    <!-- ===================== 기존 READY 거래 조회 (중복 방지용) ===================== -->
+    <select id="selectReadyTransaction" parameterType="Map"
+            resultType="com.spring.app.payment.domain.TransactionDTO">
+        SELECT TRANSACTION_ID AS transactionId,
+               PRODUCT_NO     AS productNo,
+               BUYER_EMAIL    AS buyerEmail,
+               PAYMENT_TYPE   AS paymentType,
+               AMOUNT         AS amount,
+               PAY_STATUS     AS payStatus,
+               TOSS_ORDER_ID  AS tossOrderId,
+               TOSS_PAY_KEY   AS tossPayKey,
+               USE_ESCROW     AS useEscrow
+        FROM TRANSACTIONS
+        WHERE PRODUCT_NO  = #{productNo}
+          AND BUYER_EMAIL = #{buyerEmail}
+          AND PAY_STATUS  = 'READY'
+        ORDER BY TRADE_DATE DESC
+        FETCH FIRST 1 ROWS ONLY
+    </select>
 
     <!-- ===================== 거래 조회 (orderId) ===================== -->
 	<select id="selectTransactionByOrderId" parameterType="String"
@@ -138,6 +156,7 @@
     <update id="updateProductTradeStatus" parameterType="Map">
         UPDATE PRODUCTS
         SET TRADE_STATUS = #{tradeStatus}
+            <if test="reservedRoomId != null">,RESERVED_ROOM_ID = #{reservedRoomId}</if>
         WHERE PRODUCT_NO = #{productNo}
     </update>
 
@@ -153,8 +172,17 @@
             #{logType, jdbcType=VARCHAR},
             #{apiEndpoint, jdbcType=VARCHAR},
             #{httpMethod, jdbcType=VARCHAR},
+<<<<<<< HEAD
             #{requestData, jdbcType=CLOB},    #{responseData, jdbcType=CLOB},   #{httpStatus, jdbcType=NUMERIC},
             #{errorCode, jdbcType=VARCHAR},   #{errorMsg, jdbcType=VARCHAR},    SYSTIMESTAMP,
+=======
+            #{requestData, jdbcType=CLOB},
+            #{responseData, jdbcType=CLOB},
+            #{httpStatus, jdbcType=NUMERIC},
+            #{errorCode, jdbcType=VARCHAR},
+            #{errorMsg, jdbcType=VARCHAR},
+            SYSTIMESTAMP,
+>>>>>>> refs/heads/main
             #{requestIp, jdbcType=VARCHAR}
         )
     </insert>
@@ -168,9 +196,16 @@
             ACQUIRE_STATUS, RECEIPT_URL
         ) VALUES (
             SEQ_CARD_PAY_ID.NEXTVAL,
+<<<<<<< HEAD
             #{transactionId, jdbcType=NUMERIC},
             #{cardCompanyCd, jdbcType=VARCHAR},
             #{cardCompany, jdbcType=VARCHAR},  #{cardNum, jdbcType=VARCHAR},
+=======
+            #{transactionId},
+            #{cardCompanyCd, jdbcType=VARCHAR},
+            #{cardCompany, jdbcType=VARCHAR},
+            #{cardNum, jdbcType=VARCHAR},
+>>>>>>> refs/heads/main
             #{cardType, jdbcType=VARCHAR},
             #{installment, jdbcType=NUMERIC},
             #{isNoInterest, jdbcType=VARCHAR},
@@ -188,7 +223,7 @@
         ) VALUES (
             SEQ_EASY_PAY_ID.NEXTVAL,
             #{transactionId},
-            #{provider},
+            #{provider, jdbcType=VARCHAR},
             #{discountAmt, jdbcType=NUMERIC}
         )
     </insert>

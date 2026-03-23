@@ -3,12 +3,12 @@
    + 거래제한 모달 + 택배 UI + 직거래 위치(1~3)
    + 공백만 입력 방지(alert)
    + 판매가격 숫자만 입력/검증(alert)
-   + ✅ 최근 검색한 동네 캐시(24h TTL, 개수 제한 없음)
-   + ✅ 위치설정: 1차 모달(areaModal) 내부에서 "검색어로" 버튼 클릭 시
-        지도/검색 UI(areaSearchWrap) 펼치기(2차 모달 제거)
-   + ✅ placeName/fullAddress 분리 저장
-        - 예: "홍대입구역 2호선 / 서울마포구 양화로 지하 160"
-        - 화면(칩)에는 placeName 우선 표시
+   + 최근 검색한 동네 캐시(24h TTL, 개수 제한 없음)
+   + 위치설정: 1차 모달(areaModal) 내부에서 "검색어로" 버튼 클릭 시
+     지도/검색 UI(areaSearchWrap) 펼치기(2차 모달 제거)
+   + placeName/fullAddress 분리 저장
+   + AI 판매글 작성 기능 추가
+   - AI 이미지 진단 기능 제외
 ========================================================= */
 
 (() => {
@@ -32,9 +32,6 @@
     try { return JSON.parse(str); } catch { return fallback; }
   }
 
-  // =========================================================
-  // 공통 유효성: 공백만 입력 방지 / alert + focus
-  // =========================================================
   function isBlank(value) {
     return String(value ?? "").trim().length === 0;
   }
@@ -44,11 +41,20 @@
     if (el && typeof el.focus === "function") el.focus();
   }
 
+  function getContextPath() {
+    const raw =
+      document.documentElement.getAttribute("data-context-path") ||
+      document.body.getAttribute("data-context-path") ||
+      window.ctxPath ||
+      "";
+    return String(raw).replace(/\/$/, "");
+  }
+
   // =========================================================
-  // ✅ 최근 검색한 동네 캐시 (localStorage + TTL 24h, 개수 제한 없음)
+  // 최근 검색한 동네 캐시
   // =========================================================
   const RECENT_AREA_KEY = "PF_RECENT_AREAS_V1";
-  const RECENT_AREA_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+  const RECENT_AREA_TTL_MS = 24 * 60 * 60 * 1000;
 
   function readRecentAreas() {
     try {
@@ -117,25 +123,22 @@
   }
 
   // =========================================================
-  // ✅ placeName / fullAddress 분리 도구
+  // placeName / fullAddress 분리 도구
   // =========================================================
   function splitPlaceAndAddress(raw) {
     const v = String(raw ?? "").trim();
     if (!v) return { placeName: "", fullAddress: "" };
 
-    // "A / B" 형태면 분리
     if (v.includes("/")) {
       const [a, b] = v.split("/");
       return { placeName: (a || "").trim(), fullAddress: (b || "").trim() };
     }
 
-    // "A · B" 형태면 분리 (검색 결과 표기에서 종종 사용)
     if (v.includes("·")) {
       const [a, b] = v.split("·");
       return { placeName: (a || "").trim(), fullAddress: (b || "").trim() };
     }
 
-    // 그 외는 fullAddress로만 취급
     return { placeName: "", fullAddress: v };
   }
 
@@ -152,7 +155,7 @@
   }
 
   // =========================================================
-  // -1) 공백만 입력 방지 (blur 시 alert)
+  // 공백만 입력 방지
   // =========================================================
   (() => {
     const candidates = [
@@ -179,7 +182,7 @@
   })();
 
   // =========================================================
-  // 0) 거래 제한 품목 안내 모달
+  // 거래 제한 품목 안내 모달
   // =========================================================
   (() => {
     const link = $("#pfShipSettingLink");
@@ -222,7 +225,7 @@
   })();
 
   // =========================================================
-  // 1) 탭 underline
+  // 탭 underline
   // =========================================================
   (() => {
     const tabs = $(".pf-tabs");
@@ -246,7 +249,7 @@
   })();
 
   // =========================================================
-  // 2) 이미지(1~3) + 대표(mainIndex)
+  // 이미지(1~3) + 대표(mainIndex)
   // =========================================================
   const ImageModule = (() => {
     const fileInput = $("#pfImageInput");
@@ -357,7 +360,7 @@
   window.PF.Image = ImageModule;
 
   // =========================================================
-  // 3) textarea 글자수
+  // textarea 글자수
   // =========================================================
   (() => {
     const ta = $(".pf-textarea");
@@ -369,7 +372,7 @@
   })();
 
   // =========================================================
-  // 4) 택배(배송비 포함/별도) + shippingOptionsJson
+  // 택배(배송비 포함/별도) + shippingOptionsJson
   // =========================================================
   const ShippingModule = (() => {
     const shipToggle = $("#pfShipToggle");
@@ -547,7 +550,7 @@
   window.PF.Shipping = ShippingModule;
 
   // =========================================================
-  // 4.5) 판매가격 숫자만 입력 + 검증(alert)
+  // 판매가격 숫자만 입력 + 검증
   // =========================================================
   const PriceModule = (() => {
     const priceEl =
@@ -600,9 +603,177 @@
   window.PF.Price = PriceModule;
 
   // =========================================================
-  // 5) 직거래 위치 1~3 -> meetLocationsJson
-  //    ✅ areaModal 내부에서 "검색어로" 클릭 시 지도/검색 UI 펼침
-  //    ✅ placeName/fullAddress 분리 저장 + 칩에는 placeName만 표시
+  // AI 판매글 작성
+  // - /ai/sell/description 호출
+  // - AI 이미지 진단 없음
+  // =========================================================
+  const AiSellModule = (() => {
+    const btn = $("#pfAiWriteBtn");
+    if (!btn) return null;
+
+    const statusEl = $("#pfAiStatus");
+    const cautionsWrap = $("#pfAiCautions");
+
+    const titleEl =
+      $("#pfTitle") ||
+      $("#pfName") ||
+      document.querySelector("input[name='productName']");
+
+    const descEl =
+      $(".pf-textarea") ||
+      document.querySelector("textarea[name='productDesc']");
+
+    const priceEl =
+      $("#pfPrice") ||
+      document.querySelector("input[name='productPrice']");
+
+    const categoryEl =
+      $("#pfCategoryName") ||
+      $("#pfCategoryText") ||
+      document.querySelector("select[name='categoryName']") ||
+      document.querySelector("input[name='categoryName']");
+
+    let busy = false;
+
+    function setBusy(flag) {
+      busy = flag;
+      btn.disabled = flag;
+      btn.classList.toggle("is-loading", flag);
+
+      if (statusEl) {
+        statusEl.textContent = flag ? "AI가 판매글을 작성하는 중입니다..." : "";
+      }
+    }
+
+    function getCategoryName() {
+      if (!categoryEl) return "";
+
+      if (categoryEl.tagName === "SELECT") {
+        const opt = categoryEl.options[categoryEl.selectedIndex];
+        return String(opt?.text || categoryEl.value || "").trim();
+      }
+
+      return String(categoryEl.value ?? categoryEl.textContent ?? "").trim();
+    }
+
+    function renderCautions(cautions) {
+      if (!cautionsWrap) return;
+
+      const list = Array.isArray(cautions) ? cautions.filter(x => String(x ?? "").trim() !== "") : [];
+      cautionsWrap.innerHTML = "";
+
+      if (list.length === 0) return;
+
+      const ul = document.createElement("ul");
+      ul.className = "pf-ai-caution-list";
+
+      list.forEach(text => {
+        const li = document.createElement("li");
+        li.textContent = text;
+        ul.appendChild(li);
+      });
+
+      cautionsWrap.appendChild(ul);
+    }
+
+    async function requestAiDescription() {
+      if (busy) return;
+
+      if (!titleEl || isBlank(titleEl.value)) {
+        alertAndFocus("상품명을 먼저 입력해 주세요.", titleEl);
+        return;
+      }
+
+      if (!priceEl || isBlank(priceEl.value)) {
+        alertAndFocus("판매가격을 먼저 입력해 주세요.", priceEl);
+        return;
+      }
+
+      const priceV = window.PF.Price?.validate?.();
+      if (priceV && priceV.ok === false) {
+        alertAndFocus(priceV.msg, window.PF.Price?.el);
+        return;
+      }
+
+      const payload = {
+        productName: String(titleEl?.value ?? "").trim(),
+        categoryName: getCategoryName(),
+        productPrice: String(priceEl?.value ?? "").trim(),
+        productDesc: String(descEl?.value ?? "").trim()
+      };
+
+      const ctxPath = getContextPath();
+      const url = ctxPath + "/ai/sell/description";
+
+      try {
+        setBusy(true);
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok) {
+          const msg =
+            data?.message ||
+            `AI 판매글 작성 요청에 실패했습니다. (${res.status})`;
+          throw new Error(msg);
+        }
+
+        if (!data || typeof data !== "object") {
+          throw new Error("AI 응답 형식이 올바르지 않습니다.");
+        }
+
+        const nextTitle = String(data.titleSuggestion ?? "").trim();
+        const nextDesc = String(data.description ?? "").trim();
+
+        if (!nextTitle && !nextDesc) {
+          throw new Error("AI가 작성 결과를 반환하지 않았습니다.");
+        }
+
+        if (titleEl && nextTitle) titleEl.value = nextTitle;
+        if (descEl && nextDesc) {
+          descEl.value = nextDesc;
+
+          const now = $(".pf-count-now");
+          if (now) now.textContent = String(descEl.value.length);
+        }
+
+        renderCautions(data.cautions);
+
+        if (statusEl) {
+          statusEl.textContent = "AI 판매글이 적용되었습니다.";
+          setTimeout(() => {
+            if (statusEl.textContent === "AI 판매글이 적용되었습니다.") {
+              statusEl.textContent = "";
+            }
+          }, 2500);
+        }
+      } catch (err) {
+        console.error(err);
+        alert(err?.message || "AI 판매글 작성 중 오류가 발생했습니다.");
+        if (statusEl) statusEl.textContent = "";
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    btn.addEventListener("click", requestAiDescription);
+
+    return {
+      request: requestAiDescription
+    };
+  })();
+
+  window.PF.AiSell = AiSellModule;
+
+  // =========================================================
+  // 직거래 위치 1~3 -> meetLocationsJson
   // =========================================================
   const MeetLocationModule = (() => {
     const openBtn = $("#pfLocationBtn");
@@ -613,8 +784,8 @@
     const chipsWrap = $("#pfLocChips");
     const hidden = $("#pfMeetLocations");
 
-    // ✅ areaModal 내부 검색/지도 UI
     const searchWrap = $("#areaSearchWrap");
+    const searchEmpty = $("#areaSearchEmpty");
     const mapEl = $("#areaKakaoMap");
     const kwInput = $("#areaKakaoKeyword");
     const kwBtn = $("#areaKakaoSearchBtn");
@@ -629,11 +800,15 @@
       const v = safeJsonParse(hidden.value || "[]", []);
       return Array.isArray(v) ? v : [];
     }
-    function save(arr) { hidden.value = JSON.stringify(arr); }
+
+    function save(arr) {
+      hidden.value = JSON.stringify(arr);
+    }
 
     function isDupByKey(arr, key) {
       const k = String(key ?? "").trim();
       if (!k) return false;
+
       return arr.some(x => {
         const xKey = (String(x.fullAddress ?? "").trim() || String(x.placeName ?? "").trim());
         return xKey === k;
@@ -656,7 +831,7 @@
         const text = document.createElement("span");
         text.className = "pf-loc-chip__text";
         text.title = (loc.placeName || loc.fullAddress || "");
-        text.textContent = shortText(displayNameOf(loc)); // ✅ placeName 우선
+        text.textContent = shortText(displayNameOf(loc));
 
         const del = document.createElement("button");
         del.type = "button";
@@ -679,12 +854,14 @@
     function updateAddButtonState() {
       const arr = load();
       const span = openBtn.querySelector("span");
+
       if (arr.length >= MAX_LOC) {
         openBtn.disabled = true;
         openBtn.style.opacity = "0.6";
         openBtn.style.cursor = "not-allowed";
         if (span) span.textContent = "위치 3개까지 설정 가능";
-      } else {
+      }
+      else {
         openBtn.disabled = false;
         openBtn.style.opacity = "";
         openBtn.style.cursor = "";
@@ -696,15 +873,22 @@
       const meetToggle = document.querySelector("#pfMeetToggle");
       if (meetToggle && !meetToggle.checked) return;
 
-      if (load().length >= MAX_LOC) { alert("위치는 최대 3개까지 설정할 수 있어요."); return; }
+      if (load().length >= MAX_LOC) {
+        alert("위치는 최대 3개까지 설정할 수 있어요.");
+        return;
+      }
 
       renderRecentAreaList(list);
 
-      // ✅ 검색 UI 기본 접힘
       if (searchWrap) {
         searchWrap.classList.remove("is-open");
         searchWrap.setAttribute("aria-hidden", "true");
       }
+
+      if (searchEmpty) {
+        searchEmpty.style.display = "flex";
+      }
+
       if (resultUl) resultUl.innerHTML = "";
       if (kwInput) kwInput.value = "";
 
@@ -722,28 +906,44 @@
     }
 
     openBtn.addEventListener("click", openModal);
+
     modal.addEventListener("click", (e) => {
-      if (e.target.closest("[data-area-close='true']")) closeModal();
+      if (e.target.closest("[data-area-close='true']")) {
+        closeModal();
+        return;
+      }
+
+      const panel = modal.querySelector(".area-modal__panel");
+      if (panel && !panel.contains(e.target)) {
+        closeModal();
+      }
     });
+
     window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modal.classList.contains("is-open")) closeModal();
+      if (e.key === "Escape" && modal.classList.contains("is-open")) {
+        closeModal();
+      }
     });
 
     function ensureKakaoServices() {
       return !!(window.kakao && kakao.maps && kakao.maps.services);
     }
+
     function waitForKakaoServices(cb, tries = 50) {
       if (ensureKakaoServices()) return cb();
+
       if (tries <= 0) {
         console.error("카카오 SDK 로드 실패: script appkey / libraries=services 확인");
         alert("카카오맵 로드에 실패했어요. appkey/도메인 등록을 확인해 주세요.");
         return;
       }
+
       setTimeout(() => waitForKakaoServices(cb, tries - 1), 100);
     }
 
     function addressToLatLng(address, cb) {
       if (!ensureKakaoServices()) return cb("", "");
+
       const geocoder = new kakao.maps.services.Geocoder();
       geocoder.addressSearch(address, (result, status) => {
         if (status === kakao.maps.services.Status.OK) cb(result[0].y, result[0].x);
@@ -753,13 +953,17 @@
 
     function latLngToFullAddress(lat, lng, cb) {
       if (!ensureKakaoServices()) return cb("");
+
       const geocoder = new kakao.maps.services.Geocoder();
       geocoder.coord2Address(lng, lat, (result, status) => {
         if (status === kakao.maps.services.Status.OK) {
           const jibun = result[0].address ? result[0].address.address_name : "";
           const road = result[0].road_address ? result[0].road_address.address_name : "";
           cb(road || jibun);
-        } else cb("");
+        }
+        else {
+          cb("");
+        }
       });
     }
 
@@ -771,8 +975,16 @@
       if (!key) return;
 
       const arr = load();
-      if (arr.length >= MAX_LOC) { alert("위치는 최대 3개까지 설정할 수 있어요."); return; }
-      if (isDupByKey(arr, key)) { alert("이미 추가된 위치예요."); return; }
+
+      if (arr.length >= MAX_LOC) {
+        alert("위치는 최대 3개까지 설정할 수 있어요.");
+        return;
+      }
+
+      if (isDupByKey(arr, key)) {
+        alert("이미 추가된 위치예요.");
+        return;
+      }
 
       arr.push({
         placeName: pn,
@@ -786,28 +998,30 @@
       updateAddButtonState();
     }
 
-    // =========================
-    // ✅ areaModal 내부에서 검색 UI 열기
-    // =========================
     function openSearchUI() {
       if (!searchWrap) return;
 
       searchWrap.classList.add("is-open");
       searchWrap.setAttribute("aria-hidden", "false");
 
+      if (searchEmpty) {
+        searchEmpty.style.display = "none";
+      }
+
       waitForKakaoServices(() => {
         ensureMap();
+
         setTimeout(() => {
-          try { kakao.maps.event.trigger(map, "resize"); } catch {}
+          try {
+            kakao.maps.event.trigger(map, "resize");
+          }
+          catch {}
         }, 0);
       });
 
       if (kwInput) kwInput.focus();
     }
 
-    // =========================
-    // ✅ 카카오맵(검색 + 지도 클릭) 로직
-    // =========================
     let map = null;
     let places = null;
     let markers = [];
@@ -819,8 +1033,7 @@
     }
 
     function ensureMap() {
-      if (map) return;
-      if (!mapEl) return;
+      if (map || !mapEl) return;
 
       map = new kakao.maps.Map(mapEl, {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
@@ -830,8 +1043,7 @@
       places = new kakao.maps.services.Places();
       pickMarker = new kakao.maps.Marker();
 
-      // ✅ 지도 클릭으로 선택(역지오코딩은 주소만 나오는 경우가 많아서 placeName은 비움)
-      kakao.maps.event.addListener(map, "click", function(mouseEvent) {
+      kakao.maps.event.addListener(map, "click", function (mouseEvent) {
         const latlng = mouseEvent.latLng;
         const lat = latlng.getLat();
         const lng = latlng.getLng();
@@ -841,12 +1053,12 @@
 
         latLngToFullAddress(lat, lng, (fullAddr) => {
           const fa = String(fullAddr || "").trim();
+
           if (!fa) {
             alert("주소를 가져오지 못했어요. 다른 지점을 눌러주세요.");
             return;
           }
 
-          // 최근검색에는 " / " 형태로 들어가도 OK (placeName 없음)
           pushRecentArea(fa);
           addLocation("", fa, lat, lng);
           closeModal();
@@ -856,6 +1068,7 @@
 
     function renderSearchResults(items) {
       if (!resultUl) return;
+
       resultUl.innerHTML = "";
 
       if (!items || items.length === 0) {
@@ -874,6 +1087,7 @@
 
         const placeName = (p.place_name || "").trim();
         const fullAddress = (p.road_address_name || p.address_name || "").trim();
+
         btn.textContent = `${placeName}${fullAddress ? " · " + fullAddress : ""}`;
 
         btn.addEventListener("click", () => {
@@ -882,10 +1096,10 @@
 
           waitForKakaoServices(() => {
             ensureMap();
+
             const latlng = new kakao.maps.LatLng(lat, lng);
             map.setCenter(latlng);
             map.setLevel(3);
-
             pickMarker.setPosition(latlng);
             pickMarker.setMap(map);
           });
@@ -895,7 +1109,6 @@
             return;
           }
 
-          // 최근 검색: "place / address" 저장(원하는 형태 유지)
           pushRecentArea(`${placeName}${fullAddress ? " / " + fullAddress : ""}`);
           addLocation(placeName, fullAddress, lat, lng);
           closeModal();
@@ -908,6 +1121,7 @@
 
     function searchKeyword() {
       const keyword = String(kwInput?.value ?? "").trim();
+
       if (!keyword) {
         alert("검색어를 입력해 주세요.");
         kwInput?.focus?.();
@@ -937,10 +1151,10 @@
 
             bounds.extend(latlng);
 
-            // 마커 클릭도 선택
             kakao.maps.event.addListener(m, "click", () => {
               const placeName = (p.place_name || "").trim();
               const fullAddress = (p.road_address_name || p.address_name || "").trim();
+
               if (!placeName && !fullAddress) return;
 
               pickMarker.setPosition(latlng);
@@ -958,41 +1172,45 @@
       });
     }
 
-	function setMyLocation() {
-	  if (!navigator.geolocation) {
-	    alert("이 브라우저는 위치 기능을 지원하지 않습니다.");
-	    return;
-	  }
+    function setMyLocation() {
+      if (!navigator.geolocation) {
+        alert("이 브라우저는 위치 기능을 지원하지 않습니다.");
+        return;
+      }
 
-	  navigator.geolocation.getCurrentPosition(
-	    (pos) => {
-	      const lat = pos.coords.latitude;
-	      const lng = pos.coords.longitude;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
 
-	      waitForKakaoServices(() => {
-	        latLngToFullAddress(lat, lng, (fullAddr) => {
-	          const fa = (fullAddr || "현재 위치").trim();
+          waitForKakaoServices(() => {
+            ensureMap();
 
-	          pushRecentArea(fa);
+            const latlng = new kakao.maps.LatLng(lat, lng);
+            map.setCenter(latlng);
+            map.setLevel(3);
+            pickMarker.setPosition(latlng);
+            pickMarker.setMap(map);
 
-	          // 현재 위치는 placeName도 fullAddress와 동일하게 저장
-	          addLocation(fa, fa, lat, lng);
+            latLngToFullAddress(lat, lng, (fullAddr) => {
+              const fa = (fullAddr || "현재 위치").trim();
 
-	          closeModal();
-	        });
-	      });
-	    },
-	    (err) => {
-	      if (err.code === 1) alert("위치 권한이 거부되었습니다.");
-	      else if (err.code === 2) alert("위치 정보를 가져올 수 없습니다.");
-	      else if (err.code === 3) alert("위치 조회 시간이 초과되었습니다.");
-	      else alert("위치 조회 중 오류가 발생했습니다.");
-	    },
-	    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-	  );
-	}
+              pushRecentArea(fa);
+              addLocation(fa, fa, lat, lng);
+              closeModal();
+            });
+          });
+        },
+        (err) => {
+          if (err.code === 1) alert("위치 권한이 거부되었습니다.");
+          else if (err.code === 2) alert("위치 정보를 가져올 수 없습니다.");
+          else if (err.code === 3) alert("위치 조회 시간이 초과되었습니다.");
+          else alert("위치 조회 중 오류가 발생했습니다.");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
 
-    // ✅ 최근 리스트 클릭 시: "place / address" 형태면 placeName만 화면에 나오도록 저장
     list.addEventListener("click", (e) => {
       const btn = e.target.closest(".area-item");
       if (!btn) return;
@@ -1001,8 +1219,6 @@
       pushRecentArea(val);
 
       const sp = splitPlaceAndAddress(val);
-
-      // 좌표는 addressSearch에 fullAddress가 유리함(없으면 placeName로 시도)
       const query = sp.fullAddress || sp.placeName || val;
 
       waitForKakaoServices(() => {
@@ -1013,15 +1229,19 @@
       });
     });
 
-    // 이벤트 바인딩
     waitForKakaoServices(() => {
       if (searchBtn) searchBtn.addEventListener("click", openSearchUI);
       if (useGeoBtn) useGeoBtn.addEventListener("click", setMyLocation);
 
       if (kwBtn) kwBtn.addEventListener("click", searchKeyword);
-      if (kwInput) kwInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") { e.preventDefault(); searchKeyword(); }
-      });
+      if (kwInput) {
+        kwInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            searchKeyword();
+          }
+        });
+      }
     });
 
     renderChips();
@@ -1030,18 +1250,19 @@
     return {
       validate(tradeMethod) {
         if (tradeMethod !== "직거래") return { ok: true };
+
         const arr = load();
         if (arr.length === 0) return { ok: false, msg: "직거래를 선택했다면 위치를 1개 이상 설정해 주세요." };
         if (arr.length > 3) return { ok: false, msg: "직거래 위치는 최대 3개까지 설정할 수 있어요." };
+
         return { ok: true };
       }
     };
   })();
-
   window.PF.Meet = MeetLocationModule;
 
   // =========================================================
-  // 6) 폼 submit 시 유효성 검사 + alert
+  // 폼 submit 시 유효성 검사
   // =========================================================
   (() => {
     const form =
@@ -1099,7 +1320,9 @@
     });
   })();
 
-  // ✅ 배송비 허용 범위(원)
+  // =========================================================
+  // 배송비 허용 범위(원)
+  // =========================================================
   const FEE_RANGE = {
     "일반택배": { min: 2700, max: 17000 },
     "CU반값": { min: 1800, max: 2700 },

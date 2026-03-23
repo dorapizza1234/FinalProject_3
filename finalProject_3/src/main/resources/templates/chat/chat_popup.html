@@ -82,11 +82,11 @@
         .chat-container { display: flex; height: 100%; }
         
         /* 좌측: 채팅방 목록 */
-        .chat-sidebar { width: 35%; background: #fff; border-right: 1px solid #ebebeb; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; background: #fff; color: #222; font-size: 18px; font-weight: bold; border-bottom: 1px solid #ebebeb; }
+        .chat-sidebar { width: 25%; background: #4CB050; border-right: 1px solid #3a9a3e; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 0 20px; height: 60px; display: flex; align-items: center; background: #4CB050; color: #fff; font-size: 18px; font-weight: bold; border-bottom: 1px solid #3a9a3e; }
         .room-list { flex: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
-        .room-item { padding: 15px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.2s; display: flex; flex-direction: column; }
-        .room-item:hover { background: #f9f9f9; }
+        .room-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: background 0.2s; display: flex; flex-direction: column; }
+        .room-item:hover { background: rgba(255,255,255,0.15); }
         
         /* 우측: 실제 채팅창 */
         .chat-main { width: 65%; display: flex; flex-direction: column; background: #fff; }
@@ -95,6 +95,7 @@
         .chat-header { padding: 10px 20px; background: #fff; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ebebeb; height: 60px; z-index: 10; }
         .chat-header h4 { margin: 0; font-size: 18px; font-weight: bold; color: #222; flex: 1; text-align: center; }
         .header-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #333; padding: 5px; }
+        #btnUserProfile:hover { background: #ddd; }
         
         /* 가로로 나열되는 슬라이딩 메뉴 */
         .chat-options-menu { 
@@ -115,9 +116,14 @@
         .chat-product-banner img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #eee; }
         .product-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
         .price-row { font-size: 16px; font-weight: bold; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-        .status-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; border: 1px solid #222; color: #222; font-weight: normal; }
+        .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 700; color: #fff; background: #16a34a; border: none; transition: background 0.2s ease, opacity 0.2s ease; }
+        .status-badge.reserved { background: #f59e0b; }
+        .status-badge.done { background: #6b7280; }
         .name-row { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
         .btn-reserve { background: #222; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .btn-cancel-reserve { background: #e74c3c; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .btn-safe-pay { background: #4CB050; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .chat-blocked-notice { display: none; padding: 12px 20px; background: #fff3f3; border-top: 1px solid #ffd0d0; text-align: center; font-size: 13px; color: #e74c3c; font-weight: bold; }
 
         /* 메시지 영역 */
         #msgDisplayArea { flex: 1; overflow-y: auto; padding: 20px; background: #fff; display: flex; flex-direction: column; gap: 12px; }
@@ -131,10 +137,31 @@
 
         /* 입력 영역 */
         .chat-input-wrapper { display: flex; flex-direction: column; border-top: 1px solid #ebebeb; }
-        #chatInput { width: 100%; height: 80px; padding: 15px 20px; border: none; background: #e2e2e2; outline: none; font-size: 14px; resize: none; box-sizing: border-box; }
+        #chatInput { width: 100%; height: 80px; padding: 15px 20px; border: none; border-top: 2px solid #4CB050; background: #fff; outline: none; font-size: 14px; resize: none; box-sizing: border-box; }
         .chat-input-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #fff; }
-        .action-icons { display: flex; gap: 15px; color: #333; font-size: 22px; cursor: pointer; }
-        .chat-btn-send { background: #222; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px;}
+.chat-btn-send { background: #222; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px;}
+        .btn-account-send { background: #1a73e8; color: #fff; border: none; padding: 8px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; }
+
+        /* 계좌 카드 메시지 */
+        .msg-account-card { background: #fff; border: 2px solid #1a73e8; border-radius: 12px; padding: 14px 16px; min-width: 200px; max-width: 260px; }
+        .msg-account-card .ac-title { font-size: 12px; font-weight: bold; color: #1a73e8; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .msg-account-card .ac-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+        .msg-account-card .ac-label { color: #888; }
+        .msg-account-card .ac-value { font-weight: bold; color: #222; }
+        .msg-account-card .ac-copy { margin-top: 10px; width: 100%; padding: 7px; background: #1a73e8; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+
+        /* 예약 카드 메시지 */
+        .msg-reserve-card { background: #fff; border: 2px solid #4CB050; border-radius: 12px; padding: 14px 16px; min-width: 220px; max-width: 280px; }
+        .msg-reserve-card .rv-title { font-size: 13px; font-weight: bold; color: #4CB050; margin-bottom: 12px; display: flex; align-items: center; gap: 5px; }
+        .msg-reserve-card .rv-row { display: flex; gap: 8px; font-size: 13px; margin-bottom: 7px; align-items: flex-start; }
+        .msg-reserve-card .rv-icon { width: 18px; flex-shrink: 0; }
+        .msg-reserve-card .rv-text { color: #333; line-height: 1.4; }
+        .msg-reserve-card .rv-notice { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e8f8ee; font-size: 11px; color: #888; text-align: center; }
+
+        /* 예약 취소 카드 메시지 */
+        .msg-cancel-reserve-card { background: #fff; border: 2px solid #e44; border-radius: 12px; padding: 14px 16px; min-width: 220px; max-width: 280px; }
+        .msg-cancel-reserve-card .cr-title { font-size: 13px; font-weight: bold; color: #e44; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .msg-cancel-reserve-card .cr-notice { font-size: 12px; color: #666; line-height: 1.5; }
     </style>
 
     <div id="chatOverlay" class="chat-overlay" onclick="window.toggleChatPopup()"></div>
@@ -157,7 +184,14 @@
             <div class="chat-main" id="chatMainArea" style="visibility: hidden;">
                 <div class="chat-header">
                     <button class="header-btn" onclick="window.toggleChatPopup()">❮</button>
-                    <h4 id="currentRoomTitle">판매자 이름</h4>
+                    <h4 id="currentRoomTitle" style="display:flex; align-items:center; gap:8px; justify-content:center;">
+                        <span id="currentRoomNickname">판매자 이름</span>
+                        <a id="btnUserProfile" href="#" title="프로필 보기" style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#f0f0f0; color:#555; text-decoration:none; font-size:14px; flex-shrink:0; transition:background 0.15s;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                            </svg>
+                        </a>
+                    </h4>
                     <button class="header-btn" onclick="toggleOptionsMenu()">⋮</button>
                 </div>
                 
@@ -170,10 +204,7 @@
                         <div class="menu-icon">⚠️</div>
                         <span class="menu-text">신고하기</span>
                     </div>
-                    <div class="menu-item" onclick="actionBlock()">
-                        <div class="menu-icon">🚫</div>
-                        <span class="menu-text">차단하기</span>
-                    </div>
+
                     <div class="menu-item" onclick="actionLeave()">
                         <div class="menu-icon">🚪</div>
                         <span class="menu-text">나가기</span>
@@ -181,7 +212,7 @@
                 </div>
 
                 <div class="chat-product-banner">
-                    <img id="bannerImg" src="https://via.placeholder.com/50" alt="상품이미지">
+                    <img id="bannerImg" src="" alt="상품이미지" onerror="this.style.background='#eee'; this.removeAttribute('src');" style="background:#eee;">
                     <div class="product-info">
                         <div class="price-row">
                             <span id="bannerPrice">가격 협의</span>
@@ -189,19 +220,23 @@
                         </div>
                         <div class="name-row" id="bannerTitle">상품명을 불러오는 중...</div>
                     </div>
-                    <button class="btn-reserve" onclick="actionReserve()">예약잡기</button>
+                    <button class="btn-reserve" id="btnReserve" onclick="actionReserve()">예약잡기</button>
+                    <button class="btn-cancel-reserve" id="btnCancelReserve" style="display:none;" onclick="actionCancelReserve()">예약취소</button>
+                    <button class="btn-safe-pay" id="btnSafePay" style="display:none;" onclick="actionSafePay()">안전결제</button>
                 </div>
 
                 <div id="msgDisplayArea"></div>
 
-                <div class="chat-input-wrapper">
+                <div class="chat-blocked-notice" id="chatBlockedNotice">
+                    🔒 현재 판매자가 다른 구매자와 예약 중입니다. 예약이 취소될 때까지 대화가 불가능합니다.
+                </div>
+
+                <div class="chat-input-wrapper" id="chatInputWrapper">
                     <textarea id="chatInput" placeholder="메시지를 입력하세요..." onkeypress="handleEnterKey(event)"></textarea>
                     
                     <div class="chat-input-toolbar">
-                        <div class="action-icons">
-                            <span>＋</span>
-                            <span>📸</span>
-                            <span>😊</span>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button class="btn-account-send" id="btnAccountSend" style="display:none;" onclick="window.sendAccountCard()">💳 계좌전송</button>
                         </div>
                         <button class="chat-btn-send" onclick="window.sendChatMessage()">전송</button>
                     </div>
@@ -241,10 +276,12 @@
                     
                     <div class="photo-upload-section">
                         <p>사진 첨부</p>
-                        <div class="photo-btn">
+                        <input type="file" id="reportFileInput" accept="image/*" style="display:none;" onchange="onReportFileSelected(this)">
+                        <div class="photo-btn" onclick="document.getElementById('reportFileInput').click()">
                             <span style="font-size: 20px;">📷</span>
-                            <span>0/10</span>
+                            <span id="reportPhotoCount">0/1</span>
                         </div>
+                        <div id="reportPhotoPreview" style="display:flex; gap:8px; margin-top:10px;"></div>
                     </div>
                     <button class="btn-submit-report" onclick="submitReport()">신고하기</button>
                 </div>
@@ -281,9 +318,15 @@
         /*<![CDATA[*/
         let stompClient = null;
         let currentRoomId = null;
+        let currentProductNo = null;
+        let currentReservedRoomId = null;
+        let currentSellerEmail = null;
+        let currentTradeMethod = null;
+        let currentIsSeller = false;
+        let currentTradeStatus = null;
         const currentUserEmail = /*[[${#authentication.name}]]*/ 'guest';
-        const ctxPath = '/finalProject_3'; 
-        window.currentSubscription = null; 
+        var ctxPath = '/finalProject_3';
+        window.currentSubscription = null;
 
         // ★ 추가된 부분 2: 팝업을 열고 닫을 때, 배경막(Overlay)도 같이 켜고 끄도록 수정
         window.toggleChatPopup = function() {
@@ -316,48 +359,71 @@
 		};
 
         window.loadChatRoomList = function() {
+            const ul = document.getElementById('roomListArea');
+            if (ul) ul.style.pointerEvents = 'none'; // 로딩 중 클릭 방지
             fetch(`${ctxPath}/api/chat/roomList`)
                 .then(r => r.json())
-                .then(data => { if(data.success) window.renderRoomList(data.roomList); });
+                .then(data => {
+                    if (data.success) window.renderRoomList(data.roomList);
+                })
+                .finally(() => { if (ul) ul.style.pointerEvents = ''; });
         };
 		
         
         window.renderRoomList = function(roomList) {
             const ul = document.getElementById('roomListArea');
-            ul.innerHTML = ''; 
-            if(!roomList || roomList.length===0) return ul.innerHTML = '<li style="padding:15px; text-align:center;">대화가 없습니다.</li>';
-            
+            ul.innerHTML = '';
+            if(!roomList || roomList.length===0) return ul.innerHTML = '<li style="padding:15px; text-align:center; color:#fff;">대화가 없습니다.</li>';
+
+            // 현재 열린 채팅방이 있으면 최신 상태로 배너 갱신
+            if (currentRoomId) {
+                const currentRoom = roomList.find(r => r.roomId === currentRoomId);
+                if (currentRoom) {
+                    currentTradeStatus    = currentRoom.tradeStatus    || currentTradeStatus;
+                    currentReservedRoomId = currentRoom.reservedRoomId || null;
+                    currentTradeMethod    = currentRoom.tradeMethod    || currentTradeMethod;
+                    window.applyRoomStatusUI();
+                }
+            }
+
             roomList.forEach(room => {
                 const li = document.createElement('li');
                 li.className = 'room-item';
                 
                 // ★ 수정됨: 클릭할 때 가격(productPrice)과 상태(tradeStatus)도 같이 넘겨줍니다!
                 li.onclick = () => window.openChatRoom(
-                    room.roomId, 
-                    room.nickname, 
-                    room.productName, 
-                    room.productImgUrl, 
-                    room.productPrice, // 추가됨
-                    room.tradeStatus,   // 추가됨
-                    room.sellerEmail,  // 추가됨
-                    room.productNo
+                    room.roomId,
+                    room.nickname,
+                    room.productName,
+                    room.productImgUrl,
+                    room.productPrice,
+                    room.tradeStatus,
+                    room.sellerEmail,
+                    room.productNo,
+                    room.reservedRoomId,
+                    room.tradeMethod
                 );
                 
                 li.innerHTML = `
-                    <div style="font-weight:bold; margin-bottom:5px;">${room.nickname}</div>
-                    <div style="font-size:13px; color:#666;">[${room.productName}] ${room.lastMessage || '대화를 시작하세요.'}</div>
+                    <div style="font-weight:bold; margin-bottom:5px; color:#fff;">${room.nickname}</div>
+                    <div style="font-size:13px; color:rgba(255,255,255,0.8);">[${room.productName}] ${room.lastMessage || '대화를 시작하세요.'}</div>
                 `;
                 ul.appendChild(li);
             });
         };
 
-     // ★ 매개변수 맨 뒤에 sellerEmail, productNo 가 추가되었습니다.
-        window.openChatRoom = function(roomId, targetUser, productName, imgUrl, price, status, sellerEmail, productNo) {
+        window.openChatRoom = function(roomId, targetUser, productName, imgUrl, price, status, sellerEmail, productNo, reservedRoomId, tradeMethod) {
             currentRoomId = roomId;
-            currentProductNo = productNo; // ★ 예약 확정을 위해 현재 상품번호를 전역 변수에 저장합니다.
+            currentProductNo = productNo;
+            currentTradeMethod = tradeMethod || null;
+            currentTradeStatus = status || null;
+            currentIsSeller = (currentUserEmail === sellerEmail);
+            currentReservedRoomId = reservedRoomId || null;
+            currentSellerEmail = sellerEmail;
             document.getElementById('chatMainArea').style.visibility = 'visible';
             
-            document.getElementById('currentRoomTitle').innerText = targetUser;
+            document.getElementById('currentRoomNickname').innerText = targetUser;
+            document.getElementById('btnUserProfile').href = ctxPath + '/product/product_user_profile?productNo=' + productNo;
             document.getElementById('bannerTitle').innerText = productName;
             
             // 이미지 세팅 (방어 코드 포함)
@@ -380,25 +446,60 @@
             const statusEl = document.getElementById('bannerStatus');
             statusEl.innerText = status ? status : '상태 모름';
             
-            // 상태에 따라 뱃지 색상을 바꾸기
-            if(status === '판매완료') {
-                statusEl.style.background = '#666';
-                statusEl.style.color = '#fff';
-            } else if(status === '예약중' || status === '거래중') {
-                statusEl.style.background = '#00c73c';
-                statusEl.style.color = '#fff';
-            } else {
-                statusEl.style.background = '#fff';
-                statusEl.style.color = '#222';
+            statusEl.classList.remove('reserved', 'done');
+            if (status === '판매완료') {
+                statusEl.classList.add('done');
+            } else if (status === '예약중' || status === '거래중') {
+                statusEl.classList.add('reserved');
             }
 
-            // ★ 추가된 핵심 로직: 예약 버튼 노출 조건 
-            // 현재 로그인한 사람(currentUserEmail)이 판매자(sellerEmail)와 똑같고, 상품 상태가 '판매중'일 때만 예약버튼이 보입니다.
-            const btnReserve = document.querySelector('.btn-reserve');
-            if (currentUserEmail === sellerEmail && status === '판매중') {
-                btnReserve.style.display = 'block';
+            // 예약잡기 / 예약취소 버튼 노출 조건
+            const btnReserve = document.getElementById('btnReserve');
+            const btnCancelReserve = document.getElementById('btnCancelReserve');
+            const chatBlockedNotice = document.getElementById('chatBlockedNotice');
+            const chatInputWrapper = document.getElementById('chatInputWrapper');
+
+            const btnSafePay = document.getElementById('btnSafePay');
+
+            // 버튼 초기화
+            btnReserve.style.display = 'none';
+            btnCancelReserve.style.display = 'none';
+            btnSafePay.style.display = 'none';
+            chatBlockedNotice.style.display = 'none';
+            chatInputWrapper.style.display = 'flex';
+            document.getElementById('btnAccountSend').style.display = 'none';
+
+            const isSeller = (currentUserEmail === sellerEmail);
+
+            if (isSeller) {
+                document.getElementById('btnAccountSend').style.display = 'block';
+                if (status === '판매중') {
+                    btnReserve.style.display = 'block';
+                } else if (status === '예약중') {
+                    if (reservedRoomId && reservedRoomId === roomId) {
+                        // 이 방이 정확히 예약 확정된 방 → 예약취소 버튼만 표시
+                        btnCancelReserve.style.display = 'block';
+                    } else {
+                        // 다른 구매자와 예약된 방이거나 데이터 불일치 → 차단
+                        chatBlockedNotice.innerText = '🔒 현재 다른 구매자와 예약이 진행 중입니다. 해당 채팅방에서 예약을 취소하면 다시 대화할 수 있습니다.';
+                        chatBlockedNotice.style.display = 'block';
+                        chatInputWrapper.style.display = 'none';
+                    }
+                }
             } else {
-                btnReserve.style.display = 'none';
+                // 구매자 분기
+                if (status === '예약중' && reservedRoomId && reservedRoomId !== roomId) {
+                    // 다른 구매자와 예약 중 → 채팅 차단
+                    chatBlockedNotice.innerText = '🔒 현재 판매자가 다른 구매자와 예약 중입니다. 예약이 취소될 때까지 대화가 불가능합니다.';
+                    chatBlockedNotice.style.display = 'block';
+                    chatInputWrapper.style.display = 'none';
+                } else if (status === '판매중' && tradeMethod === '택배') {
+                    // 판매중 + 택배 → 모든 구매자에게 안전결제 표시
+                    btnSafePay.style.display = 'block';
+                } else if (status === '예약중' && reservedRoomId === roomId && tradeMethod === '택배') {
+                    // 예약중 + 택배 + 예약 잡힌 구매자에게만 안전결제 표시
+                    btnSafePay.style.display = 'block';
+                }
             }
 
             // 메시지 초기화
@@ -420,6 +521,56 @@
 
             if (stompClient && stompClient.connected) window.subscribeToRoom(roomId);
             else window.connectWebSocket(() => window.subscribeToRoom(roomId));
+        };
+
+        // 현재 전역 변수(status, reservedRoomId, tradeMethod, isSeller)로 버튼/배너 UI 재적용
+        window.applyRoomStatusUI = function() {
+            const btnReserve       = document.getElementById('btnReserve');
+            const btnCancelReserve = document.getElementById('btnCancelReserve');
+            const btnSafePay       = document.getElementById('btnSafePay');
+            const chatBlockedNotice = document.getElementById('chatBlockedNotice');
+            const chatInputWrapper  = document.getElementById('chatInputWrapper');
+            const statusEl          = document.getElementById('bannerStatus');
+
+            // 초기화
+            btnReserve.style.display       = 'none';
+            btnCancelReserve.style.display = 'none';
+            btnSafePay.style.display       = 'none';
+            chatBlockedNotice.style.display = 'none';
+            chatInputWrapper.style.display  = 'flex';
+
+            // 배너 상태 텍스트/색상
+            if (statusEl) {
+                statusEl.innerText = currentTradeStatus || '';
+                statusEl.classList.remove('reserved', 'done');
+                if (currentTradeStatus === '예약중') statusEl.classList.add('reserved');
+                else if (currentTradeStatus === '판매완료') statusEl.classList.add('done');
+            }
+
+            if (currentIsSeller) {
+                document.getElementById('btnAccountSend').style.display = 'block';
+                if (currentTradeStatus === '판매중') {
+                    btnReserve.style.display = 'block';
+                } else if (currentTradeStatus === '예약중') {
+                    if (currentReservedRoomId && currentReservedRoomId === currentRoomId) {
+                        btnCancelReserve.style.display = 'block';
+                    } else {
+                        chatBlockedNotice.innerText = '🔒 현재 다른 구매자와 예약이 진행 중입니다. 해당 채팅방에서 예약을 취소하면 다시 대화할 수 있습니다.';
+                        chatBlockedNotice.style.display = 'block';
+                        chatInputWrapper.style.display = 'none';
+                    }
+                }
+            } else {
+                if (currentTradeStatus === '예약중' && currentReservedRoomId && currentReservedRoomId !== currentRoomId) {
+                    chatBlockedNotice.innerText = '🔒 현재 판매자가 다른 구매자와 예약 중입니다. 예약이 취소될 때까지 대화가 불가능합니다.';
+                    chatBlockedNotice.style.display = 'block';
+                    chatInputWrapper.style.display = 'none';
+                } else if (currentTradeStatus === '판매중' && currentTradeMethod === '택배') {
+                    btnSafePay.style.display = 'block';
+                } else if (currentTradeStatus === '예약중' && currentReservedRoomId === currentRoomId && currentTradeMethod === '택배') {
+                    btnSafePay.style.display = 'block';
+                }
+            }
         };
 
         window.subscribeToRoom = function(roomId) {
@@ -453,19 +604,66 @@
         window.showMessage = function(message) {
             const area = document.getElementById('msgDisplayArea');
             const isMine = message.sender === currentUserEmail;
-            
+
             const date = message.timestamp ? new Date(message.timestamp) : new Date();
             const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
 
             const wrapper = document.createElement('div');
             wrapper.className = `msg-wrapper ${isMine ? 'mine' : 'other'}`;
-            
-            const bubbleHtml = `<div class="message ${isMine ? 'msg-mine' : 'msg-other'}">${message.content}</div>`;
-            const timeHtml = `<div class="msg-time">${timeStr}</div>`;
 
+            let bubbleHtml;
+            if (message.content && message.content.startsWith('__ACCOUNT__:')) {
+                try {
+                    const json = JSON.parse(message.content.slice(12));
+                    bubbleHtml = `
+                    <div class="msg-account-card">
+                        <div class="ac-title">💳 계좌 정보</div>
+                        <div class="ac-row"><span class="ac-label">은행</span><span class="ac-value">${json.bankName}</span></div>
+                        <div class="ac-row"><span class="ac-label">계좌번호</span><span class="ac-value">${json.accountNum}</span></div>
+                        <div class="ac-row"><span class="ac-label">예금주</span><span class="ac-value">${json.accountHolder}</span></div>
+                        <button class="ac-copy" onclick="navigator.clipboard.writeText('${json.accountNum}').then(()=>alert('계좌번호가 복사되었습니다.'))">계좌번호 복사</button>
+                    </div>`;
+                } catch(e) {
+                    bubbleHtml = `<div class="message ${isMine ? 'msg-mine' : 'msg-other'}">${message.content}</div>`;
+                }
+            } else if (message.content && message.content.startsWith('__RESERVE__:')) {
+                try {
+                    const json = JSON.parse(message.content.slice(12));
+                    bubbleHtml = `
+                    <div class="msg-reserve-card">
+                        <div class="rv-title">🤝 예약이 확정되었습니다!</div>
+                        <div class="rv-row"><span class="rv-icon">📅</span><span class="rv-text">${json.date}</span></div>
+                        <div class="rv-row"><span class="rv-icon">📍</span><span class="rv-text">${json.location}</span></div>
+                        <div class="rv-row"><span class="rv-icon">💰</span><span class="rv-text">${json.price}원</span></div>
+                        <div class="rv-notice">약속 시간에 늦지 않게 와주세요!</div>
+                    </div>`;
+                } catch(e) {
+                    bubbleHtml = `<div class="message ${isMine ? 'msg-mine' : 'msg-other'}">${message.content}</div>`;
+                }
+                // 예약 확정 → UI 실시간 갱신
+                currentReservedRoomId = currentRoomId;
+                currentTradeStatus = '예약중';
+                window.applyRoomStatusUI();
+                window.loadChatRoomList();
+            } else if (message.content && message.content.startsWith('__CANCEL_RESERVE__:')) {
+                bubbleHtml = `
+                <div class="msg-cancel-reserve-card">
+                    <div class="cr-title">❌ 예약이 취소되었습니다</div>
+                    <div class="cr-notice">상품이 다시 '판매중' 상태로 변경되었습니다.</div>
+                </div>`;
+                // 예약 취소 → UI 실시간 갱신
+                currentReservedRoomId = null;
+                currentTradeStatus = '판매중';
+                window.applyRoomStatusUI();
+                window.loadChatRoomList();
+            } else {
+                bubbleHtml = `<div class="message ${isMine ? 'msg-mine' : 'msg-other'}">${message.content}</div>`;
+            }
+
+            const timeHtml = `<div class="msg-time">${timeStr}</div>`;
             wrapper.innerHTML = isMine ? timeHtml + bubbleHtml : bubbleHtml + timeHtml;
             area.appendChild(wrapper);
-            area.scrollTop = area.scrollHeight; 
+            area.scrollTop = area.scrollHeight;
         };
 
         window.toggleOptionsMenu = function() {
@@ -509,6 +707,11 @@
 
             document.getElementById('reportText').value = ''; // 텍스트 초기화
             window.updateCharCount(document.getElementById('reportText'));
+            // 사진 첨부 초기화
+            reportSelectedFile = null;
+            document.getElementById('reportFileInput').value = '';
+            document.getElementById('reportPhotoCount').textContent = '0/1';
+            document.getElementById('reportPhotoPreview').innerHTML = '';
         };
 
         // 3. 1단계로 돌아가기
@@ -527,6 +730,42 @@
             document.getElementById('currentCharCount').innerText = obj.value.length;
         };
 
+        // 6-1. 첨부 파일 선택 처리 (1장)
+        let reportSelectedFile = null;
+
+        window.onReportFileSelected = function(input) {
+            if (!input.files || input.files.length === 0) return;
+            reportSelectedFile = input.files[0];
+            input.value = '';
+            renderReportPhotoPreview();
+        };
+
+        function renderReportPhotoPreview() {
+            const preview = document.getElementById('reportPhotoPreview');
+            preview.innerHTML = '';
+            if (!reportSelectedFile) {
+                document.getElementById('reportPhotoCount').textContent = '0/1';
+                return;
+            }
+            document.getElementById('reportPhotoCount').textContent = '1/1';
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'position:relative; width:60px; height:60px;';
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.cssText = 'width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #ddd;';
+                const del = document.createElement('button');
+                del.textContent = '✕';
+                del.style.cssText = 'position:absolute; top:-6px; right:-6px; width:18px; height:18px; border-radius:50%; border:none; background:#e44; color:#fff; font-size:10px; cursor:pointer; padding:0; line-height:18px; text-align:center;';
+                del.onclick = function() { reportSelectedFile = null; renderReportPhotoPreview(); };
+                wrap.appendChild(img);
+                wrap.appendChild(del);
+                preview.appendChild(wrap);
+            };
+            reader.readAsDataURL(reportSelectedFile);
+        }
+
      // 6. 최종 신고 제출
         window.submitReport = function() {
             const mainType = document.getElementById('selectedTypeName').innerText; // 대분류
@@ -534,18 +773,21 @@
             const content = document.getElementById('reportText').value.trim();     // 상세내용
 
             if(!subType) { alert("상세 신고 유형을 선택해주세요."); return; }
-            if(!content) { alert("신고 사유를 입력해주세요."); return; } // 내용 없음 방어 코드 추가
+            if(!content) { alert("신고 사유를 입력해주세요."); return; }
+
+            const formData = new FormData();
+            formData.append('roomId', currentRoomId);
+            formData.append('reportMainCategory', mainType);
+            formData.append('reportSubCategory', subType);
+            formData.append('reportContent', content);
+            if (reportSelectedFile) {
+                formData.append('image', reportSelectedFile);
+            }
 
             // 서버 연동 로직
             fetch(`${ctxPath}/api/chat/report`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    roomId: currentRoomId,        // ★ 핵심: 전역 변수에서 현재 채팅방 번호 가져와서 추가!
-                    reportMainCategory: mainType, 
-                    reportSubCategory: subType,   
-                    reportContent: content
-                })
+                body: formData
             })
             .then(r => r.json())
             .then(data => {
@@ -559,7 +801,33 @@
             .catch(e => console.error("신고 에러:", e));
         };
         
-        window.actionBlock = function() { alert("차단하기 API 연동 필요"); toggleOptionsMenu(); };
+        window.sendAccountCard = function() {
+            if (!currentRoomId) { alert("채팅방을 먼저 선택해주세요."); return; }
+            fetch(`${ctxPath}/mypage/primary-account`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    alert(data.message);
+                    return;
+                }
+                const payload = JSON.stringify({ bankName: data.bankName, accountNum: data.accountNum, accountHolder: data.accountHolder });
+                const msg = {
+                    sender: currentUserEmail,
+                    content: '__ACCOUNT__:' + payload,
+                    roomId: currentRoomId,
+                    timestamp: new Date().toISOString()
+                };
+                stompClient.send("/app/chat/send", {}, JSON.stringify(msg));
+            })
+            .catch(() => alert("계좌 정보를 불러오는 중 오류가 발생했습니다."));
+        };
+
+        window.actionSafePay = function() {
+            if (!currentProductNo) { alert("상품 정보를 불러올 수 없습니다."); return; }
+            location.href = ctxPath + '/payment/checkout?productNo=' + currentProductNo + '&roomId=' + currentRoomId;
+        };
+
+
         window.actionLeave = function() { 
             if(!currentRoomId) return; 
 
@@ -587,6 +855,36 @@
             } else {
                 toggleOptionsMenu(); 
             }
+        };
+
+        // 예약 취소
+        window.actionCancelReserve = function() {
+            if (!currentRoomId || !currentProductNo) return;
+            if (!confirm("예약을 취소하시겠습니까?\n취소 후 상품은 다시 '판매중' 상태로 변경됩니다.")) return;
+
+            fetch(`${ctxPath}/api/chat/cancelReserve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productNo: currentProductNo, roomId: currentRoomId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // 배너 상태 업데이트
+                    const statusEl = document.getElementById('bannerStatus');
+                    statusEl.innerText = '판매중';
+                    statusEl.classList.remove('reserved', 'done');
+                    document.getElementById('btnCancelReserve').style.display = 'none';
+                    document.getElementById('btnReserve').style.display = 'block';
+                    currentReservedRoomId = null;
+
+                    alert("예약이 취소되었습니다.");
+                    window.loadChatRoomList();
+                } else {
+                    alert("예약 취소에 실패했습니다.");
+                }
+            })
+            .catch(e => console.error("예약 취소 에러:", e));
         };
 
      // 1. 예약 모달 열기
@@ -619,23 +917,26 @@
             const d = new Date(dateVal);
             const formattedDate = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${d.getHours() >= 12 ? '오후' : '오전'} ${d.getHours() % 12 || 12}시 ${d.getMinutes() === 0 ? '00' : d.getMinutes()}분`;
 
-            // 1. 서버에 상태 업데이트 요청 ('판매중' -> '예약중')
+            // 1. 서버에 상태 업데이트 요청 ('판매중' -> '예약중'), roomId도 함께 저장
             fetch(`${ctxPath}/api/chat/reserve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productNo: currentProductNo })
+                body: JSON.stringify({ productNo: currentProductNo, roomId: currentRoomId })
             })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    // 2. 채팅방에 전송할 이쁜 템플릿 메시지 만들기
-                    const msgContent = `[🤝 예약이 확정되었습니다!]\n\n📅 일시 : ${formattedDate}\n📍 장소 : ${locVal}\n💰 최종가격 : ${Number(priceVal).toLocaleString()}원\n\n약속 시간에 늦지 않게 와주세요!`;
-
-                    const msg = { 
-                        sender: currentUserEmail, 
-                        content: msgContent, 
-                        roomId: currentRoomId, 
-                        timestamp: new Date().toISOString() 
+                    // 2. 예약 카드 메시지 전송
+                    const reservePayload = JSON.stringify({
+                        date: formattedDate,
+                        location: locVal,
+                        price: Number(priceVal).toLocaleString()
+                    });
+                    const msg = {
+                        sender: currentUserEmail,
+                        content: '__RESERVE__:' + reservePayload,
+                        roomId: currentRoomId,
+                        timestamp: new Date().toISOString()
                     };
                     
                     // 웹소켓으로 쏘기
@@ -644,12 +945,15 @@
                     // 3. 화면의 상품 배너 상태 즉시 업데이트
                     const statusEl = document.getElementById('bannerStatus');
                     statusEl.innerText = '예약중';
-                    statusEl.style.background = '#00c73c'; // 초록색 배경
-                    statusEl.style.color = '#fff';
-                    document.querySelector('.btn-reserve').style.display = 'none'; // 예약 버튼 숨기기
+                    statusEl.classList.remove('done');
+                    statusEl.classList.add('reserved');
+                    document.getElementById('btnReserve').style.display = 'none';
+                    document.getElementById('btnCancelReserve').style.display = 'block'; // 예약취소 버튼 표시
+                    currentReservedRoomId = currentRoomId; // 전역 변수 업데이트
 
                     alert("예약이 정상적으로 확정되었습니다.");
                     window.closeReserveModal();
+                    window.loadChatRoomList();
                 } else {
                     alert("예약 처리에 실패했습니다.");
                 }

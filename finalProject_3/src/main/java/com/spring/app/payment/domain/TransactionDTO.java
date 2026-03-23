@@ -27,6 +27,9 @@ public class TransactionDTO {
 
     private String useEscrow;         // Y/N
 
+    // 채팅방 키 (안전결제 시 RESERVED_ROOM_ID 업데이트 용)
+    private String roomId;
+
     // 조인용 (상품 정보)
     private String productName;
     private Integer productPrice;

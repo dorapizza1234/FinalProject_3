@@ -8,8 +8,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -18,8 +16,12 @@ import com.spring.app.security.jwt.JwtAccessDeniedHandler;
 import com.spring.app.security.jwt.JwtAuthenticationEntryPoint;
 import com.spring.app.security.jwt.JwtAuthenticationFilter;
 import com.spring.app.security.jwt.JwtTokenProvider;
+import com.spring.app.security.loginfail.MyAuthenticationFailureHandler;
+import com.spring.app.security.loginfail.OAuth2AuthenticationFailureHandler;
 import com.spring.app.security.loginsuccess.MyAuthenticationSuccessHandler;
+import com.spring.app.security.loginsuccess.OAuth2AuthenticationSuccessHandler;
 import com.spring.app.security.model.MemberDAO;
+import com.spring.app.security.service.CustomOAuth2UserService;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.Cookie;
@@ -33,6 +35,9 @@ public class SecurityConfig {
     private MyAuthenticationSuccessHandler successHandler;
 
     @Autowired
+    private MyAuthenticationFailureHandler failureHandler;
+
+    @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
     @Autowired
@@ -44,10 +49,14 @@ public class SecurityConfig {
     @Autowired
     private JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService;
+
+    @Autowired
+    private OAuth2AuthenticationSuccessHandler oauth2SuccessHandler;
+
+    @Autowired
+    private OAuth2AuthenticationFailureHandler oauth2FailureHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -77,6 +86,7 @@ public class SecurityConfig {
                         "/product/sellRegister",
                         "/product/wishlist/**",
                         "/product/product_user_profile",
+                        "/product/report",
                         "/payment/**"
                     ).authenticated()
                 
@@ -108,7 +118,7 @@ public class SecurityConfig {
                 .usernameParameter("email")
                 .passwordParameter("password")
                 .successHandler(successHandler)
-                .failureUrl("/security/login?error=true")
+                .failureHandler(failureHandler)
                 .permitAll()
             )
             .logout(logout -> logout
@@ -140,6 +150,14 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             )
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/security/login")
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService)
+                )
+                .successHandler(oauth2SuccessHandler)
+                .failureHandler(oauth2FailureHandler)
+            )
             // JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 앞에 추가
             .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                              UsernamePasswordAuthenticationFilter.class);
@@ -156,6 +174,7 @@ public class SecurityConfig {
                                  "/images/**",
                                  "/upload/**",
                                  "/profile/**",
+                                 "/report-files/**",
                                  "/jquery-ui-1.13.1.custom/**",
                                  "/js/**",
                                  "/smarteditor/**");

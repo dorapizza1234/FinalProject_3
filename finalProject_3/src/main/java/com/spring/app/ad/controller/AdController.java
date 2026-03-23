@@ -40,6 +40,13 @@ public class AdController {
         return "ad";  // templates/ad.html
     }
 
+    // 광고 상세보기
+    @GetMapping("/{adId}")
+    public String adDetail(@PathVariable("adId") Long adId, Model model) {
+        model.addAttribute("ad", adminService.getAd(adId));
+        return "ad-detail";
+    }
+
     // 광고 등록
     @PostMapping("/register")
     @ResponseBody

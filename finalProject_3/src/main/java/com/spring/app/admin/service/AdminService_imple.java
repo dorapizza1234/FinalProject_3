@@ -14,11 +14,13 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.app.admin.domain.AdDTO;
 import com.spring.app.admin.domain.InquiryDTO;
+import com.spring.app.admin.domain.ProductDetailDTO;
 import com.spring.app.admin.domain.SearchDTO;
 import com.spring.app.admin.domain.StatDTO;
 import com.spring.app.admin.model.AdminDAO;
@@ -32,7 +34,8 @@ import lombok.RequiredArgsConstructor;
 public class AdminService_imple implements AdminService {
 	
 	private final AdminDAO dao;
-	
+	private final SimpMessagingTemplate messagingTemplate;
+
 	//광고 페이지 회원정보 가져오기
 		@Override
 		public MemberDTO getMemberById(String loginId) {
@@ -101,7 +104,35 @@ public class AdminService_imple implements AdminService {
 	        return dao.countTotalMembers();
 	    }
 
+	    //이번달 신규 
+	    @Override
+	    public int getMonthNewMembersCount() {
+	    	return dao.countMonthNewMembers(); 
+	    	}
+	    
+	    //휴면회원
+	    @Override
+	    public int getIdleMembersCount() {
+	    	return dao.countIdleMembers(); 
+	    	}
+	    //연령대별
+	    @Override
+	    public List<Integer> getMemberAgeStats() {
+	        Map<String,Object> row = dao.countByAge();
+	        return List.of(
+	            toInt(row.get("TEEN")),
+	            toInt(row.get("TWENTY")),
+	            toInt(row.get("THIRTY")),
+	            toInt(row.get("FORTY")),
+	            toInt(row.get("FIFTY")),
+	            toInt(row.get("SIXTY_PLUS"))
+	        );
+	    }
+  
+	    @Override
+	    public List<Map<String,Object>> getMemberRegionStats() { return dao.countByRegion(); }
 
+	    private int toInt(Object v) { return v == null ? 0 : ((Number) v).intValue(); }
 		@Override
 		public MemberDTO getMemberByNo(int userNo) {
 			return dao.getMemberByNo(userNo);
@@ -118,15 +149,35 @@ public class AdminService_imple implements AdminService {
 		//====================================================================================//
 		//상품 리스트 가져오기
 		@Override
-		public List<ProductDTO> getProductList(int page, int size) {
+		public List<ProductDTO> getProductList(int page, int size, String status, String filter) {
 			int offset = (page - 1) * size;
-			return dao.selectProductList(offset,size);
+			Map<String, Object> params = new HashMap<>();
+			params.put("offset", offset);
+			params.put("size", size);
+			params.put("status", status != null ? status : "");
+			params.put("filter", filter != null ? filter : "");
+			return dao.selectProductList(params);
 		}
 
-		//총 상품 개수 
+		@Override
+		public int getProductCount(String status, String filter) {
+			Map<String, Object> params = new HashMap<>();
+			params.put("status", status != null ? status : "");
+			params.put("filter", filter != null ? filter : "");
+			params.put("offset", 0);
+			params.put("size", 0);
+			return dao.selectProductCount(params);
+		}
+
+		//총 상품 개수
 		@Override
 		public int getTotalProductsCount() {
-			return dao.selectProductCount();
+			Map<String, Object> params = new HashMap<>();
+			params.put("status", "");
+			params.put("filter", "");
+			params.put("offset", 0);
+			params.put("size", 0);
+			return dao.selectProductCount(params);
 		}
 		//판매중인 상품만 가져오기
 		@Override
@@ -157,9 +208,31 @@ public class AdminService_imple implements AdminService {
 		@Override
 		public void rejectAd(Long adId, String reason) {
 		dao.rejectAd(adId, reason);
-			
+
 		}
-		//예정광고 있는지 확인 
+
+		@Override
+		public String getBanner() {
+		    return dao.getBanner();
+		}
+
+		@Override
+		public void updateBanner(String text) {
+		    dao.updateBanner(text);
+		}
+
+		//광고 조기 철회
+		@Override
+		public void withdrawAd(Long adId, String reason) {
+		dao.withdrawAd(adId, reason);
+		}
+
+		@Override
+		public List<AdDTO> getActiveAds() {
+		    return dao.getActiveAds();
+		}
+
+		//예정광고 있는지 확인
 		@Override
 		public List<AdDTO> getConflictAds(LocalDate startDate, LocalDate endDate, Long adId) {
 
@@ -209,22 +282,31 @@ public class AdminService_imple implements AdminService {
 
 	    @Override
 	    public Map<String, Object> getDailyProductStats() {
-	        // DB에서 최근 7일간의 [{REG_DATE: "03-05", CNT: 10}, ...] 형태의 리스트를 가져옵니다.
 	        List<Map<String, Object>> rawData = dao.getDailyProductStats();
-	        
 	        List<String> labels = new ArrayList<>();
 	        List<Long> data = new ArrayList<>();
-	        
-	        // 차트용 데이터 가공
 	        for (Map<String, Object> row : rawData) {
-	            labels.add(String.valueOf(row.get("REG_DATE"))); // 날짜 (X축)
-	            data.add(((Number) row.get("CNT")).longValue());  // 등록수 (Y축)
+	            labels.add(String.valueOf(row.get("REG_DATE")));
+	            data.add(((Number) row.get("CNT")).longValue());
 	        }
-	        
 	        Map<String, Object> resultMap = new HashMap<>();
 	        resultMap.put("labels", labels);
 	        resultMap.put("data", data);
-	        
+	        return resultMap;
+	    }
+
+	    @Override
+	    public Map<String, Object> getAdMonthlyStats() {
+	        List<Map<String, Object>> rawData = dao.getAdMonthlyStats();
+	        List<String> labels = new ArrayList<>();
+	        List<Long> data = new ArrayList<>();
+	        for (Map<String, Object> row : rawData) {
+	            labels.add(String.valueOf(row.get("MONTH_LABEL")));
+	            data.add(((Number) row.get("CNT")).longValue());
+	        }
+	        Map<String, Object> resultMap = new HashMap<>();
+	        resultMap.put("labels", labels);
+	        resultMap.put("data", data);
 	        return resultMap;
 	    }
 
@@ -253,6 +335,332 @@ public class AdminService_imple implements AdminService {
 
 
 
+
+	@Override
+	public Map<String, Object> getReviewListPaged(int page, int size, String keyword) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("start", (page - 1) * size);
+		params.put("end", page * size);
+		params.put("keyword", keyword);
+		int total = dao.countReviews();
+		int totalPages = (int) Math.ceil((double) total / size);
+		if (totalPages == 0) totalPages = 1;
+		Map<String, Object> result = new HashMap<>();
+		result.put("list", dao.getReviewList(params));
+		result.put("total", total);
+		result.put("totalPages", totalPages);
+		return result;
+	}
+
+	@Override
+	public void deleteReview(int reviewNo) {
+		dao.deleteReview(reviewNo);
+	}
+
+	@Override
+	public Map<String, Object> getTransactionListPaged(int page, int size, String status) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("start", (page - 1) * size);
+		params.put("end", page * size);
+		params.put("status", status);
+		int total = dao.countTransactions(params);
+		int totalPages = (int) Math.ceil((double) total / size);
+		if (totalPages == 0) totalPages = 1;
+		Map<String, Object> result = new HashMap<>();
+		result.put("list", dao.getTransactionList(params));
+		result.put("total", total);
+		result.put("totalPages", totalPages);
+		return result;
+	}
+
+	@Override
+	public Map<String, Object> getTransactionStatusStats() {
+		List<Map<String, Object>> rows = dao.countTransactionsByStatus();
+		Map<String, Object> stats = new HashMap<>();
+		for (Map<String, Object> row : rows) {
+			String st = String.valueOf(row.get("TRADE_STATUS"));
+			long cnt = ((Number) row.get("CNT")).longValue();
+			stats.put(st, cnt);
+		}
+		return stats;
+	}
+
+	@Override
+	public Map<String, Object> getReportListPaged(int page, int size, String type) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("start", (page - 1) * size);
+		params.put("end", page * size);
+		params.put("type", type);
+		int total = dao.countReports(params);
+		int totalPages = (int) Math.ceil((double) total / size);
+		if (totalPages == 0) totalPages = 1;
+		Map<String, Object> result = new HashMap<>();
+		result.put("list", dao.getReportList(params));
+		result.put("total", total);
+		result.put("totalPages", totalPages);
+		return result;
+	}
+
+	@Override
+	public void updateReportStatus(int reportId, String status) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("reportId", reportId);
+		params.put("status", status);
+		dao.updateReportStatus(params);
+	}
+
+	@Override
+	public Map<String, Object> getReportStats() {
+		Map<String, Object> stats = new HashMap<>();
+		stats.put("productReportCount", dao.getProductReportCount());
+		stats.put("chatReportCount", dao.getChatReportCount());
+		stats.put("pendingReportCount", dao.getPendingReportCount());
+		return stats;
+	}
+
+	@Override
+	public void sendAdminNotification(String email, String title, String message) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("email", email);
+		params.put("title", title);
+		params.put("message", message);
+		dao.insertAdminNotification(params);
+		Map<String, Object> payload = new HashMap<>();
+		payload.put("title", title);
+		payload.put("message", message);
+		messagingTemplate.convertAndSend("/topic/noti/" + email, payload);
+	}
+
+	@Override
+	public com.spring.app.admin.domain.ReportAdminDTO getReportDetail(long reportId) {
+		return dao.getReportDetail(reportId);
+	}
+
+	@Override
+	public int countPendingInquiries() { return dao.countPendingInquiries(); }
+
+	@Override
+	public int countAnsweredInquiries() { return dao.countAnsweredInquiries(); }
+
+	@Override
+	public List<String> getFaqKeywords() { return dao.getFaqKeywords(); }
+
+	@Override
+	public Map<String, Object> getAdminInquiryListPaged(int page, int size, String status) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("start", (page - 1) * size);
+		params.put("end", page * size);
+		params.put("status", status);
+		int total = dao.countAdminInquiries(params);
+		int totalPages = (int) Math.ceil((double) total / size);
+		if (totalPages == 0) totalPages = 1;
+		Map<String, Object> result = new HashMap<>();
+		result.put("list", dao.getAdminInquiryList(params));
+		result.put("total", total);
+		result.put("totalPages", totalPages);
+		return result;
+	}
+
+	@Override
+	public void saveInquiryAnswer(int inquiryId, String adminAnswer) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("inquiryId", inquiryId);
+		params.put("adminAnswer", adminAnswer);
+		dao.saveInquiryAnswer(params);
+	}
+
+	@Override
+	public ProductDetailDTO getProductDetail(int productNo) {
+		ProductDetailDTO dto = dao.getProductDetail(productNo);
+		if (dto != null) {
+			dto.setImages(dao.getProductImages(productNo));
+			if ("예약중".equals(dto.getTradeStatus())) {
+				Map<String,Object> buyer = dao.getBuyerForProduct(productNo);
+				if (buyer != null) {
+					dto.setBuyerEmail((String) buyer.get("BUYEREMAIL"));
+					dto.setBuyerNickname((String) buyer.get("BUYERNICKNAME"));
+				}
+			}
+		}
+		return dto;
+	}
+
+	@Override
+	public void deleteProduct(int productNo, String sellerEmail, String sellerMsg, String buyerEmail, String buyerMsg) {
+		if (sellerEmail != null && sellerMsg != null && !sellerMsg.isBlank()) {
+			sendAdminNotification(sellerEmail, "[관리자] 상품 삭제 안내", sellerMsg);
+		}
+		if (buyerEmail != null && !buyerEmail.isBlank() && buyerMsg != null && !buyerMsg.isBlank()) {
+			sendAdminNotification(buyerEmail, "[관리자] 예약 상품 삭제 안내", buyerMsg);
+		}
+		dao.deleteProduct(productNo);
+	}
+
+	@Override
+	public int getSuspendedMembersCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+
+	@Override
+	public List<MemberDTO> getMemberList(int page, int size, String status, String keyword) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("start", (page - 1) * size);
+		params.put("end", page * size);
+		params.put("status", (status != null && !status.isEmpty()) ? status : null);
+		params.put("keyword", (keyword != null && !keyword.isEmpty()) ? keyword : null);
+		return dao.selectMemberListPagedSearch(params);
+	}
+
+
+	@Override
+	public int getMemberCount(String status, String keyword) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("status", (status != null && !status.isEmpty()) ? status : null);
+		params.put("keyword", (keyword != null && !keyword.isEmpty()) ? keyword : null);
+		return dao.countSearchMembers(params);
+	}
+
+
+	@Override
+	public void suspendMember(int userNo) { dao.suspendMember(userNo); }
+
+	@Override
+	public void unsuspendMember(int userNo) {
+		dao.unsuspendMember(userNo);
+		dao.deleteUserSuspendSchedule(userNo);
+	}
+
+	@Override
+	public void permanentBanMember(int userNo) { dao.permanentBanMember(userNo); }
+
+	@Override
+	public void scheduleSuspend(int userNo, String email) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("userNo", userNo);
+		params.put("suspendType", "SUSPEND");
+		dao.insertSuspendSchedule(params);
+		// 알림 전송
+		sendAdminNotification(email,
+			"[관리자] 계정 일시정지 예정 안내",
+			"회원님의 계정이 관리자 검토에 의해 3일 후 일시정지 처리될 예정입니다.\n" +
+			"이의가 있으시면 고객센터로 문의해주세요.");
+	}
+
+	@Override
+	public void scheduleBan(int userNo, String email) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("userNo", userNo);
+		params.put("suspendType", "BAN");
+		dao.insertSuspendSchedule(params);
+		// 알림 전송
+		sendAdminNotification(email,
+			"[관리자] 계정 영구정지 예정 안내",
+			"회원님의 계정이 관리자 검토에 의해 3일 후 영구정지 처리될 예정입니다.\n" +
+			"이의가 있으시면 고객센터로 문의해주세요.");
+	}
+
+	@Override
+	public void processScheduledSuspensions() {
+		List<Map<String, Object>> list = dao.getDueSuspensions();
+		for (Map<String, Object> row : list) {
+			int scheduleId = ((Number) row.get("scheduleId")).intValue();
+			int userNo     = ((Number) row.get("userNo")).intValue();
+			String type    = (String) row.get("suspendType");
+			try {
+				if ("BAN".equals(type)) {
+					dao.permanentBanMember(userNo);
+				} else {
+					dao.suspendMember(userNo);
+				}
+			} finally {
+				dao.deleteSuspendSchedule(scheduleId);
+			}
+		}
+	}
+
+	@Override
+	public int hasPendingSuspension(int userNo) {
+		return dao.hasPendingSuspension(userNo);
+	}
+
+	@Override
+	public List<ProductDTO> getMemberActiveProducts(int userNo) {
+		return dao.getMemberActiveProducts(userNo);
+	}
+
+
+	@Override
+	public int countPendingReportsAndInquiries() {
+		return dao.countPendingReportsAndInquiries();
+	}
+
+	@Override
+	public int countPendingAds() {
+		return dao.countPendingAds();
+	}
+
+	@Override
+	public int countTodayProducts() {
+		return dao.countTodayProducts();
+	}
+
+	@Override
+	public long getDailyTradeAmount() {
+		return dao.getDailyTradeAmount();
+	}
+
+
+	@Override
+	public Map<String, Object> getWithdrawReasonStats() {
+		List<Map<String, Object>> rows = dao.getWithdrawReasonStats();
+		List<String> labels = new ArrayList<>();
+		List<Long> data = new ArrayList<>();
+		for (Map<String, Object> row : rows) {
+			labels.add(String.valueOf(row.get("REASON")));
+			data.add(((Number) row.get("CNT")).longValue());
+		}
+		Map<String, Object> result = new HashMap<>();
+		result.put("labels", labels);
+		result.put("data", data);
+		return result;
+	}
+
+	@Override
+	public Map<String, Object> getAccountingStats() {
+		Map<String, Object> stats = new HashMap<>();
+		stats.put("thisMonthAdRevenue", dao.getThisMonthAdRevenue());
+		stats.put("totalAdRevenue", dao.getTotalAdRevenue());
+		stats.put("thisMonthTradeVolume", dao.getThisMonthTradeVolume());
+		stats.put("thisMonthRefundAmount", dao.getThisMonthRefundAmount());
+
+		List<Map<String, Object>> monthlyRaw = dao.getMonthlyAdRevenue();
+		List<String> labels = new ArrayList<>();
+		List<Long> revenues = new ArrayList<>();
+		for (Map<String, Object> row : monthlyRaw) {
+			labels.add(String.valueOf(row.get("MONTH_LABEL")) + "월");
+			revenues.add(((Number) row.get("REVENUE")).longValue());
+		}
+		stats.put("monthlyLabels", labels);
+		stats.put("monthlyRevenues", revenues);
+		return stats;
+	}
+
+	@Override
+	public Map<String, Object> getAccountingList(int page, int size) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("start", (page - 1) * size);
+		params.put("end", page * size);
+		int total = dao.countAdRevenue();
+		int totalPages = (int) Math.ceil((double) total / size);
+		if (totalPages == 0) totalPages = 1;
+		Map<String, Object> result = new HashMap<>();
+		result.put("list", dao.getAdRevenueList(params));
+		result.put("total", total);
+		result.put("totalPages", totalPages);
+		return result;
+	}
 }
 		
 		

@@ -1,6 +1,7 @@
 package com.spring.app.security.controller;
 
 import java.io.File;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -129,6 +130,65 @@ public class MemberController {
         return map;
     }
 
+    // 프로필 수정 (닉네임 + 프로필 이미지)
+    @ResponseBody
+    @PostMapping("/updateProfile")
+    public Map<String, Object> updateProfile(MemberDTO memberDTO, HttpServletRequest request, Principal principal) {
+        Map<String, Object> map = new HashMap<>();
+        if (principal == null) {
+            map.put("success", false);
+            map.put("message", "로그인이 필요합니다.");
+            return map;
+        }
+        try {
+            memberDTO.setEmail(principal.getName());
+
+            MultipartFile attach = memberDTO.getAttach();
+            if (attach != null && !attach.isEmpty()) {
+                String path = request.getSession().getServletContext().getRealPath("/resources/profile_images/");
+                File dir = new File(path);
+                if (!dir.exists()) dir.mkdirs();
+                String saveFilename = System.currentTimeMillis() + "_" + attach.getOriginalFilename();
+                attach.transferTo(new File(path + saveFilename));
+                memberDTO.setProfileImg(saveFilename);
+            } else if (memberDTO.getDefaultProfile() != null && !memberDTO.getDefaultProfile().isEmpty()) {
+                memberDTO.setProfileImg(memberDTO.getDefaultProfile());
+            } else {
+                // 이미지 변경 없음 → 기존 값 유지
+                MemberDTO existing = memberService.getMemberByEmail(principal.getName());
+                if (existing != null) memberDTO.setProfileImg(existing.getProfileImg());
+            }
+
+            memberService.updateProfile(memberDTO);
+            map.put("success", true);
+            map.put("nickname", memberDTO.getNickname());
+            map.put("profileImg", memberDTO.getProfileImg());
+        } catch (Exception e) {
+            e.printStackTrace();
+            map.put("success", false);
+            map.put("message", "프로필 수정 중 오류가 발생했습니다.");
+        }
+        return map;
+    }
+
+    // 회원 탈퇴
+    @PostMapping("/withdraw")
+    @ResponseBody
+    public Map<String, Object> withdraw(Principal principal, HttpServletRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        if (principal == null) { result.put("success", false); return result; }
+        int activeCount = memberService.countActiveProducts(principal.getName());
+        if (activeCount > 0) {
+            result.put("success", false);
+            result.put("message", "판매 중이거나 진행 중인 거래가 있어 탈퇴할 수 없습니다.\n상품을 모두 삭제하거나 거래를 완료한 후 탈퇴해주세요.");
+            return result;
+        }
+        memberService.withdrawMember(principal.getName());
+        try { request.logout(); } catch (Exception e) { e.printStackTrace(); }
+        result.put("success", true);
+        return result;
+    }
+
     // 회원가입 완료 처리
     @PostMapping("/registerEnd")
     public String registerEnd(MemberDTO memberDTO, HttpServletRequest request) {
@@ -152,8 +212,10 @@ public class MemberController {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else if (memberDTO.getDefaultProfile() != null && !memberDTO.getDefaultProfile().isEmpty()) {
+            memberDTO.setProfileImg(memberDTO.getDefaultProfile()); // dicebear 일러스트 URL
         } else {
-            memberDTO.setProfileImg("default_profile.png"); // 기본 이미지
+            memberDTO.setProfileImg("https://api.dicebear.com/7.x/bottts/svg?seed=1"); // 기본 이미지
         }
         
         // DB 저장

@@ -43,8 +43,27 @@ public class ChatServiceImpl implements ChatService {
     }
     
     @Override
+    public ChatRoomDTO getProductInfoForChat(int productNo, String sellerEmail) {
+        return chatMapper.selectProductInfoForChat(productNo, sellerEmail);
+    }
+
+    @Override
     public boolean leaveChatRoom(String roomId) {
-        // 삭제된 행(row)의 개수가 1 이상이면 성공(true)
+        if (chatMapper.countReportsByRoomId(roomId) > 0) {
+            throw new IllegalStateException("신고가 접수된 채팅방은 나갈 수 없습니다.");
+        }
+
+        // 나가는 방이 예약 확정된 방이면 예약 취소 (판매중으로 복귀)
+        Integer productNo = chatMapper.findProductNoByRoomId(roomId);
+        if (productNo != null) {
+            String reservedRoomId = chatMapper.getReservedRoomId(productNo);
+            if (roomId.equals(reservedRoomId)) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("productNo", productNo);
+                chatMapper.cancelReserveStatus(map);
+            }
+        }
+
         int result = chatMapper.deleteChatRoom(roomId);
         return result > 0;
     }
@@ -55,8 +74,82 @@ public class ChatServiceImpl implements ChatService {
 	     Map<String, Object> map = new HashMap<>();
 	     map.put("productNo", productNo);
 	     map.put("status", status);
-	     
-	     // 이전에 Mapper XML에 추가했던 updateTradeStatus 쿼리를 실행합니다.
-	     chatMapper.updateTradeStatus(map); 
+	     chatMapper.updateTradeStatus(map);
 	 }
+
+    @Override
+    public void confirmReserve(int productNo, String roomId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("productNo", productNo);
+        map.put("roomId", roomId);
+        chatMapper.updateReserveStatus(map);
+    }
+
+    @Override
+    public void cancelReserve(int productNo) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("productNo", productNo);
+        chatMapper.cancelReserveStatus(map);
+    }
+
+    @Override
+    public boolean completeTrade(int productNo, String roomId, String buyerEmail) {
+        ChatRoomDTO room = chatMapper.selectRoomById(roomId);
+        if (room == null || !buyerEmail.equals(room.getBuyerEmail())) return false;
+
+        // 상품 정보 조회 (가격, 판매유형)
+        ChatRoomDTO productInfo = chatMapper.selectProductInfoForChat(productNo, room.getSellerEmail());
+
+        // TRANSACTIONS 레코드 생성 (직거래/나눔은 결제 없이 완료되므로 직접 INSERT)
+        Map<String, Object> txMap = new HashMap<>();
+        txMap.put("productNo", productNo);
+        txMap.put("sellerEmail", room.getSellerEmail());
+        txMap.put("buyerEmail", buyerEmail);
+        String saleType = productInfo != null ? productInfo.getSaleType() : null;
+        txMap.put("paymentType", "나눔".equals(saleType) ? "나눔" : "직거래");
+        Integer priceObj = productInfo != null ? productInfo.getProductPrice() : null;
+        txMap.put("amount", "나눔".equals(saleType) ? 0 : (priceObj != null ? priceObj : 0));
+        chatMapper.insertDirectTrade(txMap);
+
+        // 상품 판매완료 처리
+        Map<String, Object> map = new HashMap<>();
+        map.put("productNo", productNo);
+        map.put("roomId", roomId);
+        chatMapper.completeTrade(map);
+        return true;
+    }
+
+    @Override
+    public String getReservedRoomId(int productNo) {
+        return chatMapper.getReservedRoomId(productNo);
+    }
+
+    @Override
+    public Integer getProductNoByRoomId(String roomId) {
+        return chatMapper.findProductNoByRoomId(roomId);
+    }
+
+    @Override
+    public ChatRoomDTO getRoomById(String roomId) {
+        return chatMapper.selectRoomById(roomId);
+    }
+
+    @Override
+    public void incrementUnread(String roomId, String recipientEmail, String sellerEmail) {
+        if (recipientEmail.equals(sellerEmail)) {
+            chatMapper.incrementSellerUnread(roomId);
+        } else {
+            chatMapper.incrementBuyerUnread(roomId);
+        }
+    }
+
+    @Override
+    public void resetAllUnread(String email) {
+        chatMapper.resetAllUnread(email);
+    }
+
+    @Override
+    public int getTotalUnreadCount(String email) {
+        return chatMapper.getTotalUnreadCount(email);
+    }
 }

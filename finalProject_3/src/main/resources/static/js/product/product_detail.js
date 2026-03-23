@@ -1,10 +1,159 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    
+    let currentUserPosition = null;
 
     function moveLogin() {
         alert("로그인이 필요합니다.");
         location.href = "/finalProject_3/security/login";
+    }
+
+    function toRad(value) {
+        return value * Math.PI / 180;
+    }
+
+    function calculateDistanceKm(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = toRad(lat2 - lat1);
+        const dLng = toRad(lng2 - lng1);
+
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    function loadCurrentPosition(callback) {
+        if (currentUserPosition) {
+            callback(currentUserPosition);
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            alert("브라우저에서 위치 정보를 지원하지 않습니다.");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                currentUserPosition = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                callback(currentUserPosition);
+            },
+            function () {
+                alert("현재 위치 권한이 필요합니다. 위치 접근을 허용해주세요.");
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000
+            }
+        );
+    }
+
+    function updateRouteDistanceTexts() {
+        if (!currentUserPosition) {
+            return;
+        }
+
+        const routeBtns = document.querySelectorAll(".pd-route-btn[data-lat][data-lng]");
+
+        routeBtns.forEach(function (btn) {
+            const lat = parseFloat(btn.dataset.lat);
+            const lng = parseFloat(btn.dataset.lng);
+            const index = btn.dataset.index;
+
+            if (isNaN(lat) || isNaN(lng) || index === undefined) {
+                return;
+            }
+
+            const target = document.getElementById("pd-route-distance-" + index);
+
+            if (!target) {
+                return;
+            }
+
+            const distKm = calculateDistanceKm(
+                currentUserPosition.lat,
+                currentUserPosition.lng,
+                lat,
+                lng
+            );
+
+            if (distKm < 1) {
+                target.textContent = "현재위치 기준 약 " + Math.round(distKm * 1000) + "m";
+            } else {
+                target.textContent = "현재위치 기준 약 " + distKm.toFixed(1) + "km";
+            }
+        });
+    }
+
+    function bindRouteButtons() {
+        const routeBtns = document.querySelectorAll(".pd-route-btn[data-lat][data-lng]");
+
+        if (routeBtns.length === 0) {
+            return;
+        }
+
+        routeBtns.forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const destLat = parseFloat(btn.dataset.lat);
+                const destLng = parseFloat(btn.dataset.lng);
+                const place = btn.dataset.place || "거래 희망 위치";
+
+                if (isNaN(destLat) || isNaN(destLng)) {
+                    alert("거래 위치 좌표가 없습니다.");
+                    return;
+                }
+
+                loadCurrentPosition(function () {
+                    updateRouteDistanceTexts();
+
+                    const kakaoUrl =
+                        "https://map.kakao.com/link/to/" +
+                        encodeURIComponent(place) +
+                        "," +
+                        destLat +
+                        "," +
+                        destLng;
+
+                    window.open(kakaoUrl, "_blank");
+                });
+            });
+        });
+    }
+
+    function initCurrentLocationDistance() {
+        const routeBtns = document.querySelectorAll(".pd-route-btn[data-lat][data-lng]");
+
+        if (routeBtns.length === 0) {
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                currentUserPosition = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                updateRouteDistanceTexts();
+            },
+            function () {
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 8000,
+                maximumAge: 300000
+            }
+        );
     }
 
     /* =========================
@@ -178,79 +327,76 @@ document.addEventListener("DOMContentLoaded", function () {
     /* =========================
        4. 찜 하트 기능
     ========================= */
-	/* =========================
-	   4. 찜 하트 기능
-	========================= */
-	$(document).on("click", ".pd-like", function (e) {
-	    e.preventDefault();
-	    e.stopPropagation();
+    $(document).on("click", ".pd-like", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-	    const $btn = $(this);
-	    const isLogin = String($btn.attr("data-login")) === "true";
+        const $btn = $(this);
+        const isLogin = String($btn.attr("data-login")) === "true";
 
-	    if (!isLogin) {
-	        moveLogin();
-	        return;
-	    }
+        if (!isLogin) {
+            moveLogin();
+            return;
+        }
 
-	    const productNo = $btn.attr("data-product-no");
+        const productNo = $btn.attr("data-product-no");
 
-	    $.ajax({
-	        url: "/finalProject_3/product/wishlist/toggle",
-	        type: "post",
-	        data: { productNo: productNo },
-	        dataType: "json",
-	        success: function (json) {
-	            if (!json.success) {
-	                alert(json.message || "찜 처리에 실패했습니다.");
-	                return;
-	            }
+        $.ajax({
+            url: "/finalProject_3/product/wishlist/toggle",
+            type: "post",
+            data: { productNo: productNo },
+            dataType: "json",
+            success: function (json) {
+                if (!json.success) {
+                    alert(json.message || "찜 처리에 실패했습니다.");
+                    return;
+                }
 
-	            const $icon = $btn.find("i");
-	            const $wishCountText = $("#wishCountText");
-	            let currentCount = parseInt($wishCountText.text(), 10);
+                const $icon = $btn.find("i");
+                const $wishCountText = $("#wishCountText");
+                let currentCount = parseInt($wishCountText.text(), 10);
 
-	            if (isNaN(currentCount)) {
-	                currentCount = 0;
-	            }
+                if (isNaN(currentCount)) {
+                    currentCount = 0;
+                }
 
-	            if (json.wished) {
-	                $btn.addClass("is-active");
-	                $icon.removeClass("fa-regular").addClass("fa-solid");
-	                $wishCountText.text(currentCount + 1);
-	                alert("찜 성공");
-	            } else {
-	                $btn.removeClass("is-active");
-	                $icon.removeClass("fa-solid").addClass("fa-regular");
+                if (json.wished) {
+                    $btn.addClass("is-active");
+                    $icon.removeClass("fa-regular").addClass("fa-solid");
+                    $wishCountText.text(currentCount + 1);
+                    alert("찜 성공");
+                } else {
+                    $btn.removeClass("is-active");
+                    $icon.removeClass("fa-solid").addClass("fa-regular");
 
-	                if (currentCount > 0) {
-	                    $wishCountText.text(currentCount - 1);
-	                }
+                    if (currentCount > 0) {
+                        $wishCountText.text(currentCount - 1);
+                    }
 
-	                alert("찜 취소");
-	            }
-	        },
-	        error: function (request, status, error) {
-	            console.log("찜 AJAX ERROR");
-	            console.log("status =", request.status);
-	            console.log("responseText =", request.responseText);
-	            console.log("error =", error);
+                    alert("찜 취소");
+                }
+            },
+            error: function (request, status, error) {
+                console.log("찜 AJAX ERROR");
+                console.log("status =", request.status);
+                console.log("responseText =", request.responseText);
+                console.log("error =", error);
 
-	            if (request.status === 401) {
-	                alert("로그인이 필요하거나 인증이 만료되었습니다.");
-	                moveLogin();
-	                return;
-	            }
+                if (request.status === 401) {
+                    alert("로그인이 필요하거나 인증이 만료되었습니다.");
+                    moveLogin();
+                    return;
+                }
 
-	            if (request.status === 403) {
-	                alert("접근 권한이 없습니다.");
-	                return;
-	            }
+                if (request.status === 403) {
+                    alert("접근 권한이 없습니다.");
+                    return;
+                }
 
-	            alert("찜 처리 중 오류가 발생했습니다.");
-	        }
-	    });
-	});
+                alert("찜 처리 중 오류가 발생했습니다.");
+            }
+        });
+    });
 
     /* =========================
        5. 등록시간 표시
@@ -380,5 +526,8 @@ document.addEventListener("DOMContentLoaded", function () {
         barFill.style.backgroundColor = color;
         tempValueEl.style.color = color;
     })();
+
+    bindRouteButtons();
+    initCurrentLocationDistance();
 
 });

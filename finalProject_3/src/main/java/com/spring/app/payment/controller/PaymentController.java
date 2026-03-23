@@ -51,6 +51,7 @@ public class PaymentController {
      */
     @GetMapping("checkout")
     public String checkout(@RequestParam("productNo") int productNo,
+                           @RequestParam(value = "roomId", required = false) String roomId,
                            Authentication authentication,
                            Model model) {
 
@@ -78,6 +79,7 @@ public class PaymentController {
         model.addAttribute("product", product);
         model.addAttribute("tossClientKey", tossClientKey);
         model.addAttribute("buyerEmail", buyerEmail);
+        model.addAttribute("roomId", roomId != null ? roomId : "");
 
         return "payment/checkout";
     }
@@ -101,17 +103,16 @@ public class PaymentController {
 
         int productNo = ((Number) params.get("productNo")).intValue();
         String paymentType = (String) params.getOrDefault("paymentType", "카드결제");
+        int requestAmount = params.get("amount") != null ? ((Number) params.get("amount")).intValue() : 0;
+        String roomId = (String) params.getOrDefault("roomId", null);
 
         try {
-            TransactionDTO txn = paymentService.createTransaction(productNo, buyerEmail, paymentType);
-
-            // 🌟 수정된 부분: 무료나눔일 경우 DB의 tossOrderId가 null이므로, 확실한 PK인 transactionId로 조회합니다!
-            TransactionDTO fullTxn = paymentService.getTransactionById(txn.getTransactionId());
+            TransactionDTO txn = paymentService.createTransaction(productNo, buyerEmail, paymentType, requestAmount, roomId);
 
             result.put("success", true);
             result.put("orderId", txn.getTossOrderId());
             result.put("transactionId", txn.getTransactionId());
-            result.put("amount", fullTxn != null ? fullTxn.getAmount() : 0);
+            result.put("amount", txn.getAmount());
 
         } catch (Exception e) {
             log.error("결제 준비 실패", e);
@@ -194,6 +195,14 @@ public class PaymentController {
             TransactionDTO txn = paymentService.getTransactionById(transactionId);
             model.addAttribute("transaction", txn);
             model.addAttribute("paymentKey", "FREE");
+            return "payment/success";
+        }
+
+        // 이미 승인 완료된 거래인지 먼저 확인 (팝업 결제 후 success URL 재진입 방지)
+        TransactionDTO existing = paymentService.getTransactionByOrderId(orderId);
+        if (existing != null && "DONE".equals(existing.getPayStatus())) {
+            model.addAttribute("transaction", existing);
+            model.addAttribute("paymentKey", paymentKey);
             return "payment/success";
         }
 

@@ -48,4 +48,482 @@
         WHERE ROWNUM &lt;= 3
     </select>
 
+
+    <!-- ===== 내 판매상품 목록 ===== -->
+    <select id="getMyProducts" parameterType="String" resultType="com.spring.app.product.domain.ProductDTO">
+        SELECT p.PRODUCT_NO    AS productNo,
+               p.PRODUCT_NAME  AS productName,
+               p.PRODUCT_PRICE AS productPrice,
+               p.SALE_TYPE     AS saleType,
+               p.TRADE_STATUS  AS tradeStatus,
+               p.PRODUCT_DESC  AS productDesc,
+               p.TRADE_METHOD  AS tradeMethod,
+               txn.CARRIER_CODE  AS carrierCode,
+               txn.INVOICE_NO    AS invoiceNo,
+               txn.TRANSACTION_ID AS transactionId,
+               pi.IMG_URL      AS imgUrl
+        FROM PRODUCTS p
+        LEFT JOIN (
+            SELECT TRANSACTION_ID, PRODUCT_NO, CARRIER_CODE, INVOICE_NO
+            FROM (
+                SELECT TRANSACTION_ID, PRODUCT_NO, CARRIER_CODE, INVOICE_NO,
+                       ROW_NUMBER() OVER (PARTITION BY PRODUCT_NO ORDER BY TRANSACTION_ID DESC) AS rn
+                FROM TRANSACTIONS
+            )
+            WHERE rn = 1
+        ) txn ON txn.PRODUCT_NO = p.PRODUCT_NO
+        LEFT JOIN (
+            SELECT PRODUCT_NO, IMG_URL
+            FROM (
+                SELECT PRODUCT_NO, IMG_URL,
+                       ROW_NUMBER() OVER (PARTITION BY PRODUCT_NO ORDER BY PRD_IMG_NO) AS rn
+                FROM PRODUCT_IMAGE WHERE IS_MAIN = 'Y'
+            )
+            WHERE rn = 1
+        ) pi ON pi.PRODUCT_NO = p.PRODUCT_NO
+        WHERE p.SELLER_EMAIL = #{email}
+        ORDER BY p.PRODUCT_NO DESC
+    </select>
+
+    <!-- ===== 송장번호 저장 ===== -->
+    <update id="saveInvoice" parameterType="map">
+        UPDATE TRANSACTIONS
+        SET CARRIER_CODE = #{carrierCode},
+            INVOICE_NO   = #{invoiceNo}
+        WHERE TRANSACTION_ID = #{transactionId}
+          AND SELLER_EMAIL   = #{email}
+    </update>
+
+    <!-- ===== 송장번호 조회 ===== -->
+    <select id="getInvoice" parameterType="map" resultType="com.spring.app.product.domain.ProductDTO">
+        SELECT CARRIER_CODE AS carrierCode,
+               INVOICE_NO   AS invoiceNo
+        FROM TRANSACTIONS
+        WHERE TRANSACTION_ID = #{transactionId}
+          AND SELLER_EMAIL   = #{email}
+    </select>
+
+    <!-- ===== 내 판매상품 단건 조회 (수정 페이지용) ===== -->
+    <select id="getMyProductByNo" parameterType="map" resultType="com.spring.app.product.domain.ProductDTO">
+        SELECT p.PRODUCT_NO         AS productNo,
+               p.PRODUCT_NAME       AS productName,
+               p.PRODUCT_PRICE      AS productPrice,
+               p.SALE_TYPE          AS saleType,
+               p.TRADE_STATUS       AS tradeStatus,
+               p.PRODUCT_DESC       AS productDesc,
+               p.CATEGORY_NO        AS categoryNo,
+               p.PRODUCT_CONDITION  AS productCondition,
+               p.TRADE_METHOD       AS tradeMethod
+        FROM PRODUCTS p
+        WHERE p.PRODUCT_NO   = #{productNo}
+          AND p.SELLER_EMAIL = #{email}
+    </select>
+
+    <!-- ===== 내 판매상품 수정 ===== -->
+    <update id="updateMyProduct" parameterType="map">
+        UPDATE PRODUCTS
+        SET PRODUCT_NAME      = #{productName},
+            PRODUCT_PRICE     = #{productPrice, jdbcType=NUMERIC},
+            TRADE_STATUS      = #{tradeStatus},
+            PRODUCT_DESC      = #{productDesc, jdbcType=VARCHAR},
+            CATEGORY_NO       = #{categoryNo, jdbcType=NUMERIC},
+            PRODUCT_CONDITION = #{productCondition, jdbcType=VARCHAR},
+            TRADE_METHOD      = #{tradeMethod, jdbcType=VARCHAR}
+        WHERE PRODUCT_NO   = #{productNo}
+          AND SELLER_EMAIL = #{email}
+    </update>
+
+    <!-- ===== 이미지 단건 조회 ===== -->
+    <select id="getProductImageByNo" parameterType="int" resultType="com.spring.app.product.domain.ProductImageDTO">
+        SELECT PRD_IMG_NO AS prdImgNo, PRODUCT_NO AS productNo,
+               IMG_URL AS imgUrl, ORGFILENAME AS orgfilename, FILENAME AS filename,
+               SORT_NO AS sortNo, IS_MAIN AS isMain
+        FROM PRODUCT_IMAGE WHERE PRD_IMG_NO = #{prdImgNo}
+    </select>
+
+    <!-- ===== 이미지 삭제 ===== -->
+    <delete id="deleteProductImageByNo" parameterType="int">
+        DELETE FROM PRODUCT_IMAGE WHERE PRD_IMG_NO = #{prdImgNo}
+    </delete>
+
+    <!-- ===== 이미지 삽입 ===== -->
+    <insert id="insertProductImageEdit" parameterType="com.spring.app.product.domain.ProductImageDTO">
+        <selectKey keyProperty="prdImgNo" resultType="int" order="BEFORE">
+            SELECT SEQ_PRODUCT_IMAGE_NO.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO PRODUCT_IMAGE (PRD_IMG_NO, PRODUCT_NO, IMG_URL, ORGFILENAME, FILENAME, SORT_NO, IS_MAIN)
+        VALUES (#{prdImgNo}, #{productNo}, #{imgUrl,jdbcType=VARCHAR}, #{orgfilename,jdbcType=VARCHAR},
+                #{filename,jdbcType=VARCHAR}, #{sortNo}, #{isMain,jdbcType=CHAR})
+    </insert>
+
+    <!-- ===== 대표이미지 리셋 / 첫 이미지를 대표로 ===== -->
+    <update id="resetMainImages" parameterType="int">
+        UPDATE PRODUCT_IMAGE SET IS_MAIN = 'N' WHERE PRODUCT_NO = #{productNo}
+    </update>
+    <update id="setFirstImageAsMain" parameterType="int">
+        UPDATE PRODUCT_IMAGE SET IS_MAIN = 'Y'
+        WHERE PRD_IMG_NO = (
+            SELECT MIN(PRD_IMG_NO) FROM PRODUCT_IMAGE WHERE PRODUCT_NO = #{productNo}
+        )
+    </update>
+
+    <!-- ===== 배송 옵션 삭제 / 삽입 ===== -->
+    <delete id="deleteProductShippingOptions" parameterType="int">
+        DELETE FROM PRODUCT_SHIPPING_OPTION WHERE PRODUCT_NO = #{productNo}
+    </delete>
+    <insert id="insertShippingOptionEdit" parameterType="com.spring.app.product.domain.ProductShippingOptionDTO">
+        <selectKey keyProperty="optionNo" resultType="int" order="BEFORE">
+            SELECT SEQ_PSO_NO.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO PRODUCT_SHIPPING_OPTION (OPTION_NO, PRODUCT_NO, PARCEL_TYPE, SHIPPING_FEE)
+        VALUES (#{optionNo}, #{productNo}, #{parcelType,jdbcType=VARCHAR}, #{shippingFee})
+    </insert>
+
+    <!-- ===== 직거래 위치 삭제 / 삽입 ===== -->
+    <delete id="deleteProductMeetLocations" parameterType="int">
+        DELETE FROM PRODUCT_MEET_LOCATION WHERE PRODUCT_NO = #{productNo}
+    </delete>
+    <insert id="insertMeetLocationEdit" parameterType="com.spring.app.product.domain.ProductMeetLocationDTO">
+        <selectKey keyProperty="locationNo" resultType="int" order="BEFORE">
+            SELECT SEQ_PML_NO.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO PRODUCT_MEET_LOCATION (LOCATION_NO, PRODUCT_NO, PLACE_NAME, FULL_ADDRESS, LATITUDE, LONGITUDE, SORT_NO)
+        VALUES (#{locationNo}, #{productNo}, #{placeName,jdbcType=VARCHAR}, #{fullAddress,jdbcType=VARCHAR},
+                #{latitude}, #{longitude}, #{sortNo})
+    </insert>
+
+    <!-- ===== 내 판매상품 거래 건수 조회 (삭제 가능 여부 확인) ===== -->
+    <select id="getProductTransactionCount" parameterType="int" resultType="int">
+        SELECT COUNT(*) FROM TRANSACTIONS WHERE PRODUCT_NO = #{productNo}
+    </select>
+
+    <!-- ===== 내 판매상품 신고 건수 조회 (삭제 가능 여부 확인) ===== -->
+    <select id="getProductReportCount" parameterType="int" resultType="int">
+        SELECT COUNT(*) FROM REPORTS WHERE PRODUCT_NUM = #{productNo}
+    </select>
+
+    <!-- ===== 내 판매상품 삭제 ===== -->
+    <delete id="deleteMyProduct" parameterType="map">
+        DELETE FROM PRODUCTS
+        WHERE PRODUCT_NO   = #{productNo}
+          AND SELLER_EMAIL = #{email}
+    </delete>
+
+    <!-- ===== 찜 목록 ===== -->
+    <select id="getWishlist" parameterType="String" resultType="com.spring.app.product.domain.ProductDTO">
+        SELECT p.PRODUCT_NO   AS productNo,
+               p.PRODUCT_NAME AS productName,
+               p.PRODUCT_PRICE AS productPrice,
+               p.SALE_TYPE    AS saleType,
+               p.TRADE_STATUS AS tradeStatus,
+               pi.IMG_URL     AS imgUrl
+        FROM WISHLIST w
+        JOIN PRODUCTS p ON w.PRODUCT_NO = p.PRODUCT_NO
+        LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
+        WHERE w.MEMBER_EMAIL = #{email}
+        ORDER BY p.PRODUCT_NO DESC
+    </select>
+
+    <!-- ===== 계좌 관리 ===== -->
+
+    <select id="getPrimaryAccount" parameterType="String" resultType="com.spring.app.mypage.domain.AccountDTO">
+        SELECT ACCOUNT_ID   AS accountId,
+               EMAIL        AS email,
+               BANK_NAME    AS bankName,
+               ACCOUNT_NUM  AS accountNum,
+               ACCOUNT_HOLDER AS accountHolder,
+               IS_PRIMARY   AS isPrimary
+        FROM ACCOUNTS
+        WHERE EMAIL = #{email} AND IS_PRIMARY = 'Y'
+        AND ROWNUM = 1
+    </select>
+
+    <select id="getAccountList" parameterType="String" resultType="com.spring.app.mypage.domain.AccountDTO">
+        SELECT ACCOUNT_ID   AS accountId,
+               EMAIL        AS email,
+               BANK_NAME    AS bankName,
+               ACCOUNT_NUM  AS accountNum,
+               ACCOUNT_HOLDER AS accountHolder,
+               IS_PRIMARY   AS isPrimary
+        FROM ACCOUNTS
+        WHERE EMAIL = #{email}
+        ORDER BY IS_PRIMARY DESC, ACCOUNT_ID ASC
+    </select>
+
+    <select id="getAccountCount" parameterType="String" resultType="int">
+        SELECT COUNT(*) FROM ACCOUNTS WHERE EMAIL = #{email}
+    </select>
+
+    <insert id="insertAccount" parameterType="com.spring.app.mypage.domain.AccountDTO">
+        INSERT INTO ACCOUNTS (ACCOUNT_ID, EMAIL, BANK_NAME, ACCOUNT_NUM, ACCOUNT_HOLDER, IS_PRIMARY)
+        VALUES (SEQ_ACCOUNT_ID.NEXTVAL, #{email}, #{bankName}, #{accountNum}, #{accountHolder}, #{isPrimary})
+    </insert>
+
+    <update id="updateAccount" parameterType="com.spring.app.mypage.domain.AccountDTO">
+        UPDATE ACCOUNTS
+        SET BANK_NAME      = #{bankName},
+            ACCOUNT_NUM    = #{accountNum},
+            ACCOUNT_HOLDER = #{accountHolder}
+        WHERE ACCOUNT_ID = #{accountId} AND EMAIL = #{email}
+    </update>
+
+    <delete id="deleteAccount" parameterType="map">
+        DELETE FROM ACCOUNTS WHERE ACCOUNT_ID = #{accountId} AND EMAIL = #{email}
+    </delete>
+
+    <update id="setPrimaryAccount" parameterType="map">
+        UPDATE ACCOUNTS
+        SET IS_PRIMARY = CASE WHEN ACCOUNT_ID = #{accountId} THEN 'Y' ELSE 'N' END
+        WHERE EMAIL = #{email}
+    </update>
+
+    <!-- ===== 배송지 관리 ===== -->
+
+    <select id="getDeliveryList" parameterType="String" resultType="com.spring.app.mypage.domain.DeliveryAddressDTO">
+        SELECT DELIVERY_NO    AS deliveryNo,
+               MEMBER_EMAIL   AS memberEmail,
+               LABEL          AS label,
+               RECEIVER_NAME  AS receiverName,
+               RECEIVER_PHONE AS receiverPhone,
+               POSTCODE       AS postcode,
+               ADDRESS        AS address,
+               DETAILADDRESS  AS detailAddress,
+               EXTRAADDRESS   AS extraAddress,
+               IS_PRIMARY     AS isPrimary
+        FROM DELIVERY_ADDRESS
+        WHERE MEMBER_EMAIL = #{email}
+        ORDER BY IS_PRIMARY DESC, DELIVERY_NO ASC
+    </select>
+
+    <select id="getDeliveryCount" parameterType="String" resultType="int">
+        SELECT COUNT(*) FROM DELIVERY_ADDRESS WHERE MEMBER_EMAIL = #{email}
+    </select>
+
+    <insert id="insertDelivery" parameterType="com.spring.app.mypage.domain.DeliveryAddressDTO">
+        INSERT INTO DELIVERY_ADDRESS
+            (DELIVERY_NO, MEMBER_EMAIL, LABEL, RECEIVER_NAME, RECEIVER_PHONE,
+             POSTCODE, ADDRESS, DETAILADDRESS, EXTRAADDRESS, IS_PRIMARY)
+        VALUES
+            (SEQ_DELIVERY_NO.NEXTVAL, #{memberEmail}, #{label}, #{receiverName}, #{receiverPhone},
+             #{postcode}, #{address}, #{detailAddress}, #{extraAddress}, #{isPrimary})
+    </insert>
+
+    <update id="updateDelivery" parameterType="com.spring.app.mypage.domain.DeliveryAddressDTO">
+        UPDATE DELIVERY_ADDRESS
+        SET LABEL          = #{label},
+            RECEIVER_NAME  = #{receiverName},
+            RECEIVER_PHONE = #{receiverPhone},
+            POSTCODE       = #{postcode},
+            ADDRESS        = #{address},
+            DETAILADDRESS  = #{detailAddress},
+            EXTRAADDRESS   = #{extraAddress}
+        WHERE DELIVERY_NO = #{deliveryNo} AND MEMBER_EMAIL = #{memberEmail}
+    </update>
+
+    <delete id="deleteDelivery" parameterType="map">
+        DELETE FROM DELIVERY_ADDRESS WHERE DELIVERY_NO = #{deliveryNo} AND MEMBER_EMAIL = #{email}
+    </delete>
+
+    <update id="setPrimaryDelivery" parameterType="map">
+        UPDATE DELIVERY_ADDRESS
+        SET IS_PRIMARY = CASE WHEN DELIVERY_NO = #{deliveryNo} THEN 'Y' ELSE 'N' END
+        WHERE MEMBER_EMAIL = #{email}
+    </update>
+
+    <!-- ===== 내 구매상품 ===== -->
+    <select id="getMyPurchases" parameterType="String" resultType="com.spring.app.mypage.domain.MyPurchaseDTO">
+        SELECT p.PRODUCT_NO    AS productNo,
+               p.PRODUCT_NAME  AS productName,
+               p.PRODUCT_PRICE AS productPrice,
+               p.SALE_TYPE     AS saleType,
+               t.AMOUNT        AS amount,
+               t.PAYMENT_TYPE  AS paymentType,
+               t.TRADE_STATUS  AS tradeStatus,
+               t.PAY_STATUS    AS payStatus,
+               TO_CHAR(t.TRADE_DATE, 'YYYY-MM-DD HH24:MI') AS tradeDate,
+               (SELECT IMG_URL FROM PRODUCT_IMAGE pi WHERE pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y' AND ROWNUM = 1) AS imgUrl,
+               t.TRANSACTION_ID AS transactionId,
+               t.SELLER_EMAIL   AS sellerEmail,
+               t.CARRIER_CODE  AS carrierCode,
+               t.INVOICE_NO    AS invoiceNo,
+               p.TRADE_METHOD  AS tradeMethod,
+               p.TRADE_STATUS  AS productTradeStatus,
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM REVIEWS r WHERE r.TRANSACTION_ID = t.TRANSACTION_ID
+               ) THEN 1 ELSE 0 END AS hasReview
+        FROM TRANSACTIONS t
+        JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
+        WHERE t.BUYER_EMAIL = #{email}
+          AND t.PAY_STATUS != 'READY'
+        ORDER BY t.TRADE_DATE DESC
+    </select>
+
+    <!-- 구매확정: TRANSACTIONS.TRADE_STATUS = '거래완료' -->
+    <update id="confirmPurchase" parameterType="map">
+        UPDATE TRANSACTIONS
+        SET TRADE_STATUS = '거래완료'
+        WHERE TRANSACTION_ID = #{transactionId}
+          AND BUYER_EMAIL = #{email}
+    </update>
+
+    <!-- 구매확정: PRODUCTS.TRADE_STATUS = '판매완료' (구매자 소유 검증 포함) -->
+    <update id="confirmPurchaseProduct" parameterType="map">
+        UPDATE PRODUCTS
+        SET TRADE_STATUS = '판매완료',
+            RESERVED_ROOM_ID = NULL
+        WHERE PRODUCT_NO = #{productNo}
+          AND EXISTS (
+              SELECT 1 FROM TRANSACTIONS
+              WHERE TRANSACTION_ID = #{transactionId}
+                AND BUYER_EMAIL = #{email}
+          )
+    </update>
+
+    <!-- ===== 리뷰 작성 ===== -->
+    <insert id="insertReview" parameterType="map">
+        <selectKey keyProperty="reviewNo" resultType="int" order="BEFORE">
+            SELECT SEQ_REVIEW_NO.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO REVIEWS (REVIEW_NO, WRITER_EMAIL, TARGET_EMAIL, TRANSACTION_ID, RATING, ONE_LINE_CAT, REVIEW_CONTENT, CREATED_AT)
+        VALUES (#{reviewNo}, #{writerEmail}, #{targetEmail}, #{transactionId}, #{rating}, #{oneLineCat}, #{reviewContent, jdbcType=CLOB}, SYSDATE)
+    </insert>
+
+    <!-- ===== 후기관리 ===== -->
+    <select id="getReceivedReviews" parameterType="String" resultType="com.spring.app.product.domain.ReviewDTO">
+        SELECT r.REVIEW_NO       AS reviewNo,
+               r.WRITER_EMAIL   AS writerEmail,
+               r.RATING         AS rating,
+               r.ONE_LINE_CAT   AS oneLineCat,
+               r.REVIEW_CONTENT AS reviewContent,
+               r.CREATED_AT     AS createdAt,
+               m.NICKNAME       AS writerName,
+               m.PROFILE_IMG    AS writerProfileImg,
+               p.PRODUCT_NAME   AS productName,
+               pi.IMG_URL       AS productImgUrl
+        FROM REVIEWS r
+        JOIN MEMBER m ON r.WRITER_EMAIL = m.EMAIL
+        JOIN TRANSACTIONS t ON r.TRANSACTION_ID = t.TRANSACTION_ID
+        JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
+        LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
+        WHERE r.TARGET_EMAIL = #{email}
+        ORDER BY r.CREATED_AT DESC
+    </select>
+
+    <select id="getWrittenReviews" parameterType="String" resultType="com.spring.app.product.domain.ReviewDTO">
+        SELECT r.REVIEW_NO       AS reviewNo,
+               r.TARGET_EMAIL   AS targetEmail,
+               r.RATING         AS rating,
+               r.ONE_LINE_CAT   AS oneLineCat,
+               r.REVIEW_CONTENT AS reviewContent,
+               r.CREATED_AT     AS createdAt,
+               m.NICKNAME       AS writerName,
+               m.PROFILE_IMG    AS writerProfileImg,
+               p.PRODUCT_NAME   AS productName,
+               pi.IMG_URL       AS productImgUrl
+        FROM REVIEWS r
+        JOIN MEMBER m ON r.TARGET_EMAIL = m.EMAIL
+        JOIN TRANSACTIONS t ON r.TRANSACTION_ID = t.TRANSACTION_ID
+        JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
+        LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
+        WHERE r.WRITER_EMAIL = #{email}
+        ORDER BY r.CREATED_AT DESC
+    </select>
+
+    <!-- ===== 내 통계 ===== -->
+    <select id="getMySafePayCount" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM TRANSACTIONS t
+        JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
+        WHERE p.SELLER_EMAIL = #{email}
+          AND t.USE_ESCROW = 'Y'
+          AND t.PAY_STATUS = 'DONE'
+    </select>
+
+    <select id="getMyTradeCount" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM PRODUCTS
+        WHERE SELLER_EMAIL = #{email}
+          AND TRADE_STATUS = '판매완료'
+    </select>
+
+    <!-- ===== 신고관리 ===== -->
+
+    <select id="getMyReportsSent" parameterType="String" resultType="com.spring.app.mypage.domain.MyReportDTO">
+        SELECT r.REPORT_ID          AS reportId,
+               r.REPORT_DETAIL      AS reportDetail,
+               r.REPORT_STATUS      AS reportStatus,
+               TO_CHAR(r.REPORT_DATE, 'YYYY-MM-DD HH24:MI') AS reportDate,
+               rt.TYPE_NAME         AS typeName,
+               rt.MAIN_CATEGORY     AS mainCategory,
+               p.PRODUCT_NAME       AS productName,
+               p.PRODUCT_NO         AS productNo,
+               pi.IMG_URL           AS imgUrl,
+               m_reporter.NICKNAME  AS reporterNickname,
+               m_target.NICKNAME    AS targetNickname
+        FROM REPORTS r
+        LEFT JOIN REPORT_TYPES rt ON r.TYPE_ID = rt.TYPE_ID
+        LEFT JOIN PRODUCTS p ON r.PRODUCT_NUM = p.PRODUCT_NO
+        LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
+        LEFT JOIN MEMBER m_reporter ON m_reporter.EMAIL = r.REPORTER_EMAIL
+        LEFT JOIN MEMBER m_target ON m_target.EMAIL = r.TARGET_EMAIL
+        WHERE r.REPORTER_EMAIL = #{email}
+        ORDER BY r.REPORT_DATE DESC
+    </select>
+
+    <select id="getMyReportsReceived" parameterType="String" resultType="com.spring.app.mypage.domain.MyReportDTO">
+        SELECT r.REPORT_ID          AS reportId,
+               r.REPORT_DETAIL      AS reportDetail,
+               r.REPORT_STATUS      AS reportStatus,
+               TO_CHAR(r.REPORT_DATE, 'YYYY-MM-DD HH24:MI') AS reportDate,
+               rt.TYPE_NAME         AS typeName,
+               rt.MAIN_CATEGORY     AS mainCategory,
+               p.PRODUCT_NAME       AS productName,
+               p.PRODUCT_NO         AS productNo,
+               pi.IMG_URL           AS imgUrl,
+               m_reporter.NICKNAME  AS reporterNickname,
+               m_target.NICKNAME    AS targetNickname
+        FROM REPORTS r
+        LEFT JOIN REPORT_TYPES rt ON r.TYPE_ID = rt.TYPE_ID
+        LEFT JOIN PRODUCTS p ON r.PRODUCT_NUM = p.PRODUCT_NO
+        LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
+        LEFT JOIN MEMBER m_reporter ON m_reporter.EMAIL = r.REPORTER_EMAIL
+        LEFT JOIN MEMBER m_target ON m_target.EMAIL = r.TARGET_EMAIL
+        WHERE r.TARGET_EMAIL = #{email}
+        ORDER BY r.REPORT_DATE DESC
+    </select>
+    
+    <select id="getMyPurchaseList" parameterType="String"
+        resultType="com.spring.app.payment.domain.TransactionDTO">
+    SELECT t.PRODUCT_NO     AS productNo,
+           p.PRODUCT_NAME   AS productName,
+           p.SALE_TYPE      AS saleType,
+           t.AMOUNT         AS amount,
+           t.PAYMENT_TYPE   AS paymentType,
+           t.TRADE_STATUS   AS tradeStatus,
+           t.PAY_STATUS     AS payStatus,
+           TO_CHAR(t.TRADE_DATE, 'YYYY-MM-DD HH24:MI') AS tradeDate,
+           pi.IMG_URL       AS imgUrl,
+           t.TRANSACTION_ID AS transactionId,
+           t.SELLER_EMAIL   AS sellerEmail,
+           p.CARRIER_CODE   AS carrierCode,
+           p.INVOICE_NO     AS invoiceNo,
+           /* ↓ 채팅 거래 추가 컬럼 */
+           cr.ROOM_ID       AS roomId,
+           cr.RESERVE_TIME  AS reserveTime,
+           cr.RESERVE_PLACE AS reservePlace,
+           CASE WHEN EXISTS (
+               SELECT 1 FROM REVIEWS r WHERE r.TRANSACTION_ID = t.TRANSACTION_ID
+           ) THEN 1 ELSE 0 END AS hasReview
+    FROM TRANSACTIONS t
+    JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
+    LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
+    /* ↓ 이 JOIN 추가 */
+    LEFT JOIN CHAT_ROOM cr ON  cr.PRODUCT_NO   = t.PRODUCT_NO
+                           AND cr.SELLER_EMAIL = t.SELLER_EMAIL
+                           AND cr.BUYER_EMAIL  = t.BUYER_EMAIL
+    WHERE t.BUYER_EMAIL = #{email}
+      AND t.PAY_STATUS != 'READY'
+    ORDER BY t.TRADE_DATE DESC
+	</select>
+
 </mapper>

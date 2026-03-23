@@ -13,6 +13,7 @@ import com.spring.app.admin.domain.AdDTO;
 import com.spring.app.admin.domain.InquiryDTO;
 import com.spring.app.admin.domain.SearchDTO;
 import com.spring.app.admin.service.AdminService;
+import com.spring.app.common.AES256;
 import com.spring.app.common.FileManager;
 import com.spring.app.product.domain.ProductDTO;
 import com.spring.app.security.domain.MemberDTO;
@@ -33,6 +34,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final FileManager fileManager;
+    private final AES256 aes256;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -40,47 +42,146 @@ public class AdminController {
     //관리자 메인페이지
     @GetMapping("/index")
     public String index(Model model) {
-        // 인기 검색어 상위 10개 가져오기
-        List<SearchDTO> popularKeywords = adminService.getPopularKeywords();
-        model.addAttribute("popularKeywords", popularKeywords);
-        
+        model.addAttribute("popularKeywords", adminService.getPopularKeywords());
+        model.addAttribute("reportsAndInquiries", adminService.countPendingReportsAndInquiries());
+        model.addAttribute("adInquiries", adminService.countPendingAds());
+        model.addAttribute("todayProducts", adminService.countTodayProducts());
+        model.addAttribute("dailyTradeAmount", adminService.getDailyTradeAmount());
+        model.addAttribute("withdrawStats", adminService.getWithdrawReasonStats());
         return "admin/index";
     }
     		
     //index페이지 신규가입자
     @GetMapping("/user-stats")
     @ResponseBody
-    // (value = "type") 을 추가해서 이름을 명시해줍니다.
     public Map<String, Object> getUserStats(@RequestParam(value = "type", defaultValue = "week") String type) {
         return adminService.getUserRegistrationStats(type);
     }
     
     //=====================================================================================//
-     //회원 관리 페이지
+    //회원 관리 페이지
     @GetMapping("/member")
     public String memebrPage(Model model,
-                             @RequestParam(value = "page", defaultValue = "1") int page)  {
+                             @RequestParam(value = "page", defaultValue = "1") int page,
+                             @RequestParam(value = "status", defaultValue = "") String status,
+                             @RequestParam(value = "keyword", defaultValue = "") String keyword) {
         int size = 20;
-        int totalMembers = adminService.getTotalMembersCount();
+        int totalMembers = adminService.getMemberCount(status, keyword);
         int totalPages = (int) Math.ceil((double) totalMembers / size);
         if (totalPages == 0) totalPages = 1;
 
-        model.addAttribute("members", adminService.getMemberList(page, size));
+        model.addAttribute("members", adminService.getMemberList(page, size, status, keyword));
         model.addAttribute("newMembers", adminService.getNewMembersCount());
-        model.addAttribute("withdrawals", adminService.getWithdrawalsCount());
-        model.addAttribute("totalMembers", totalMembers);
+        model.addAttribute("suspendedMembers", adminService.getSuspendedMembersCount());
+        model.addAttribute("totalMembers", adminService.getTotalMembersCount());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
+        model.addAttribute("searchStatus", status);
+        model.addAttribute("searchKeyword", keyword);
+        model.addAttribute("searchCount", totalMembers);
+        model.addAttribute("monthNewMembers",  adminService.getMonthNewMembersCount());
+        model.addAttribute("idleMembers",      adminService.getIdleMembersCount());
+        model.addAttribute("withdrawnMembers", adminService.getWithdrawalsCount());
+        
+     // 연령대 차트
+        model.addAttribute("ageLabels", List.of("10대","20대","30대","40대","50대","60대+"));
+        model.addAttribute("ageData",   adminService.getMemberAgeStats());
 
+        // 지역 차트
+        List<Map<String,Object>> regionList = adminService.getMemberRegionStats();
+        model.addAttribute("regionLabels", regionList.stream().map(m -> (String) m.get("REGION")).toList());
+        model.addAttribute("regionData",   regionList.stream().map(m -> m.get("CNT")).toList());
         return "admin/member";
     }
-    
-    //회원 한명 보여주기
+
+    //회원 상세 보여주기 (멤버정보 + 거래중인 상품)
     @GetMapping("/member/detail")
     @ResponseBody
-    public MemberDTO getMemberDetail(@RequestParam("userNo")int userNo) {
-    return adminService.getMemberByNo(userNo);	
+    public Map<String, Object> getMemberDetail(@RequestParam("userNo") int userNo) {
+        MemberDTO member = adminService.getMemberByNo(userNo);
+        Map<String, Object> result = new HashMap<>();
+        if (member == null) return result;
+        result.put("userNo", member.getUserNo());
+        result.put("email", member.getEmail());
+        result.put("userName", member.getUserName());
+        result.put("nickname", member.getNickname());
+        String decryptedPhone = member.getPhone();
+        if (decryptedPhone != null && !decryptedPhone.isEmpty()) {
+            try { decryptedPhone = aes256.decrypt(decryptedPhone); } catch (Exception ignored) {}
+        }
+        result.put("phone", decryptedPhone);
+        result.put("regDate", member.getRegDate());
+        result.put("status", member.getStatus());
+        result.put("suspended", member.getSuspended());
+        result.put("idle", member.getIdle());
+        result.put("mannerTemp", member.getMannerTemp());
+        result.put("profileImg", member.getProfileImg());
+        result.put("products", adminService.getMemberActiveProducts(userNo));
+        try {
+            result.put("pendingSuspension", adminService.hasPendingSuspension(userNo) > 0);
+        } catch (Exception e) {
+            result.put("pendingSuspension", false);
+        }
+        return result;
     }
+
+    //일시정지 예약 (3일 후 적용, 즉시 알림 발송)
+    @PostMapping("/member/suspend")
+    @ResponseBody
+    public Map<String, Object> suspendMember(@RequestParam("userNo") int userNo,
+                                              @RequestParam(value="email", required=false) String email) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            if (email == null || email.isEmpty()) {
+                MemberDTO m = adminService.getMemberByNo(userNo);
+                email = m != null ? m.getEmail() : "";
+            }
+            adminService.scheduleSuspend(userNo, email);
+            result.put("success", true);
+            result.put("message", "3일 후 일시정지가 예약되었습니다. 회원에게 알림을 발송했습니다.");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
+    //정지 해제
+    @PostMapping("/member/unsuspend")
+    @ResponseBody
+    public Map<String, Object> unsuspendMember(@RequestParam("userNo") int userNo) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.unsuspendMember(userNo);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+        }
+        return result;
+    }
+
+    //영구정지 예약 (3일 후 적용, 즉시 알림 발송)
+    @PostMapping("/member/ban")
+    @ResponseBody
+    public Map<String, Object> permanentBanMember(@RequestParam("userNo") int userNo,
+                                                   @RequestParam(value="email", required=false) String email) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            if (email == null || email.isEmpty()) {
+                MemberDTO m = adminService.getMemberByNo(userNo);
+                email = m != null ? m.getEmail() : "";
+            }
+            adminService.scheduleBan(userNo, email);
+            result.put("success", true);
+            result.put("message", "3일 후 영구정지가 예약되었습니다. 회원에게 알림을 발송했습니다.");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
+    
+
     
     //=====================================================================================//
     
@@ -88,37 +189,30 @@ public class AdminController {
     @GetMapping("/product")
     public String productPage(Model model,
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size) {
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "status", defaultValue = "") String status,
+            @RequestParam(value = "filter", defaultValue = "") String filter) {
 
         // 1. 기본 데이터 및 페이징
-        List<ProductDTO> productList = adminService.getProductList(page, size);
+        List<ProductDTO> productList = adminService.getProductList(page, size, status, filter);
+        int filteredTotal = adminService.getProductCount(status, filter);
         int totalProducts = adminService.getTotalProductsCount();
         int onsaleCount = adminService.getOnsaleProductCount();
-        int reportCount = adminService.getReportedProductCount(); // 신고 건수 서비스 추가 권장
+        int reportCount = adminService.getReportedProductCount();
 
-        // 2. 카테고리 매핑 (DB에서 가져오거나 상수로 관리)
+        // 2. 카테고리 매핑
         Map<Integer, String> categoryMap = new HashMap<>();
-        categoryMap.put(1, "패션");
-        categoryMap.put(2, "육아");
-        categoryMap.put(3, "가전");
-        categoryMap.put(4, "홈·인테리어");
-        categoryMap.put(5, "취미");
-        categoryMap.put(6, "여행");
-        categoryMap.put(7, "공구/산업용품");
-
+        categoryMap.put(1, "패션"); categoryMap.put(2, "육아"); categoryMap.put(3, "가전");
+        categoryMap.put(4, "홈·인테리어"); categoryMap.put(5, "취미");
+        categoryMap.put(6, "여행"); categoryMap.put(7, "공구/산업용품");
         for(ProductDTO p : productList) {
-            p.setCategoryName(categoryMap.getOrDefault(p.getCategoryNo(), "기타")); 
+            p.setCategoryName(categoryMap.getOrDefault(p.getCategoryNo(), "기타"));
         }
 
-        // 3. [핵심] 차트 데이터 준비
-        // A. 일별 등록 현황 (최근 7일) -> 서비스에서 List<Map<String, Object>> 형태로 받아온다고 가정
-        // 데이터 예시: Labels: ["03-03", "03-04"...], Data: [12, 5, 8...]
-        Map<String, Object> dailyStats = adminService.getDailyProductStats(); 
-        model.addAttribute("dailyLabels", dailyStats.get("labels")); // 날짜 리스트
-        model.addAttribute("dailyData", dailyStats.get("data"));     // 건수 리스트
-
-        // B. 카테고리별 비중 (도넛 차트용)
-        // 데이터 예시: Labels: ["패션", "가전"...], Data: [45, 20...]
+        // 3. 차트 데이터
+        Map<String, Object> dailyStats = adminService.getDailyProductStats();
+        model.addAttribute("dailyLabels", dailyStats.get("labels"));
+        model.addAttribute("dailyData", dailyStats.get("data"));
         Map<String, Object> categoryStats = adminService.getCategoryProductStats();
         model.addAttribute("categoryLabels", categoryStats.get("labels"));
         model.addAttribute("categoryData", categoryStats.get("data"));
@@ -126,13 +220,16 @@ public class AdminController {
         // 4. 모델 담기
         model.addAttribute("productList", productList);
         model.addAttribute("totalProducts", totalProducts);
+        model.addAttribute("filteredTotal", filteredTotal);
         model.addAttribute("onsaleCount", onsaleCount);
         model.addAttribute("reportCount", reportCount);
         model.addAttribute("size", size);
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", (int) Math.ceil((double) totalProducts / size));
+        model.addAttribute("totalPages", (int) Math.ceil((double) filteredTotal / size));
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedFilter", filter);
 
-        return "admin/product"; 
+        return "admin/product";
     }
      
     
@@ -142,7 +239,11 @@ public class AdminController {
     //=====================================================================================//  
     //광고 페이지 보여주기
     @GetMapping("/ad")
-    public String adPage() {
+    public String adPage(Model model, Principal principal) {
+        if (principal != null) {
+            MemberDTO loginUser = adminService.getMemberById(principal.getName());
+            model.addAttribute("loginUser", loginUser);
+        }
     	return "admin/ad";
     }
     
@@ -165,14 +266,13 @@ public class AdminController {
     //광고 등록하기
     @PostMapping("/ad/register")
     @ResponseBody
-    public Map<String,Object> registerAd(AdDTO adDto,
-                                         HttpSession session) {
+    public Map<String,Object> registerAd(AdDTO adDto, Principal principal) {
 
         Map<String,Object> result = new HashMap<>();
 
         try {
 
-            MemberDTO loginUser = (MemberDTO) session.getAttribute("loginUser");
+            MemberDTO loginUser = adminService.getMemberById(principal.getName());
 
             adDto.setUserNo(loginUser.getUserNo());
 
@@ -208,11 +308,14 @@ public class AdminController {
         List<List<LocalDate>> calendarWeeks = generateCalendar(firstDay);
 
         List<AdDTO> adList = adminService.getAdList();
+        Map<String, Object> adStats = adminService.getAdMonthlyStats();
 
         model.addAttribute("calendarWeeks", calendarWeeks);
         model.addAttribute("adList", adList);
         model.addAttribute("year", year);
         model.addAttribute("month", month);
+        model.addAttribute("chartLabels", adStats.get("labels"));
+        model.addAttribute("chartData", adStats.get("data"));
 
         return "admin/contents";
     }
@@ -261,7 +364,8 @@ public class AdminController {
         String dirPath = uploadDir + File.separator + subDir;
         fileManager.doFileDownload(fileName, originalName, dirPath, response);
     }
-
+    
+    // 광고 승인
     @PostMapping("/ad/approve")
     @ResponseBody
     public String approvedAd(@RequestParam("adId") Long adId) {
@@ -269,7 +373,7 @@ public class AdminController {
     	return "ok";
     }
     
-    
+    //광고 거절
     @PostMapping("/ad/reject")
     @ResponseBody
     public String rejectAd(@RequestParam("adId") Long adId,
@@ -279,7 +383,23 @@ public class AdminController {
 
         return "ok";
     }
-    
+    	
+    //광고 철회
+    @PostMapping("/ad/withdraw")
+    @ResponseBody
+    public String withdrawAd(@RequestParam("adId") Long adId,
+            @RequestParam("reason") String reason) {
+        adminService.withdrawAd(adId, reason);
+        return "ok";
+    }
+    //메인페이지 배너
+    @PostMapping("/banner/update")
+    @ResponseBody
+    public String updateBanner(@RequestParam("text") String text) {
+        adminService.updateBanner(text);
+        return "ok";
+    }
+
  // ---------------------------------------------------------
     // [추가할 부분] 달력 데이터를 만드는 로직 (에러 해결용)
     // ---------------------------------------------------------
@@ -306,32 +426,201 @@ public class AdminController {
         }
         return weeks;
     }
-    //문의 페이지 보여주기
-    @GetMapping("/inquiry")
-    public String inquiry() {
-    	return "admin/inquiry";
-    }
-    
-    
-    //신고 페이지 보여주기
-    @GetMapping("/complaint")
-    public String complaint() {
-    	return "admin/complaint";
-    }
-    
-    //신고 페이지 보여주기
-    @GetMapping("/transaction")
-    public String transaction() {
-    	return "admin/transaction";
-    }
-    
-    //신고 페이지 보여주기
+    // 리뷰 관리 페이지
     @GetMapping("/review")
-    public String review() {
-    	return "admin/review";
+    public String review(Model model,
+                         @RequestParam(value = "page", defaultValue = "1") int page,
+                         @RequestParam(value = "size", defaultValue = "20") int size,
+                         @RequestParam(value = "keyword", defaultValue = "") String keyword) {
+        Map<String, Object> data = adminService.getReviewListPaged(page, size, keyword);
+        model.addAttribute("reviewList", data.get("list"));
+        model.addAttribute("totalCount", data.get("total"));
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", data.get("totalPages"));
+        model.addAttribute("searchKeyword", keyword);
+        return "admin/review";
     }
-    
-    
+
+    @PostMapping("/review/delete")
+    @ResponseBody
+    public Map<String, Object> deleteReview(@RequestParam("reviewNo") int reviewNo) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.deleteReview(reviewNo);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+        }
+        return result;
+    }
+
+    // 거래 관리 페이지
+    @GetMapping("/transaction")
+    public String transaction(Model model,
+                              @RequestParam(value = "page", defaultValue = "1") int page,
+                              @RequestParam(value = "size", defaultValue = "20") int size,
+                              @RequestParam(value = "status", defaultValue = "ALL") String status) {
+        Map<String, Object> data = adminService.getTransactionListPaged(page, size, status);
+        Map<String, Object> statusStats = adminService.getTransactionStatusStats();
+        model.addAttribute("tradeList", data.get("list"));
+        model.addAttribute("totalCount", data.get("total"));
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", data.get("totalPages"));
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("statusStats", statusStats);
+        return "admin/transaction";
+    }
+
+    // 신고 관리 페이지
+    @GetMapping("/complaint")
+    public String complaint(Model model,
+                            @RequestParam(value = "page", defaultValue = "1") int page,
+                            @RequestParam(value = "size", defaultValue = "20") int size,
+                            @RequestParam(value = "type", defaultValue = "ALL") String type) {
+        Map<String, Object> data = adminService.getReportListPaged(page, size, type);
+        model.addAttribute("reportList", data.get("list"));
+        model.addAttribute("totalCount", data.get("total"));
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", data.get("totalPages"));
+        model.addAttribute("selectedType", type);
+        model.addAttribute("reportStats", adminService.getReportStats());
+        return "admin/complaint";
+    }
+
+    @GetMapping("/complaint/detail")
+    public String complaintDetail(@RequestParam("reportId") long reportId, Model model) {
+        model.addAttribute("report", adminService.getReportDetail(reportId));
+        return "admin/complaint_detail";
+    }
+
+    @PostMapping("/complaint/memberAction")
+    @ResponseBody
+    public Map<String, Object> memberAction(@RequestParam("userNo") int userNo,
+                                             @RequestParam("action") String action) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            switch (action) {
+                case "suspend":   adminService.suspendMember(userNo);      break;
+                case "ban":       adminService.permanentBanMember(userNo); break;
+                case "unsuspend": adminService.unsuspendMember(userNo);    break;
+            }
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        return result;
+    }
+
+    @PostMapping("/complaint/notify")
+    @ResponseBody
+    public Map<String, Object> sendComplaintNotification(@RequestParam("email") String email,
+                                                          @RequestParam("title") String title,
+                                                          @RequestParam("message") String message) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.sendAdminNotification(email, title, message);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+        }
+        return result;
+    }
+    //회원 메시지 전달
+    @PostMapping("/api/sendMessage")
+    @ResponseBody
+    public Map<String, Object> sendMessage(@org.springframework.web.bind.annotation.RequestBody Map<String, Object> body) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.sendAdminNotification(
+                (String) body.get("targetEmail"),
+                (String) body.get("title"),
+                (String) body.get("message")
+            );
+            result.put("success", true);
+            result.put("message", "메시지가 성공적으로 전송되었습니다.");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "전송 실패: " + e.getMessage());
+        }
+        return result;
+    }
+
+    @PostMapping("/complaint/process")
+    @ResponseBody
+    public Map<String, Object> processReport(@RequestParam("reportId") int reportId,
+                                              @RequestParam("status") String status) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.updateReportStatus(reportId, status);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    // 문의 관리 페이지
+    @GetMapping("/inquiry")
+    public String inquiry(Model model,
+                          @RequestParam(value = "page", defaultValue = "1") int page,
+                          @RequestParam(value = "size", defaultValue = "20") int size,
+                          @RequestParam(value = "status", defaultValue = "ALL") String status) {
+        Map<String, Object> data = adminService.getAdminInquiryListPaged(page, size, status);
+        model.addAttribute("inquiryList", data.get("list"));
+        model.addAttribute("totalCount", data.get("total"));
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", data.get("totalPages"));
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("pendingCount", adminService.countPendingInquiries());
+        model.addAttribute("answeredCount", adminService.countAnsweredInquiries());
+        model.addAttribute("faqKeywords", adminService.getFaqKeywords());
+        return "admin/inquiry";
+    }
+
+    @PostMapping("/inquiry/answer")
+    @ResponseBody
+    public Map<String, Object> saveInquiryAnswer(@RequestParam("inquiryId") int inquiryId,
+                                                  @RequestParam("adminAnswer") String adminAnswer) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.saveInquiryAnswer(inquiryId, adminAnswer);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+        }
+        return result;
+    }
+
+    // 상품 상세 페이지
+    @GetMapping("/productDetail")
+    public String productDetail(@RequestParam("productNo") int productNo, Model model) {
+        model.addAttribute("product", adminService.getProductDetail(productNo));
+        return "admin/product_detail";
+    }
+
+    // 상품 삭제
+    @PostMapping("/product/delete")
+    @ResponseBody
+    public Map<String, Object> deleteProduct(
+            @RequestParam("productNo") int productNo,
+            @RequestParam(value = "sellerEmail", required = false) String sellerEmail,
+            @RequestParam(value = "sellerMsg", required = false) String sellerMsg,
+            @RequestParam(value = "buyerEmail", required = false) String buyerEmail,
+            @RequestParam(value = "buyerMsg", required = false) String buyerMsg) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            adminService.deleteProduct(productNo, sellerEmail, sellerMsg, buyerEmail, buyerMsg);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
   //=========================================================================================================================
 	 // 사용자 문의내역 게시판 
 	
@@ -350,13 +639,26 @@ public class AdminController {
 	 return "admin/user_inquiry";
 	 }
 	    
-	    //문의하기 글쓰기 페이지 
+	    //문의하기 글쓰기 페이지
 	 @GetMapping("/inquiry_write")
 	 public String write() {
 		 return "admin/inquiry_write";
 	 }
-		    
-    
-    
-    
+
+	// 회계관리
+	@GetMapping("/accounting")
+	public String getAccounting(
+	        @RequestParam(value="page", defaultValue="1") int page,
+	        Model model) {
+	    int size = 10;
+	    Map<String, Object> stats = adminService.getAccountingStats();
+	    Map<String, Object> listData = adminService.getAccountingList(page, size);
+	    model.addAttribute("stats", stats);
+	    model.addAttribute("list", listData.get("list"));
+	    model.addAttribute("total", listData.get("total"));
+	    model.addAttribute("totalPages", listData.get("totalPages"));
+	    model.addAttribute("currentPage", page);
+	    return "admin/accounting";
+	}
+
 }
