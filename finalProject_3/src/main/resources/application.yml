@@ -171,7 +171,7 @@ file:
   reports-dir: file_reports
 
 gemini:
-  api-key: ${GEMINI_API_KEY:AIzaSyC8iivsP0Sk099ihDHbvmKokbSRe4BjYUc}
+  api-key: ${1234}
   text-model: gemini-2.5-flash
 
 jwt:
@@ -191,7 +191,7 @@ toss:
     api-url: https://api.tosspayments.com/v1
 
 sweettracker:
-  api-key: iZXFC9x2hR8IE8S0D0L7AQ
+  api-key: 1234
 
 eureka:
   client:
