@@ -112,8 +112,14 @@ public class MemberService_imple implements MemberService {
     }
 
     @Override
+    public int countActiveProducts(String email) {
+        return dao.countActiveProducts(email);
+    }
+
+    @Override
     public void withdrawMember(String email) {
         dao.deleteRefreshToken(email);
+        dao.deleteNotificationsByEmail(email);
         dao.withdrawMember(email);
     }
 }

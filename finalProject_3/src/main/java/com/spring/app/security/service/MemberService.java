@@ -25,6 +25,7 @@ public interface MemberService {
     // 프로필 수정 (닉네임 + 프로필 이미지)
     void updateProfile(MemberDTO member);
 
+    int countActiveProducts(String email);
     // 회원 탈퇴
     void withdrawMember(String email);
 }

@@ -173,12 +173,20 @@ public class MemberController {
 
     // 회원 탈퇴
     @PostMapping("/withdraw")
-    public String withdraw(Principal principal, HttpServletRequest request) {
-        if (principal != null) {
-            memberService.withdrawMember(principal.getName());
-            try { request.logout(); } catch (Exception e) { e.printStackTrace(); }
+    @ResponseBody
+    public Map<String, Object> withdraw(Principal principal, HttpServletRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        if (principal == null) { result.put("success", false); return result; }
+        int activeCount = memberService.countActiveProducts(principal.getName());
+        if (activeCount > 0) {
+            result.put("success", false);
+            result.put("message", "판매 중이거나 진행 중인 거래가 있어 탈퇴할 수 없습니다.\n상품을 모두 삭제하거나 거래를 완료한 후 탈퇴해주세요.");
+            return result;
         }
-        return "redirect:/";
+        memberService.withdrawMember(principal.getName());
+        try { request.logout(); } catch (Exception e) { e.printStackTrace(); }
+        result.put("success", true);
+        return result;
     }
 
     // 회원가입 완료 처리

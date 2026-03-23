@@ -45,6 +45,8 @@ public interface MemberDAO {
     // 프로필 수정 (닉네임 + 프로필 이미지)
     void updateProfile(MemberDTO member);
 
+    int countActiveProducts(String email);
+    void deleteNotificationsByEmail(String email);
     // 회원 탈퇴 (STATUS = 0)
     void withdrawMember(String email);
 

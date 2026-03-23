@@ -236,13 +236,10 @@
                         style="flex:1; padding:13px; border:1px solid #ddd; border-radius:8px; background:#fff; font-size:14px; cursor:pointer; font-weight:bold;">
                     취소
                 </button>
-                <form id="withdrawForm" th:action="@{/security/withdraw}" method="post" style="flex:1;">
-                    <input type="hidden" th:name="${_csrf != null ? _csrf.parameterName : '_csrf'}" th:value="${_csrf != null ? _csrf.token : ''}">
-                    <button type="submit"
-                            style="width:100%; padding:13px; border:none; border-radius:8px; background:#e33; color:#fff; font-size:14px; cursor:pointer; font-weight:bold;">
-                        탈퇴하기
-                    </button>
-                </form>
+                <button onclick="doWithdraw()"
+                        style="flex:1; padding:13px; border:none; border-radius:8px; background:#e33; color:#fff; font-size:14px; cursor:pointer; font-weight:bold;">
+                    탈퇴하기
+                </button>
             </div>
         </div>
     </div>
@@ -699,6 +696,22 @@
     }
     window.closeWithdrawModal = function() {
         document.getElementById('withdrawModal').style.display = 'none';
+    }
+    window.doWithdraw = function() {
+        fetch(`${ctxPath}security/withdraw`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('탈퇴가 완료되었습니다.');
+                location.href = ctxPath;
+            } else {
+                closeWithdrawModal();
+                alert(data.message || '탈퇴에 실패했습니다.');
+            }
+        });
     }
 
     // ===== 섹션 전환 =====

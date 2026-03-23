@@ -100,6 +100,16 @@ public class MemberDAO_imple implements MemberDAO {
     }
  
     @Override
+    public int countActiveProducts(String email) {
+        return sqlsession.selectOne("member.countActiveProducts", email);
+    }
+
+    @Override
+    public void deleteNotificationsByEmail(String email) {
+        sqlsession.delete("member.deleteNotificationsByEmail", email);
+    }
+
+    @Override
     public void withdrawMember(String email) {
         sqlsession.delete("member.withdrawMember", email);
     }

@@ -131,6 +131,19 @@
 	    WHERE EMAIL = #{email}
 	</delete>
 
+	<!-- 탈퇴 전 활성 상품 수 조회 (판매중/예약중 포함) -->
+	<select id="countActiveProducts" parameterType="String" resultType="int">
+	    SELECT COUNT(*) FROM PRODUCTS
+	    WHERE SELLER_EMAIL = #{email}
+	      AND TRADE_STATUS IN ('판매중', '예약중', '거래중')
+	</select>
+
+	<!-- 회원 탈퇴 전 알림 삭제 -->
+	<delete id="deleteNotificationsByEmail" parameterType="String">
+	    DELETE FROM WEB_NOTIFICATION
+	    WHERE USER_NO = (SELECT USER_NO FROM MEMBER WHERE EMAIL = #{email})
+	</delete>
+
 	<!-- 회원 탈퇴 (완전 삭제) -->
 	<delete id="withdrawMember" parameterType="String">
 	    DELETE FROM MEMBER WHERE EMAIL = #{email}
