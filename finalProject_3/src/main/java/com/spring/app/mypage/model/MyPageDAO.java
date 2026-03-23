@@ -47,6 +47,8 @@ public interface MyPageDAO {
 
     // 내 구매상품
     List<MyPurchaseDTO> getMyPurchases(String email);
+    int confirmPurchase(Map<String, Object> params);
+    int confirmPurchaseProduct(Map<String, Object> params);
     int insertReview(Map<String, Object> params);
 
     // 계좌

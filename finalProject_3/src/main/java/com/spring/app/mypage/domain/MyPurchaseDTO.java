@@ -19,4 +19,6 @@ public class MyPurchaseDTO {
     private String sellerEmail;
     private String carrierCode;
     private String invoiceNo;
+    private String tradeMethod;
+    private String productTradeStatus;
 }

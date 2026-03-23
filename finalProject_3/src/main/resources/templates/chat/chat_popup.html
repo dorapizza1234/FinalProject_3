@@ -434,7 +434,7 @@
             // 이미지 세팅 (방어 코드 포함)
             const bannerImg = document.getElementById('bannerImg');
             if(imgUrl) {
-                bannerImg.src = imgUrl.startsWith('/') ? ctxPath + imgUrl : imgUrl;
+                bannerImg.src = imgUrl.startsWith('http') ? imgUrl : ctxPath + (imgUrl.startsWith('/') ? '' : '/') + imgUrl;
             } else {
                 bannerImg.src = 'https://via.placeholder.com/50?text=No+Image';
             }

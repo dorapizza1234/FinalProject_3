@@ -107,8 +107,8 @@ public class ChatServiceImpl implements ChatService {
         txMap.put("buyerEmail", buyerEmail);
         String saleType = productInfo != null ? productInfo.getSaleType() : null;
         txMap.put("paymentType", "나눔".equals(saleType) ? "나눔" : "직거래");
-        int price = productInfo != null ? productInfo.getProductPrice() : 0;
-        txMap.put("amount", "나눔".equals(saleType) ? 0 : price);
+        Integer priceObj = productInfo != null ? productInfo.getProductPrice() : null;
+        txMap.put("amount", "나눔".equals(saleType) ? 0 : (priceObj != null ? priceObj : 0));
         chatMapper.insertDirectTrade(txMap);
 
         // 상품 판매완료 처리
