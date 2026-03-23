@@ -169,6 +169,10 @@ file:
   adminupload-dir: file_adminupload
   profile-dir: file_profile
   reports-dir: file_reports
+  
+gemini:
+  api-key: 1234
+  text-model: gemini-2.5-flash
 
 jwt:
   secret: e37ea07e222779c4066309ce10e47004a9718bbbc8e1062b7b4bca9b5d89a83d
