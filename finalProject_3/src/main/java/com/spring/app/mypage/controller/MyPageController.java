@@ -296,6 +296,26 @@ public class MyPageController {
         return myPageService.getMyPurchases(principal.getName());
     }
 
+    @PostMapping("/confirm-purchase")
+    @ResponseBody
+    public Map<String, Object> confirmPurchase(@RequestBody Map<String, Object> payload, Principal principal) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            int transactionId = Integer.parseInt(payload.get("transactionId").toString());
+            int productNo = Integer.parseInt(payload.get("productNo").toString());
+            Map<String, Object> params = new HashMap<>();
+            params.put("transactionId", transactionId);
+            params.put("email", principal.getName());
+            params.put("productNo", productNo);
+            myPageService.confirmPurchase(params);
+            int productUpdated = myPageService.confirmPurchaseProduct(params);
+            result.put("success", productUpdated > 0);
+        } catch (Exception e) {
+            result.put("success", false);
+        }
+        return result;
+    }
+
     @GetMapping("/review/write")
     public String reviewWritePage(
             @RequestParam("transactionId") int transactionId,

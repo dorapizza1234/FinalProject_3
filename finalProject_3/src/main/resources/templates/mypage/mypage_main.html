@@ -658,6 +658,28 @@
         document.getElementById('deliveryStatusModal').style.display = 'block';
     }
 
+    // ===== 구매확정 버튼 (택배 구매확정 후 리뷰작성 버튼으로 전환) =====
+    window.confirmPayment = function(productNo, transactionId, targetEmail, productName, imgUrl, amount, paymentType, saleType) {
+        if (!confirm('구매를 확정하시겠습니까?')) return;
+        fetch(`${ctxPath}mypage/confirm-purchase`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transactionId, productNo })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { alert('구매확정 처리에 실패했습니다.'); return; }
+            const area = document.getElementById('review-area-' + transactionId);
+            if (!area) return;
+            area.innerHTML = `<button class="mp-purchase-btn" style="width:100%; background:#ff6b35; color:#fff; border:none; cursor:pointer;"
+                onclick="openReviewModal(${transactionId},'${targetEmail}','${(productName||'').replace(/'/g,"\\'")}','${imgUrl}','${amount}','${paymentType}','${saleType}')">리뷰작성</button>`;
+            const badge = document.getElementById('status-badge-' + transactionId);
+            if (badge) { badge.className = 'rp-status-badge rp-status-done'; badge.textContent = '거래완료'; }
+            const productBadge = document.getElementById('product-status-' + transactionId);
+            if (productBadge) { productBadge.style.background = '#555'; productBadge.textContent = '판매완료'; }
+        });
+    }
+
     // ===== 리뷰 작성 팝업 =====
     window.openReviewModal = function(transactionId, targetEmail, productName, imgUrl, amount, paymentType, saleType) {
         const params = new URLSearchParams({
@@ -835,18 +857,27 @@
             const priceText = p.amount != null ? p.amount.toLocaleString() + '원' : (p.productPrice ? p.productPrice.toLocaleString() + '원' : '가격 미정');
             const st = statusMap[p.tradeStatus] || { cls: 'rp-status-pending', label: p.tradeStatus || '-' };
             const isDone = p.tradeStatus === '거래완료';
-            const canReview = isDone && !p.hasReview;
-            const reviewBtnStyle = canReview
-                ? 'background:#ff6b35; color:#fff; border:none; cursor:pointer;'
-                : 'background:#eee; color:#aaa; border:none; cursor:default;';
-            const reviewBtnAttr = canReview
-                ? `onclick="openReviewModal(${p.transactionId},'${p.sellerEmail}','${p.productName.replace(/'/g, "\\'")}','${p.imgUrl || ''}','${p.amount || p.productPrice || ''}','${p.paymentType || ''}','${p.saleType || ''}')"`
-                : 'disabled';
+            const isParcel = p.tradeMethod === '택배';
+            const reviewModalArgs = `${p.transactionId},'${p.sellerEmail}','${p.productName.replace(/'/g, "\\'")}','${p.imgUrl || ''}','${p.amount || p.productPrice || ''}','${p.paymentType || ''}','${p.saleType || ''}'`;
+            let reviewAreaHtml;
+            if (p.hasReview) {
+                reviewAreaHtml = `<button class="mp-purchase-btn" style="background:#eee; color:#aaa; border:none; cursor:default;" disabled>리뷰완료</button>`;
+            } else if (isDone) {
+                reviewAreaHtml = `<button class="mp-purchase-btn" style="background:#ff6b35; color:#fff; border:none; cursor:pointer;"
+                    onclick="openReviewModal(${reviewModalArgs})">리뷰작성</button>`;
+            } else if (isParcel) {
+                reviewAreaHtml = `<div id="review-area-${p.transactionId}" style="flex:1;">
+                    <button class="mp-purchase-btn" style="width:100%; background:#1976d2; color:#fff; border:none; cursor:pointer;"
+                        onclick="confirmPayment(${p.productNo}, ${reviewModalArgs})">구매확정</button>
+                </div>`;
+            } else {
+                reviewAreaHtml = `<button class="mp-purchase-btn" style="background:#eee; color:#aaa; border:none; cursor:default;" disabled>리뷰작성</button>`;
+            }
             return `
                 <div class="mp-wish-card">
                     <a href="${ctxPath}product/product_detail/${p.productNo}" class="mp-wish-img-wrap">
                         <img src="${imgSrc}" alt="${p.productName}" onerror="this.src='${ctxPath}images/no_image.png'">
-                        <span class="mp-wish-status" style="background:#444;">${p.saleType || ''}</span>
+                        ${p.productTradeStatus ? `<span id="product-status-${p.transactionId}" class="mp-wish-status" style="background:${p.productTradeStatus === '판매완료' ? '#555' : p.productTradeStatus === '예약중' ? '#e67e22' : '#4CB050'};">${p.productTradeStatus}</span>` : ''}
                     </a>
                     <div class="mp-wish-info">
                         <p class="mp-wish-name">${p.productName}</p>
@@ -854,7 +885,7 @@
                         <p style="margin:4px 0 0; font-size:12px; color:#999;">${p.tradeDate || ''}</p>
                     </div>
                     <div style="margin:0 12px 4px; display:flex; align-items:center; justify-content:space-between;">
-                        <span class="rp-status-badge ${st.cls}">${st.label}</span>
+                        <span id="status-badge-${p.transactionId}" class="rp-status-badge ${st.cls}">${st.label}</span>
                         <span style="font-size:11px; color:#aaa;">${p.paymentType || ''}</span>
                     </div>
                     <div style="margin:0 12px 12px; display:flex; gap:6px; flex-wrap:wrap;">
@@ -862,7 +893,7 @@
                             ? `<button class="mp-purchase-btn" style="background:#4CB050; color:#fff; border:none; cursor:pointer;" onclick="trackDeliveryByInfo('${p.carrierCode || ''}','${p.invoiceNo}','${p.productName.replace(/'/g, "\\'")}')">배송현황</button>`
                             : `<button class="mp-purchase-btn" onclick="openNoInvoiceModal()">배송현황</button>`
                         }
-                        <button class="mp-purchase-btn" style="${reviewBtnStyle}" ${reviewBtnAttr}>${p.hasReview ? '리뷰완료' : '리뷰작성'}</button>
+                        ${reviewAreaHtml}
                     </div>
                 </div>`;
         }).join('')}</div>`;
@@ -927,7 +958,7 @@
                             onclick="trackDelivery(${p.transactionId})">배송조회</button>` : ''}
                     </div>` : ''}
                     <div class="mp-product-actions">
-                        <button class="mp-product-edit-btn" onclick="goProductEdit(${p.productNo})">수정</button>
+                        ${p.tradeStatus !== '판매완료' ? `<button class="mp-product-edit-btn" onclick="goProductEdit(${p.productNo})">수정</button>` : ''}
                         <button class="mp-product-delete-btn"
                             ${p.tradeStatus === '예약중' ? 'disabled title="예약중인 상품은 삭제할 수 없습니다."' : `onclick="deleteMyProduct(${p.productNo})"`}>삭제</button>
                     </div>

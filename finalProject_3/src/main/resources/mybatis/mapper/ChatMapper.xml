@@ -101,7 +101,6 @@
         SET TRADE_STATUS = '판매완료',
             RESERVED_ROOM_ID = NULL
         WHERE PRODUCT_NO = #{productNo}
-          AND RESERVED_ROOM_ID = #{roomId}
     </update>
 
     <!-- 직거래/나눔 거래완료 시 TRANSACTIONS 레코드 생성 -->

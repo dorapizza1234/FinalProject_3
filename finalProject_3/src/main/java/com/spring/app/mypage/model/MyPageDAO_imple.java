@@ -143,6 +143,16 @@ public class MyPageDAO_imple implements MyPageDAO {
     }
 
     @Override
+    public int confirmPurchase(Map<String, Object> params) {
+        return sqlsession.update(ns + ".confirmPurchase", params);
+    }
+
+    @Override
+    public int confirmPurchaseProduct(Map<String, Object> params) {
+        return sqlsession.update(ns + ".confirmPurchaseProduct", params);
+    }
+
+    @Override
     public int insertReview(Map<String, Object> params) {
         return sqlsession.insert(ns + ".insertReview", params);
     }

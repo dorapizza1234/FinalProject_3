@@ -341,21 +341,43 @@
                t.TRADE_STATUS  AS tradeStatus,
                t.PAY_STATUS    AS payStatus,
                TO_CHAR(t.TRADE_DATE, 'YYYY-MM-DD HH24:MI') AS tradeDate,
-               pi.IMG_URL      AS imgUrl,
+               (SELECT IMG_URL FROM PRODUCT_IMAGE pi WHERE pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y' AND ROWNUM = 1) AS imgUrl,
                t.TRANSACTION_ID AS transactionId,
                t.SELLER_EMAIL   AS sellerEmail,
                t.CARRIER_CODE  AS carrierCode,
                t.INVOICE_NO    AS invoiceNo,
+               p.TRADE_METHOD  AS tradeMethod,
+               p.TRADE_STATUS  AS productTradeStatus,
                CASE WHEN EXISTS (
                    SELECT 1 FROM REVIEWS r WHERE r.TRANSACTION_ID = t.TRANSACTION_ID
                ) THEN 1 ELSE 0 END AS hasReview
         FROM TRANSACTIONS t
         JOIN PRODUCTS p ON t.PRODUCT_NO = p.PRODUCT_NO
-        LEFT JOIN PRODUCT_IMAGE pi ON pi.PRODUCT_NO = p.PRODUCT_NO AND pi.IS_MAIN = 'Y'
         WHERE t.BUYER_EMAIL = #{email}
           AND t.PAY_STATUS != 'READY'
         ORDER BY t.TRADE_DATE DESC
     </select>
+
+    <!-- 구매확정: TRANSACTIONS.TRADE_STATUS = '거래완료' -->
+    <update id="confirmPurchase" parameterType="map">
+        UPDATE TRANSACTIONS
+        SET TRADE_STATUS = '거래완료'
+        WHERE TRANSACTION_ID = #{transactionId}
+          AND BUYER_EMAIL = #{email}
+    </update>
+
+    <!-- 구매확정: PRODUCTS.TRADE_STATUS = '판매완료' (구매자 소유 검증 포함) -->
+    <update id="confirmPurchaseProduct" parameterType="map">
+        UPDATE PRODUCTS
+        SET TRADE_STATUS = '판매완료',
+            RESERVED_ROOM_ID = NULL
+        WHERE PRODUCT_NO = #{productNo}
+          AND EXISTS (
+              SELECT 1 FROM TRANSACTIONS
+              WHERE TRANSACTION_ID = #{transactionId}
+                AND BUYER_EMAIL = #{email}
+          )
+    </update>
 
     <!-- ===== 리뷰 작성 ===== -->
     <insert id="insertReview" parameterType="map">

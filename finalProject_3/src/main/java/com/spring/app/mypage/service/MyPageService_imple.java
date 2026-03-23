@@ -105,6 +105,16 @@ public class MyPageService_imple implements MyPageService {
     }
 
     @Override
+    public int confirmPurchase(Map<String, Object> params) {
+        return myPageDAO.confirmPurchase(params);
+    }
+
+    @Override
+    public int confirmPurchaseProduct(Map<String, Object> params) {
+        return myPageDAO.confirmPurchaseProduct(params);
+    }
+
+    @Override
     public int insertReview(Map<String, Object> params) {
         return myPageDAO.insertReview(params);
     }
