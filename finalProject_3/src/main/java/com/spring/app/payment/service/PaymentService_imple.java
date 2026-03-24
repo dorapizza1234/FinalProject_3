@@ -138,23 +138,6 @@ public class PaymentService_imple implements PaymentService {
             return result;
         }
 
-<<<<<<< HEAD
-        // =========================================================
-        // 🌟 [추가할 코드] 새로고침 방어 로직!
-        // 이미 DB에 결제완료(DONE)로 저장되어 있다면, 토스에 또 물어보지 않고 패스!
-        // =========================================================
-        if ("DONE".equals(txn.getPayStatus())) {
-            result.put("success", true);
-            result.put("transactionId", txn.getTransactionId());
-            result.put("paymentKey", txn.getTossPayKey());
-            result.put("orderId", orderId);
-            return result;
-        }
-        // =========================================================
-
-        // 금액 검증
-=======
->>>>>>> refs/heads/main
         if (txn.getAmount() != amount) {
             result.put("success", false);
             result.put("message", "결제 금액이 일치하지 않습니다.");
