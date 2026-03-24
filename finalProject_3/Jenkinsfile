@@ -54,7 +54,7 @@ pipeline {
                             "docker stop $CONTAINER_NAME || true && \
                              docker rm $CONTAINER_NAME || true && \
                              docker pull $DOCKER_IMAGE:latest && \
-                             docker run -d --restart always --name $CONTAINER_NAME -p 9080:9080 $DOCKER_IMAGE:latest"
+                             docker run -d --restart always --name $CONTAINER_NAME -p 9080:9080 -v /home/ubuntu/secrets/serviceAccountKey.json:/home/ubuntu/secrets/serviceAccountKey.json $DOCKER_IMAGE:latest"
                     '''
                 }
             }
