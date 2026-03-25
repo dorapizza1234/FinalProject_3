@@ -73,13 +73,6 @@
 <!-- Botpress 웹챗 -->
 <script src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"></script>
 <script src="https://files.bpcontent.cloud/2026/02/09/04/20260209044814-4XLOFSNX.js" defer></script>
-<script>
-  window.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'REDIRECT_SEARCH' && event.data.searchWord) {
-      window.location.href = 'http://54.116.1.59:8000/finalProject_3/product/product_list?searchWord=' + encodeURIComponent(event.data.searchWord);
-    }
-  });
-</script>
     
 </body>
 </html>
