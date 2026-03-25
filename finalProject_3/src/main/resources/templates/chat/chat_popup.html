@@ -429,8 +429,16 @@
             currentSellerEmail = sellerEmail;
             currentPayStatus = payStatus || null;
             currentTransactionId = transactionId || null;
+            // 상태/버튼 먼저 초기화 (깜빡임 방지)
+            document.getElementById('bannerStatus').innerText = '';
+            document.getElementById('bannerStatus').className = 'status-badge';
+            document.getElementById('btnReserve').style.display = 'none';
+            document.getElementById('btnCancelReserve').style.display = 'none';
+            document.getElementById('btnSafePay').style.display = 'none';
+            document.getElementById('btnConfirmPurchaseChat').style.display = 'none';
+
             document.getElementById('chatMainArea').style.visibility = 'visible';
-            
+
             document.getElementById('currentRoomNickname').innerText = targetUser;
             document.getElementById('btnUserProfile').href = ctxPath + '/product/product_user_profile?productNo=' + productNo;
             document.getElementById('bannerTitle').innerText = productName;
